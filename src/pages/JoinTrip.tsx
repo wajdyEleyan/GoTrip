@@ -99,8 +99,7 @@ export default function JoinTrip() {
       {/* Trip Info */}
       <div className="mx-4 mt-4 p-4 bg-muted rounded-xl text-sm text-gray-600">
         <p>📅 {trip.startDate} – {trip.endDate}</p>
-        <p>💶 {trip.budgetMin}€ – {trip.budgetMax}€ pro Person</p>
-        <p>👥 {trip.members.length}/{trip.groupSize} Mitglieder</p>
+        <p>👥 {trip.members.length} Mitglieder</p>
       </div>
 
       {/* Join Form */}

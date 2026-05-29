@@ -1,58 +1,107 @@
-// Autor: Mohamad Haj Ahmad
-// src/pages/TripDashboard.tsx — Trip Hub: alle Schritte auf einen Blick
+// src/pages/TripDashboard.tsx
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { useTripContext } from '@/context/TripContext'
+import { useLanguage } from '@/context/LanguageContext'
+import { getTripPreferences } from '@/utils/storage'
 import {
   Users, Calendar, Heart, Sparkles, Star, Zap, Trophy, Wallet, ChevronRight
 } from 'lucide-react'
-
-const STEPS = [
-  { label: 'Mitglieder',        icon: Users,     path: 'members',        desc: 'Gruppe verwalten & einladen' },
-  { label: 'Verfügbarkeit',     icon: Calendar,  path: 'availability',   desc: 'Gemeinsame Termine finden' },
-  { label: 'Präferenzen',       icon: Heart,     path: 'preferences',    desc: 'Budget & Interessen eingeben' },
-  { label: 'KI-Empfehlung',     icon: Sparkles,  path: 'recommendation', desc: 'Reiseziele von ki-engine analysieren lassen', highlight: true },
-  { label: 'Abstimmen',         icon: Star,      path: 'vote',           desc: 'Ziele bewerten & entscheiden' },
-  { label: 'Aktivitäten',       icon: Zap,       path: 'activities',     desc: 'Was machen wir dort?' },
-  { label: 'Finale Übersicht',  icon: Trophy,    path: 'final',          desc: 'Alles auf einen Blick' },
-  { label: 'Budget-Tracker',    icon: Wallet,    path: 'budget',         desc: 'Kosten aufteilen (Splitwise)' },
-]
 
 export default function TripDashboard() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { getTripById } = useTripContext()
+  const { t } = useLanguage()
 
   const trip = id ? getTripById(id) : undefined
+  const [avgBudget, setAvgBudget] = useState<number | null>(null)
+  const [overlapStart, setOverlapStart] = useState<string | null>(null)
+  const [overlapEnd, setOverlapEnd] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!id) return
+    const prefs = getTripPreferences(id)
+    if (prefs.length > 0) {
+      const sum = prefs.reduce((s, p) => s + p.budgetPerPerson, 0)
+      setAvgBudget(Math.round(sum / prefs.length))
+
+      // Calculate date overlap: latest start date AND earliest end date
+      const starts = prefs.map((p) => p.preferredStartDate).filter(Boolean) as string[]
+      const ends = prefs.map((p) => p.preferredEndDate).filter(Boolean) as string[]
+      if (starts.length > 0 && ends.length > 0) {
+        const latestStart = starts.reduce((a, b) => (a > b ? a : b))
+        const earliestEnd = ends.reduce((a, b) => (a < b ? a : b))
+        if (latestStart <= earliestEnd) {
+          setOverlapStart(latestStart)
+          setOverlapEnd(earliestEnd)
+        }
+      }
+    }
+  }, [id])
+
+  const STEPS = [
+    { labelKey: 'stepMembers' as const, icon: Users, path: 'members', descKey: 'stepMembersDesc' as const },
+    { labelKey: 'stepAvailability' as const, icon: Calendar, path: 'availability', descKey: 'stepAvailabilityDesc' as const },
+    { labelKey: 'stepPreferences' as const, icon: Heart, path: 'preferences', descKey: 'stepPreferencesDesc' as const },
+    { labelKey: 'stepRecommendation' as const, icon: Sparkles, path: 'recommendation', descKey: 'stepRecommendationDesc' as const, highlight: true },
+    { labelKey: 'stepVote' as const, icon: Star, path: 'vote', descKey: 'stepVoteDesc' as const },
+    { labelKey: 'stepActivities' as const, icon: Zap, path: 'activities', descKey: 'stepActivitiesDesc' as const },
+    { labelKey: 'stepFinal' as const, icon: Trophy, path: 'final', descKey: 'stepFinalDesc' as const },
+    { labelKey: 'stepBudget' as const, icon: Wallet, path: 'budget', descKey: 'stepBudgetDesc' as const },
+  ]
 
   if (!trip) {
     return (
       <div className="app-shell flex flex-col items-center justify-center min-h-svh px-6 text-center">
-        <p className="text-gray-500 mb-4">Reise nicht gefunden.</p>
-        <Button variant="outline" onClick={() => navigate('/home')}>Zur Übersicht</Button>
+        <p className="text-gray-500 mb-4">{t('tripNotFound')}</p>
+        <Button variant="outline" onClick={() => navigate('/home')}>{t('backToOverview')}</Button>
       </div>
     )
   }
 
   return (
     <div className="app-shell flex flex-col min-h-svh bg-gray-50">
-      <PageHeader title={trip.name} />
+      <PageHeader title={trip.name} backTo="/home" />
 
       <main className="flex-1 px-4 py-5 pb-8 overflow-y-auto flex flex-col gap-3">
-        {/* Trip Info */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 flex justify-between text-sm text-gray-500">
-          <span>📅 {trip.startDate} – {trip.endDate}</span>
-          <span>💶 {trip.budgetMin}–{trip.budgetMax}€</span>
-          <span>👥 {trip.members.length}/{trip.groupSize}</span>
+        {/* Trip info card */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">📅 Zeitraum</span>
+              <span className="text-gray-700 font-medium">
+                {trip.startDate} – {trip.endDate}
+              </span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">👥 {t('memberCount')}</span>
+              <span className="text-gray-700 font-medium">{trip.members.length}</span>
+            </div>
+            {avgBudget != null && (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">💶 {t('avgBudgetLabel')}</span>
+                <span className="text-gray-700 font-medium">{avgBudget}€</span>
+              </div>
+            )}
+            {overlapStart && overlapEnd && (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">✅ {t('commonPeriod')}</span>
+                <span className="text-gray-700 font-medium text-xs">{overlapStart} – {overlapEnd}</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Step tiles */}
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1 mt-1">
-          Was möchtest du tun?
+        {/* Section label */}
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1 mt-1">
+          {t('whatToDo')}
         </p>
 
-        {STEPS.map(({ label, icon: Icon, path, desc, highlight }) => (
+        {/* Step tiles */}
+        {STEPS.map(({ labelKey, icon: Icon, path, descKey, highlight }) => (
           <button
             key={path}
             onClick={() => navigate(`/trip/${id}/${path}`)}
@@ -68,8 +117,12 @@ export default function TripDashboard() {
               <Icon size={20} className={highlight ? 'text-white' : 'text-primary'} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`font-semibold text-sm ${highlight ? 'text-white' : 'text-gray-900'}`}>{label}</p>
-              <p className={`text-xs mt-0.5 ${highlight ? 'text-white/80' : 'text-gray-400'}`}>{desc}</p>
+              <p className={`font-semibold text-sm ${highlight ? 'text-white' : 'text-gray-900'}`}>
+                {t(labelKey)}
+              </p>
+              <p className={`text-xs mt-0.5 ${highlight ? 'text-white/80' : 'text-gray-400'}`}>
+                {t(descKey)}
+              </p>
             </div>
             <ChevronRight size={18} className={highlight ? 'text-white/60' : 'text-gray-300'} />
           </button>

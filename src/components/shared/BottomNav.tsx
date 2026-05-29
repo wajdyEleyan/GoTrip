@@ -1,19 +1,19 @@
-// Autor: Amal Najah
 // src/components/shared/BottomNav.tsx
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Home, Plus, User } from 'lucide-react'
+import { Home, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { toast } from '@/components/shared/Toast'
+import { useLanguage } from '@/context/LanguageContext'
 
 export function BottomNav() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-gray-100"
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/95 backdrop-blur border-t border-gray-100"
       aria-label="Hauptnavigation"
     >
-      <ul className="flex items-center justify-around h-16 px-2 list-none m-0 p-0">
+      <ul className="flex items-center justify-around h-16 px-8 list-none m-0 p-0">
         {/* Home */}
         <li className="flex-1">
           <NavLink
@@ -24,12 +24,12 @@ export function BottomNav() {
                 isActive ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
               )
             }
-            aria-label="Meine Reisen"
+            aria-label={t('trips')}
           >
             {({ isActive }) => (
               <>
-                <Home size={22} className={isActive ? 'text-primary' : 'text-gray-400'} aria-hidden="true" />
-                <span>Reisen</span>
+                <Home size={22} className={isActive ? 'text-primary' : 'text-gray-400'} />
+                <span>{t('trips')}</span>
               </>
             )}
           </NavLink>
@@ -40,24 +40,12 @@ export function BottomNav() {
           <button
             onClick={() => navigate('/create')}
             className="flex flex-col items-center justify-center gap-0.5 min-h-[44px] w-full text-xs font-medium text-gray-400 hover:text-primary transition-colors"
-            aria-label="Neue Reise erstellen"
+            aria-label={t('create')}
           >
-            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-sm shadow-primary/30 -mt-3">
-              <Plus size={20} className="text-white" aria-hidden="true" />
+            <div className="w-11 h-11 bg-primary rounded-full flex items-center justify-center shadow-md shadow-primary/30 -mt-4">
+              <Plus size={22} className="text-white" />
             </div>
-            <span className="mt-0.5">Erstellen</span>
-          </button>
-        </li>
-
-        {/* Profil (coming soon) */}
-        <li className="flex-1">
-          <button
-            onClick={() => toast.info('Profil-Feature kommt bald!')}
-            className="flex flex-col items-center justify-center gap-0.5 h-full min-h-[44px] w-full text-xs font-medium text-gray-400 hover:text-gray-500 transition-colors"
-            aria-label="Profil (demnächst verfügbar)"
-          >
-            <User size={22} aria-hidden="true" />
-            <span>Profil</span>
+            <span className="mt-0.5">{t('create')}</span>
           </button>
         </li>
       </ul>

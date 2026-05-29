@@ -1,75 +1,91 @@
-// Autor: Eya Mathlouthi
 // src/components/trips/TripForm.tsx
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { BudgetRangeInput } from './BudgetRangeInput'
-import { GroupSizeStepper } from './GroupSizeStepper'
 import { createTripSchema, type CreateTripSchema } from '@/utils/tripSchema'
 import { useTripContext } from '@/context/TripContext'
+import { useLanguage } from '@/context/LanguageContext'
+import type { Trip } from '@/types/trip'
 
-export function TripForm() {
+interface TripFormProps {
+  editTrip?: Trip
+}
+
+export function TripForm({ editTrip }: TripFormProps) {
   const navigate = useNavigate()
-  const { createTrip } = useTripContext()
+  const { createTrip, updateTrip } = useTripContext()
+  const { t } = useLanguage()
+  const isEdit = !!editTrip
 
   const {
     register,
     handleSubmit,
-    watch,
-    setValue,
+    reset,
     formState: { errors, isSubmitting, isValid },
   } = useForm<CreateTripSchema>({
     resolver: zodResolver(createTripSchema),
     mode: 'onChange',
     defaultValues: {
-      groupSize: 2,
-      budgetMin: 0,
-      budgetMax: 0,
+      name: editTrip?.name ?? '',
+      startDate: editTrip?.startDate ?? '',
+      endDate: editTrip?.endDate ?? '',
     },
   })
 
-  const groupSize = watch('groupSize')
-  const budgetMin = watch('budgetMin')
-  const budgetMax = watch('budgetMax')
+  useEffect(() => {
+    if (editTrip) {
+      reset({
+        name: editTrip.name,
+        startDate: editTrip.startDate,
+        endDate: editTrip.endDate,
+      })
+    }
+  }, [editTrip, reset])
+
   const today = new Date().toISOString().split('T')[0]
 
   function onSubmit(data: CreateTripSchema) {
-    const trip = createTrip(data)
-    navigate(`/trip/${trip.id}/dashboard`)
+    if (isEdit && editTrip) {
+      updateTrip({ ...editTrip, ...data })
+      navigate(`/trip/${editTrip.id}/dashboard`)
+    } else {
+      const trip = createTrip(data)
+      navigate(`/trip/${trip.id}/dashboard`)
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-6">
       {/* Trip Name */}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="name">Trip Name *</Label>
+        <Label htmlFor="name" className="text-sm font-semibold text-gray-700">{t('tripName')}</Label>
         <Input
           id="name"
-          placeholder="z.B. Sommerwochenende Barcelona"
+          placeholder={t('tripNamePlaceholder')}
+          className="h-12 rounded-xl border-gray-200 focus:border-primary"
           aria-invalid={!!errors.name}
-          aria-describedby={errors.name ? 'name-error' : undefined}
           {...register('name')}
         />
         {errors.name && (
-          <p id="name-error" className="text-xs text-red-500" role="alert">
-            {errors.name.message}
-          </p>
+          <p className="text-xs text-red-500" role="alert">{errors.name.message}</p>
         )}
       </div>
 
       {/* Travel Period */}
       <fieldset className="border-0 p-0 m-0">
-        <legend className="text-sm font-medium text-gray-700 mb-1.5">Reisezeitraum *</legend>
+        <legend className="text-sm font-semibold text-gray-700 mb-2">{t('travelPeriod')}</legend>
         <div className="flex gap-3">
           <div className="flex-1 flex flex-col gap-1">
-            <Label htmlFor="startDate" className="text-xs text-gray-500">Von</Label>
+            <Label htmlFor="startDate" className="text-xs text-gray-500">{t('from')}</Label>
             <Input
               id="startDate"
               type="date"
               min={today}
+              className="h-12 rounded-xl border-gray-200 focus:border-primary"
               aria-invalid={!!errors.startDate}
               {...register('startDate')}
             />
@@ -78,11 +94,12 @@ export function TripForm() {
             )}
           </div>
           <div className="flex-1 flex flex-col gap-1">
-            <Label htmlFor="endDate" className="text-xs text-gray-500">Bis</Label>
+            <Label htmlFor="endDate" className="text-xs text-gray-500">{t('to')}</Label>
             <Input
               id="endDate"
               type="date"
               min={today}
+              className="h-12 rounded-xl border-gray-200 focus:border-primary"
               aria-invalid={!!errors.endDate}
               {...register('endDate')}
             />
@@ -93,38 +110,15 @@ export function TripForm() {
         </div>
       </fieldset>
 
-      {/* Budget Range */}
-      <div className="flex flex-col gap-1.5">
-        <Label>Budget pro Person *</Label>
-        <BudgetRangeInput
-          minValue={budgetMin}
-          maxValue={budgetMax}
-          onMinChange={(v) => setValue('budgetMin', v, { shouldValidate: true })}
-          onMaxChange={(v) => setValue('budgetMax', v, { shouldValidate: true })}
-          minError={errors.budgetMin?.message}
-          maxError={errors.budgetMax?.message}
-        />
-      </div>
-
-      {/* Group Size */}
-      <div className="flex flex-col gap-1.5">
-        <Label>Gruppengröße *</Label>
-        <GroupSizeStepper
-          value={groupSize}
-          onChange={(v) => setValue('groupSize', v, { shouldValidate: true })}
-        />
-        {errors.groupSize && (
-          <p className="text-xs text-red-500" role="alert">{errors.groupSize.message}</p>
-        )}
-      </div>
-
       <Button
         type="submit"
         disabled={!isValid || isSubmitting}
-        className="mt-2 w-full"
-        aria-label="Reise erstellen"
+        className="mt-2 h-12 w-full rounded-xl text-base font-semibold"
       >
-        {isSubmitting ? 'Wird erstellt…' : 'Create Trip'}
+        {isSubmitting
+          ? (isEdit ? t('saving') : t('creating'))
+          : (isEdit ? t('saveChanges') : t('createTripBtn'))
+        }
       </Button>
     </form>
   )

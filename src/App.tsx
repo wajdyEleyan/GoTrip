@@ -1,9 +1,9 @@
-// Autor: Wajdy Eleyan
-// src/App.tsx — Alle Routen + Auth-Guard
+// src/App.tsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { TripProvider } from '@/context/TripContext'
 import { AccessibilityProvider } from '@/context/AccessibilityContext'
+import { LanguageProvider } from '@/context/LanguageContext'
 import { Toaster } from '@/components/shared/Toast'
 import type { ReactNode } from 'react'
 
@@ -11,6 +11,7 @@ import type { ReactNode } from 'react'
 import Login from '@/pages/Login'
 import Home from '@/pages/Home'
 import CreateTrip from '@/pages/CreateTrip'
+import EditTrip from '@/pages/EditTrip'
 import InviteFriends from '@/pages/InviteFriends'
 import GroupMembers from '@/pages/GroupMembers'
 import JoinTrip from '@/pages/JoinTrip'
@@ -23,7 +24,6 @@ import FinalOverview from '@/pages/FinalOverview'
 import BudgetTracker from '@/pages/BudgetTracker'
 import TripDashboard from '@/pages/TripDashboard'
 
-// Auth Guard: redirect unauthenticated users to login
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth()
 
@@ -48,6 +48,7 @@ function AppRoutes() {
       {/* Protected */}
       <Route path="/home" element={<RequireAuth><Home /></RequireAuth>} />
       <Route path="/create" element={<RequireAuth><CreateTrip /></RequireAuth>} />
+      <Route path="/trip/:id/edit" element={<RequireAuth><EditTrip /></RequireAuth>} />
       <Route path="/trip/:id/dashboard" element={<RequireAuth><TripDashboard /></RequireAuth>} />
       <Route path="/trip/:id/invite" element={<RequireAuth><InviteFriends /></RequireAuth>} />
       <Route path="/trip/:id/members" element={<RequireAuth><GroupMembers /></RequireAuth>} />
@@ -68,14 +69,16 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AccessibilityProvider>
-        <AuthProvider>
-          <TripProvider>
-            <AppRoutes />
-            <Toaster position="top-center" richColors />
-          </TripProvider>
-        </AuthProvider>
-      </AccessibilityProvider>
+      <LanguageProvider>
+        <AccessibilityProvider>
+          <AuthProvider>
+            <TripProvider>
+              <AppRoutes />
+              <Toaster position="top-center" richColors />
+            </TripProvider>
+          </AuthProvider>
+        </AccessibilityProvider>
+      </LanguageProvider>
     </BrowserRouter>
   )
 }
