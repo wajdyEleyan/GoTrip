@@ -1,13 +1,12 @@
-// src/pages/InviteFriends.tsx
+// src/pages/EditTrip.tsx
 import { useParams, useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { InviteLink } from '@/components/members/InviteLink'
+import { TripForm } from '@/components/trips/TripForm'
 import { Button } from '@/components/ui/button'
 import { useTripContext } from '@/context/TripContext'
 import { useLanguage } from '@/context/LanguageContext'
-import { Users } from 'lucide-react'
 
-export default function InviteFriends() {
+export default function EditTrip() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { getTripById } = useTripContext()
@@ -26,23 +25,9 @@ export default function InviteFriends() {
 
   return (
     <div className="app-shell flex flex-col min-h-svh bg-white">
-      <PageHeader title={t('inviteFriends')} />
-
-      <main className="flex-1 px-4 py-6 overflow-y-auto flex flex-col gap-6">
-        <div className="text-center">
-          <p className="text-sm text-gray-500">{t('inviteLinkFor')}</p>
-          <h2 className="text-lg font-bold text-gray-900">{trip.name}</h2>
-        </div>
-
-        <InviteLink inviteCode={trip.inviteCode} />
-
-        <Button
-          onClick={() => navigate(`/trip/${trip.id}/members`)}
-          className="w-full mt-auto h-12 rounded-xl"
-        >
-          <Users size={16} className="mr-2" />
-          {t('viewMembers')}
-        </Button>
+      <PageHeader title={t('editTrip')} backTo={`/trip/${trip.id}/dashboard`} />
+      <main className="flex-1 px-4 py-6 overflow-y-auto">
+        <TripForm editTrip={trip} />
       </main>
     </div>
   )

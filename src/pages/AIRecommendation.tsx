@@ -68,13 +68,16 @@ export default function AIRecommendation() {
 
     try {
       const prefs = getTripPreferences(id)
+      const budgets = prefs.map((p) => p.budgetPerPerson)
+      const budgetMin = budgets.length > 0 ? Math.min(...budgets) : undefined
+      const budgetMax = budgets.length > 0 ? Math.max(...budgets) : undefined
       const result = await analyzeDestination({
         destination: dest.name,
         startDate: trip.startDate,
         endDate: trip.endDate,
         preferences: prefs,
-        budgetMin: trip.budgetMin,
-        budgetMax: trip.budgetMax,
+        budgetMin,
+        budgetMax,
       })
 
       const analyzed: Destination = {

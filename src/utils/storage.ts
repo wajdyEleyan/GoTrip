@@ -34,6 +34,11 @@ export function updateTrip(updated: Trip): void {
   localStorage.setItem(TRIPS_KEY, JSON.stringify(trips))
 }
 
+export function deleteTrip(id: string): void {
+  const trips = getTrips().filter((t) => t.id !== id)
+  localStorage.setItem(TRIPS_KEY, JSON.stringify(trips))
+}
+
 // Auth helpers
 export interface StoredAuth {
   id: string

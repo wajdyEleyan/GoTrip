@@ -14,8 +14,8 @@ export interface AnalyzeRequest {
   startDate: string
   endDate: string
   preferences: MemberPreferences[]
-  budgetMin: number
-  budgetMax: number
+  budgetMin?: number
+  budgetMax?: number
 }
 
 export interface AnalyzeResult {

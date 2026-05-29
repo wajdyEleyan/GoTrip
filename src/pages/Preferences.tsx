@@ -1,15 +1,12 @@
-// Autor: Eya Mathlouthi
-// src/pages/Preferences.tsx — Screen 7: Präferenzen & Interessen
+// src/pages/Preferences.tsx
 import { useParams, useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { PreferencesForm } from '@/components/preferences/PreferencesForm'
 import { useTripContext } from '@/context/TripContext'
 import { useAuth } from '@/context/AuthContext'
-import {
-  saveMemberPreferences,
-  getMemberPreferences,
-} from '@/utils/storage'
+import { useLanguage } from '@/context/LanguageContext'
+import { saveMemberPreferences, getMemberPreferences } from '@/utils/storage'
 import { toast } from '@/components/shared/Toast'
 import type { MemberPreferences } from '@/types/preferences'
 
@@ -18,6 +15,7 @@ export default function Preferences() {
   const navigate = useNavigate()
   const { getTripById } = useTripContext()
   const { user } = useAuth()
+  const { t } = useLanguage()
 
   const trip = id ? getTripById(id) : undefined
   const existing = id && user ? getMemberPreferences(id, user.id) : undefined
@@ -25,33 +23,27 @@ export default function Preferences() {
   if (!trip || !user) {
     return (
       <div className="app-shell flex flex-col items-center justify-center min-h-svh px-6 text-center">
-        <p className="text-gray-500 mb-4">Reise nicht gefunden.</p>
-        <Button variant="outline" onClick={() => navigate('/home')}>Zur Übersicht</Button>
+        <p className="text-gray-500 mb-4">{t('tripNotFound')}</p>
+        <Button variant="outline" onClick={() => navigate('/home')}>{t('backToOverview')}</Button>
       </div>
     )
   }
 
   function handleSave(partial: Omit<MemberPreferences, 'memberId' | 'tripId'>) {
-    const prefs: MemberPreferences = {
-      memberId: user!.id,
-      tripId: trip!.id,
-      ...partial,
-    }
+    const prefs: MemberPreferences = { memberId: user!.id, tripId: trip!.id, ...partial }
     saveMemberPreferences(prefs)
-    toast.success('Präferenzen gespeichert!')
+    toast.success(t('preferencesSaved'))
     navigate(`/trip/${trip!.id}/recommendation`)
   }
 
   return (
     <div className="app-shell flex flex-col min-h-svh bg-white">
-      <PageHeader title="Deine Präferenzen" />
+      <PageHeader title={t('yourPreferences')} />
 
       <main className="flex-1 px-4 py-5 overflow-y-auto pb-8">
         <div className="mb-5">
-          <h2 className="text-lg font-semibold text-gray-900">{trip.name}</h2>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Was sind deine Vorstellungen für diese Reise?
-          </p>
+          <h2 className="text-lg font-bold text-gray-900">{trip.name}</h2>
+          <p className="text-sm text-gray-500 mt-0.5">{t('whatAreYourIdeas')}</p>
         </div>
 
         <PreferencesForm
