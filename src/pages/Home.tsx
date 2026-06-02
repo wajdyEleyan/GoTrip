@@ -1,7 +1,7 @@
 // src/pages/Home.tsx
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Globe, LogOut, Plane, ArrowRight } from 'lucide-react'
+import { Globe, LogOut, ArrowRight } from 'lucide-react'
 import { BottomNav } from '@/components/shared/BottomNav'
 import { BottomSheet } from '@/components/shared/BottomSheet'
 import { GlassPopup } from '@/components/shared/GlassPopup'
@@ -13,6 +13,9 @@ import { useLanguage } from '@/context/LanguageContext'
 import type { Lang } from '@/i18n/translations'
 
 const LANGS: { code: Lang }[] = [{ code: 'de' }, { code: 'en' }, { code: 'es' }]
+
+// Echtes NASA-Foto „Erde aus dem All" — Unsplash-Lizenz (frei, kommerziell, ohne Attribution).
+const EARTH_IMG = 'https://images.unsplash.com/photo-1777047023536-8e47688b77f9?q=80&w=1400&auto=format&fit=crop'
 
 type ActiveSheet = 'create' | 'trips' | 'join' | null
 
@@ -50,16 +53,29 @@ export default function Home() {
   }
 
   return (
-    <div className="app-shell flex flex-col min-h-svh bg-gray-50">
+    <div className="app-shell relative flex flex-col min-h-svh overflow-hidden">
 
-      {/* ── Header ── */}
-      <header className="sticky top-0 z-20 glass-bar border-b">
+      {/* ── Hintergrund: echtes Erd-Foto, leicht geblurt + Dunkel-Overlay ── */}
+      <div className="absolute inset-0 -z-10">
+        <img
+          src={EARTH_IMG}
+          alt=""
+          aria-hidden="true"
+          className="w-full h-full object-cover scale-110"
+          style={{ filter: 'blur(3px) brightness(0.9)' }}
+        />
+        {/* Overlay für Lesbarkeit (oben + unten dunkler) */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/25 to-black/70" />
+      </div>
+
+      {/* ── Header (über dem Bild, heller Text) ── */}
+      <header className="relative z-20">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-sm shadow-primary/30">
+            <div className="w-8 h-8 bg-white/15 backdrop-blur-md rounded-xl flex items-center justify-center ring-1 ring-white/30">
               <span className="text-sm">✈️</span>
             </div>
-            <span className="text-base font-bold text-gray-900">GoTrip</span>
+            <span className="text-base font-bold text-white drop-shadow">GoTrip</span>
           </div>
 
           <div className="flex items-center gap-1">
@@ -67,7 +83,7 @@ export default function Home() {
             <div className="relative" ref={langRef}>
               <button
                 onClick={() => { setLangOpen(v => !v); setProfileOpen(false) }}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-white/90 hover:bg-white/15 transition-colors"
               >
                 <Globe size={14} />
                 <span>{lang.toUpperCase()}</span>
@@ -87,7 +103,7 @@ export default function Home() {
             {/* Profile */}
             <div className="relative" ref={profileRef}>
               <button onClick={() => { setProfileOpen(v => !v); setLangOpen(false) }}
-                className="w-9 h-9 rounded-xl bg-primary/10 text-primary font-bold text-xs hover:bg-primary/20 transition-colors">
+                className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-md ring-1 ring-white/30 text-white font-bold text-xs hover:bg-white/25 transition-colors">
                 {initials}
               </button>
               {profileOpen && (
@@ -111,51 +127,32 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Main: Hero mit Planet Erde + umkreisendem Flugzeug ── */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 pb-28 overflow-hidden">
-
-        <p className="text-sm text-gray-500 mb-1">{t('hiUser', { name: user?.name ?? '' })}</p>
-
-        {/* Hero */}
-        <div className="relative flex items-center justify-center w-[280px] h-[280px] my-6">
-          {/* Glow / Atmosphäre */}
-          <div className="absolute w-56 h-56 rounded-full bg-primary/25 blur-3xl" />
-          {/* Umlaufbahn (gestrichelt) */}
-          <div className="absolute w-[260px] h-[260px] rounded-full border border-dashed border-primary/30" />
-
-          {/* Erde */}
-          <div
-            className="relative leading-none select-none animate-[earth-float_6s_ease-in-out_infinite] drop-shadow-2xl"
-            style={{ fontSize: 150 }}
-            aria-hidden="true"
-          >
-            🌍
-          </div>
-
-          {/* Flugzeug auf Umlaufbahn */}
-          <div className="absolute w-[260px] h-[260px] animate-[orbit-spin_14s_linear_infinite] pointer-events-none">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              <div className="w-11 h-11 rounded-full bg-white shadow-lg shadow-primary/20 flex items-center justify-center">
-                <Plane size={22} className="text-primary rotate-90" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Botschaft */}
-        <h1 className="text-2xl font-bold text-gray-900 text-center">Wohin geht die Reise?</h1>
-        <p className="text-sm text-gray-500 text-center mt-1.5 max-w-[260px]">
-          Plane deine nächste Gruppenreise — tippe unten auf <span className="font-bold text-primary">＋</span>
+      {/* ── Main: Botschaft + Buttons über dem Bild ── */}
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pb-28 text-center">
+        <p className="text-sm text-white/80 mb-2 drop-shadow">{t('hiUser', { name: user?.name ?? '' })}</p>
+        <h1 className="text-3xl font-extrabold text-white leading-tight drop-shadow-lg max-w-[300px]">
+          Wohin geht die Reise?
+        </h1>
+        <p className="text-sm text-white/85 mt-3 max-w-[280px] drop-shadow">
+          Plane deine nächste Gruppenreise — gemeinsam, datenbasiert, in wenigen Taps.
         </p>
 
-        {/* Primärer Button (zusätzlich zur Leiste, für Klarheit) */}
-        <button
-          onClick={() => setSheet('create')}
-          className="mt-6 h-13 px-6 rounded-2xl bg-black text-white text-base font-bold flex items-center gap-2 active:scale-[0.98] transition-transform shadow-md"
-        >
-          {t('createNewTrip')}
-          <ArrowRight size={18} />
-        </button>
+        {/* Buttons */}
+        <div className="flex flex-col gap-3 mt-8 w-full max-w-[280px]">
+          <button
+            onClick={() => setSheet('create')}
+            className="w-full h-13 rounded-2xl bg-white text-gray-900 text-base font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-xl"
+          >
+            {t('createNewTrip')}
+            <ArrowRight size={18} />
+          </button>
+          <button
+            onClick={() => setSheet('join')}
+            className="w-full h-13 rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/40 text-white text-base font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+          >
+            {t('join')}
+          </button>
+        </div>
       </main>
 
       <BottomNav
