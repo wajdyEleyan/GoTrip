@@ -14,8 +14,8 @@ import type { Lang } from '@/i18n/translations'
 
 const LANGS: { code: Lang }[] = [{ code: 'de' }, { code: 'en' }, { code: 'es' }]
 
-// Echtes NASA-Foto „Erde aus dem All" — Unsplash-Lizenz (frei, kommerziell, ohne Attribution).
-const EARTH_IMG = 'https://images.unsplash.com/photo-1777047023536-8e47688b77f9?q=80&w=1400&auto=format&fit=crop'
+// Vestrahorn / Stokksnes, Island — Unsplash-Lizenz (frei, kommerziell, ohne Attribution).
+const HERO_IMG = 'https://images.unsplash.com/photo-1764276266750-4d6316e972e0?q=80&w=1400&auto=format&fit=crop'
 
 type ActiveSheet = 'create' | 'trips' | 'join' | null
 
@@ -58,14 +58,14 @@ export default function Home() {
       {/* ── Hintergrund: echtes Erd-Foto, leicht geblurt + Dunkel-Overlay ── */}
       <div className="absolute inset-0 -z-10">
         <img
-          src={EARTH_IMG}
+          src={HERO_IMG}
           alt=""
           aria-hidden="true"
-          className="w-full h-full object-cover scale-110"
-          style={{ filter: 'blur(3px) brightness(0.9)' }}
+          className="w-full h-full object-cover scale-105"
+          style={{ filter: 'blur(2px) brightness(0.92)' }}
         />
         {/* Overlay für Lesbarkeit (oben + unten dunkler) */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/25 to-black/70" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/75" />
       </div>
 
       {/* ── Header (über dem Bild, heller Text) ── */}
@@ -127,28 +127,34 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Main: Botschaft + Buttons über dem Bild ── */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pb-28 text-center">
-        <p className="text-sm text-white/80 mb-2 drop-shadow">{t('hiUser', { name: user?.name ?? '' })}</p>
-        <h1 className="text-3xl font-extrabold text-white leading-tight drop-shadow-lg max-w-[300px]">
-          Wohin geht die Reise?
-        </h1>
-        <p className="text-sm text-white/85 mt-3 max-w-[280px] drop-shadow">
-          Plane deine nächste Gruppenreise — gemeinsam, datenbasiert, in wenigen Taps.
-        </p>
+      {/* ── Main: „Explore. Travel. Inspire." — Hero oben, Buttons unten ── */}
+      <main className="relative z-10 flex-1 flex flex-col px-6 pb-28">
+        {/* Hero-Slogan oben links */}
+        <div className="mt-6">
+          <h1 className="text-5xl font-extrabold text-white leading-[1.05] tracking-tight drop-shadow-lg">
+            Explore.<br />Travel.<br />Inspire.
+          </h1>
+          <p className="text-sm text-white/85 mt-4 max-w-[230px] drop-shadow">
+            {t('hiUser', { name: user?.name ?? '' })} — plane deine nächste Gruppenreise.
+          </p>
+        </div>
 
-        {/* Buttons */}
-        <div className="flex flex-col gap-3 mt-8 w-full max-w-[280px]">
+        {/* Abstand */}
+        <div className="flex-1" />
+
+        {/* Buttons unten */}
+        <div className="flex flex-col gap-3">
           <button
             onClick={() => setSheet('create')}
-            className="w-full h-13 rounded-2xl bg-white text-gray-900 text-base font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-xl"
+            className="w-full h-14 rounded-2xl text-white text-base font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-xl shadow-black/20"
+            style={{ background: '#34C2AC' }}
           >
             {t('createNewTrip')}
             <ArrowRight size={18} />
           </button>
           <button
             onClick={() => setSheet('join')}
-            className="w-full h-13 rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/40 text-white text-base font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            className="w-full h-12 rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/40 text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
           >
             {t('join')}
           </button>
