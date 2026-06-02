@@ -1,20 +1,23 @@
 // Autor: Amal Najah
 // src/components/preferences/InterestChips.tsx
-import { Check } from 'lucide-react'
+import {
+  Check, Umbrella, Building2, Trees, Mountain, Landmark, Music, Flower2, Utensils, ShoppingBag,
+  type LucideIcon,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { InterestType } from '@/types/preferences'
 import { destinationImage } from '@/utils/destinationImage'
 
-const INTERESTS: { key: InterestType; label: string; emoji: string }[] = [
-  { key: 'beach', label: 'Beach', emoji: '🏖️' },
-  { key: 'city', label: 'City', emoji: '🏙️' },
-  { key: 'nature', label: 'Nature', emoji: '🌿' },
-  { key: 'adventure', label: 'Adventure', emoji: '🧗' },
-  { key: 'culture', label: 'Culture', emoji: '🏛️' },
-  { key: 'nightlife', label: 'Nightlife', emoji: '🎉' },
-  { key: 'relaxation', label: 'Relaxation', emoji: '🧘' },
-  { key: 'food', label: 'Food', emoji: '🍜' },
-  { key: 'shopping', label: 'Shopping', emoji: '🛍️' },
+const INTERESTS: { key: InterestType; label: string; icon: LucideIcon }[] = [
+  { key: 'beach', label: 'Beach', icon: Umbrella },
+  { key: 'city', label: 'City', icon: Building2 },
+  { key: 'nature', label: 'Nature', icon: Trees },
+  { key: 'adventure', label: 'Adventure', icon: Mountain },
+  { key: 'culture', label: 'Culture', icon: Landmark },
+  { key: 'nightlife', label: 'Nightlife', icon: Music },
+  { key: 'relaxation', label: 'Relaxation', icon: Flower2 },
+  { key: 'food', label: 'Food', icon: Utensils },
+  { key: 'shopping', label: 'Shopping', icon: ShoppingBag },
 ]
 
 interface InterestChipsProps {
@@ -37,7 +40,7 @@ export function InterestChips({ selected, onChange }: InterestChipsProps) {
       role="group"
       aria-label="Interessen auswählen"
     >
-      {INTERESTS.map(({ key, label, emoji }) => {
+      {INTERESTS.map(({ key, label, icon: Icon }) => {
         const isSelected = selected.includes(key)
         return (
           <button
@@ -70,8 +73,8 @@ export function InterestChips({ selected, onChange }: InterestChipsProps) {
               </div>
             )}
 
-            <div className="photo-title absolute inset-0 flex flex-col items-center justify-end pb-2 px-1 gap-0.5">
-              <span className="text-base leading-none" aria-hidden="true">{emoji}</span>
+            <div className="photo-title absolute inset-0 flex flex-col items-center justify-end pb-2 px-1 gap-1">
+              <Icon size={18} className="text-white drop-shadow" aria-hidden="true" />
               <span className="text-[11px] font-semibold leading-tight text-center">{label}</span>
             </div>
           </button>

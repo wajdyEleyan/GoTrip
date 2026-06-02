@@ -1,6 +1,7 @@
 // src/pages/Login.tsx
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Plane } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -29,15 +30,18 @@ export default function Login() {
 
   return (
     <div className="app-shell flex flex-col min-h-svh">
-      {/* Full-bleed hero photo background */}
+      {/* Full-bleed hero video background (Foto als Fallback/Poster) */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <img
-          src={destinationImage('beach', 1200)}
-          alt=""
-          aria-hidden="true"
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster={destinationImage('beach', 1200)}
           className="w-full h-full object-cover object-center"
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-        />
+        >
+          <source src="/welcome.mp4" type="video/mp4" />
+        </video>
         {/* Dark gradient scrim for readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/65" />
       </div>
@@ -64,7 +68,7 @@ export default function Login() {
         {/* Logo */}
         <div className="mb-5">
           <div className="w-20 h-20 bg-white/20 border-2 border-white/50 rounded-3xl flex items-center justify-center shadow-xl backdrop-blur-sm">
-            <span className="text-3xl">✈️</span>
+            <Plane size={36} className="text-white" />
           </div>
         </div>
 

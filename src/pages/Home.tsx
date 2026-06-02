@@ -1,7 +1,7 @@
 // src/pages/Home.tsx
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Globe, LogOut, ArrowRight } from 'lucide-react'
+import { Globe, LogOut, ArrowRight, Plane } from 'lucide-react'
 import { BottomNav } from '@/components/shared/BottomNav'
 import { BottomSheet } from '@/components/shared/BottomSheet'
 import { GlassPopup } from '@/components/shared/GlassPopup'
@@ -73,7 +73,7 @@ export default function Home() {
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-white/15 backdrop-blur-md rounded-xl flex items-center justify-center ring-1 ring-white/30">
-              <span className="text-sm">✈️</span>
+              <Plane size={16} className="text-white" />
             </div>
             <span className="text-base font-bold text-white drop-shadow">GoTrip</span>
           </div>

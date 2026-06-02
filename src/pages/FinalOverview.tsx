@@ -1,7 +1,7 @@
 // src/pages/FinalOverview.tsx
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { MapPin, Users, Wallet, Thermometer, Star, Trophy } from 'lucide-react'
+import { MapPin, Users, Wallet, Thermometer, Star, Trophy, PartyPopper, Sun, ThumbsUp } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { ScoreRing } from '@/components/recommendations/ScoreRing'
@@ -117,7 +117,7 @@ export default function FinalOverview() {
               <span className="text-xs font-bold text-white">{t('yourDestination')}</span>
             </div>
             {/* Celebration badge */}
-            <div className="absolute top-3 right-3 text-2xl">🎉</div>
+            <div className="absolute top-3 right-3"><PartyPopper size={22} className="text-amber-300" /></div>
             {/* Bottom title block */}
             <div className="photo-title absolute bottom-0 left-0 right-0 px-4 pb-4 pt-8">
               <h1 className="text-xl font-bold leading-tight">{winner.name}</h1>
@@ -132,7 +132,7 @@ export default function FinalOverview() {
         ) : (
           /* Fallback hero when no winner yet */
           <div className="glass-card rounded-3xl p-6 text-center">
-            <div className="text-4xl mb-2">🎉</div>
+            <div className="flex justify-center mb-2"><PartyPopper size={36} className="text-primary" /></div>
             <h1 className="text-xl font-bold text-[#16323B] mb-1">{t('tripFinished')}</h1>
             <p className="text-primary text-sm font-medium">{trip.name}</p>
           </div>
@@ -148,8 +148,9 @@ export default function FinalOverview() {
                   <h2 className="text-base font-bold text-[#16323B] truncate">{winner.name}</h2>
                 </div>
                 {winner.climate && (
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    🌡️ {winner.climate.temp_avg}°C · ☀️ {winner.climate.sunshine_hours}h
+                  <p className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                    <span className="flex items-center gap-1"><Thermometer size={12} className="text-orange-400" /> {winner.climate.temp_avg}°C</span>
+                    <span className="flex items-center gap-1"><Sun size={12} className="text-amber-400" /> {winner.climate.sunshine_hours}h</span>
                   </p>
                 )}
                 <div className="flex items-center gap-1 mt-2">
@@ -236,7 +237,7 @@ export default function FinalOverview() {
                     <p className="text-sm font-medium text-[#16323B] truncate">{act.name}</p>
                   </div>
                   <div className="flex items-center gap-1 text-xs text-success font-semibold">
-                    <span>👍</span>
+                    <ThumbsUp size={12} />
                     <span>{act.voteCount}</span>
                   </div>
                 </div>

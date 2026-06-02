@@ -1,7 +1,7 @@
 // Autor: Amal Najah
 // src/components/recommendations/DestinationCard.tsx
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Thermometer, CloudRain, Sun } from 'lucide-react'
+import { ChevronDown, ChevronUp, Thermometer, CloudRain, Sun, Star } from 'lucide-react'
 import { ScoreRing } from './ScoreRing'
 import { DataSourceBadges } from './DataSourceBadges'
 import { DestinationSkeleton } from '@/components/shared/SkeletonCard'
@@ -73,8 +73,8 @@ export function DestinationCard({ dest, rank, onVoteClick, showVoteButton = true
             )}
 
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs text-gray-500">
-                ⭐ {dest.starsAvg > 0 ? dest.starsAvg.toFixed(1) : '–'} ({dest.voteCount} Stimmen)
+              <span className="flex items-center gap-1 text-xs text-gray-500">
+                <Star size={12} className="text-amber-400 fill-amber-400" /> {dest.starsAvg > 0 ? dest.starsAvg.toFixed(1) : '–'} ({dest.voteCount} Stimmen)
               </span>
             </div>
           </div>

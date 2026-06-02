@@ -72,7 +72,7 @@ export function BalanceSummary({ balances, settlements, currentUserId }: Balance
 
       {settlements.length === 0 && balances.length > 0 && (
         <div className="bg-green-50 rounded-2xl p-4 text-center">
-          <p className="text-sm font-medium text-success">Alles ausgeglichen! 🎉</p>
+          <p className="text-sm font-medium text-success">Alles ausgeglichen!</p>
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 // src/components/sheets/FinalSheet.tsx
 import { useEffect, useRef, useState } from 'react'
-import { Trophy, Users, Wallet, Star } from 'lucide-react'
+import { Trophy, Users, Wallet, Star, ThumbsUp } from 'lucide-react'
 import { ScoreRing } from '@/components/recommendations/ScoreRing'
 import { WeatherWidget } from '@/components/shared/WeatherWidget'
 import { getTripDestinations, getTripVotes, getTripPreferences, getTripActivities } from '@/utils/storage'
@@ -75,7 +75,7 @@ export function FinalSheet({ trip, onNext }: Props) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
               <Trophy size={13} className="text-amber-300" />
-              <span className="text-xs font-bold text-white">Euer Reiseziel 🎉</span>
+              <span className="text-xs font-bold text-white">Euer Reiseziel</span>
             </div>
             <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
               <h2 className="text-lg font-bold text-white">{winner.name}</h2>
@@ -133,7 +133,7 @@ export function FinalSheet({ trip, onNext }: Props) {
               <div key={act.id} className="flex items-center gap-2">
                 <span className="text-xs font-bold text-gray-400 w-4">{i + 1}.</span>
                 <p className="flex-1 text-sm text-gray-800 truncate">{act.name}</p>
-                <span className="text-xs text-green-500 font-semibold">👍 {act.voteCount}</span>
+                <span className="flex items-center gap-1 text-xs text-green-500 font-semibold"><ThumbsUp size={12} /> {act.voteCount}</span>
               </div>
             ))}
           </div>

@@ -10,7 +10,7 @@ import { getTripByInviteCode } from '@/utils/storage'
 import { pullTrip, setActiveTrip } from '@/services/tripSync'
 import { useAuth } from '@/context/AuthContext'
 import type { Trip, Member } from '@/types/trip'
-import { Users, Plane, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
+import { Users, Plane, CheckCircle2, XCircle, Loader2, Calendar } from 'lucide-react'
 import { ambientImage } from '@/utils/destinationImage'
 
 export default function JoinTrip() {
@@ -147,7 +147,7 @@ export default function JoinTrip() {
         {/* Trip Info */}
         <div className="mx-4 mt-4 p-4 rounded-xl bg-primary-soft text-sm text-gray-600 flex flex-col gap-1">
           <p className="flex items-center gap-2">
-            <span className="text-primary font-medium">📅</span>
+            <Calendar size={14} className="text-primary" />
             {trip.startDate} – {trip.endDate}
           </p>
           <p className="flex items-center gap-2">

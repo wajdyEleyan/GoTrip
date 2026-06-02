@@ -29,13 +29,15 @@ import type { InterestType } from '@/types/preferences'
 import {
   Users, Calendar, Heart, Sparkles, Star, Zap, Trophy, Wallet, CalendarRange,
   MapPin, Wallet as WalletIcon, ChevronRight, ArrowRight,
+  Umbrella, Building2, Trees, Mountain, Landmark, Music, Flower2, Utensils, ShoppingBag,
+  type LucideIcon,
 } from 'lucide-react'
 
 type TileKey = PlanStep | 'budget' | 'dates'
 
-const INTEREST_EMOJI: Record<InterestType, string> = {
-  beach: '🏖️', city: '🏙️', nature: '🌿', adventure: '🧗', culture: '🏛️',
-  nightlife: '🎉', relaxation: '🧘', food: '🍜', shopping: '🛍️',
+const INTEREST_ICON: Record<InterestType, LucideIcon> = {
+  beach: Umbrella, city: Building2, nature: Trees, adventure: Mountain, culture: Landmark,
+  nightlife: Music, relaxation: Flower2, food: Utensils, shopping: ShoppingBag,
 }
 
 const STEPS = [
@@ -159,11 +161,14 @@ export default function TripDashboard() {
             <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
               <span className="text-[11px] font-bold text-primary uppercase tracking-wider">{t('interests')}</span>
               <div className="flex flex-wrap gap-1.5">
-                {myInterests.map(i => (
-                  <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold capitalize">
-                    <span aria-hidden="true">{INTEREST_EMOJI[i]}</span>{i}
-                  </span>
-                ))}
+                {myInterests.map(i => {
+                  const Icon = INTEREST_ICON[i]
+                  return (
+                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold capitalize">
+                      <Icon size={13} aria-hidden="true" />{i}
+                    </span>
+                  )
+                })}
               </div>
             </div>
           )}

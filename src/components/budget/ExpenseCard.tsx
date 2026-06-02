@@ -1,6 +1,6 @@
 // Autor: Mohamad Haj Ahmad
 // src/components/budget/ExpenseCard.tsx
-import { Trash2 } from 'lucide-react'
+import { Trash2, CreditCard } from 'lucide-react'
 import type { Expense } from '@/types/expense'
 
 interface ExpenseCardProps {
@@ -16,8 +16,8 @@ export function ExpenseCard({ expense, currentUserId, onDelete }: ExpenseCardPro
 
   return (
     <div className="flex items-start gap-3 py-3 border-b border-gray-100 last:border-0">
-      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 text-base">
-        💳
+      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+        <CreditCard size={16} className="text-primary" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 truncate">{expense.description}</p>
