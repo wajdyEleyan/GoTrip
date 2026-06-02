@@ -2,14 +2,14 @@
 @import "tailwindcss";
 
 @theme {
-  /* GoTrip Brand Colors — „Ambient Foto-Blur" (Variante C) */
-  --color-primary: #0F7D8C;        /* Teal */
-  --color-primary-hover: #0B6573;
-  --color-primary-soft: #DDEFF1;
+  /* GoTrip Brand Colors — „Explore. Travel. Inspire." (Mint-Teal) */
+  --color-primary: #2EBDA8;        /* Mint-Teal */
+  --color-primary-hover: #249E8D;
+  --color-primary-soft: #D8F3EE;
   --color-success: #3FBF6A;        /* YES */
   --color-warning: #F2B23E;        /* MAYBE */
   --color-danger: #E5533C;         /* NO */
-  --color-admin: #0F7D8C;
+  --color-admin: #2EBDA8;
   --color-muted: #EAF1F2;
   --color-ink: #16323B;
 

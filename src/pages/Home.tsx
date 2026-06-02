@@ -132,10 +132,10 @@ export default function Home() {
         {/* Hero-Slogan oben links */}
         <div className="mt-6">
           <h1 className="text-5xl font-extrabold text-white leading-[1.05] tracking-tight drop-shadow-lg">
-            Explore.<br />Travel.<br />Inspire.
+            {t('sloganLine1')}<br />{t('sloganLine2')}<br />{t('sloganLine3')}
           </h1>
-          <p className="text-sm text-white/85 mt-4 max-w-[230px] drop-shadow">
-            {t('hiUser', { name: user?.name ?? '' })} — plane deine nächste Gruppenreise.
+          <p className="text-sm text-white/85 mt-4 max-w-[240px] drop-shadow">
+            {t('hiUser', { name: user?.name ?? '' })} — {t('homeTagline')}.
           </p>
         </div>
 
@@ -146,8 +146,7 @@ export default function Home() {
         <div className="flex flex-col gap-3">
           <button
             onClick={() => setSheet('create')}
-            className="w-full h-14 rounded-2xl text-white text-base font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-xl shadow-black/20"
-            style={{ background: '#34C2AC' }}
+            className="w-full h-14 rounded-2xl bg-primary hover:bg-primary-hover text-white text-base font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-xl shadow-black/20"
           >
             {t('createNewTrip')}
             <ArrowRight size={18} />
