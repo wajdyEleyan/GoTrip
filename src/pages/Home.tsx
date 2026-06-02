@@ -55,15 +55,19 @@ export default function Home() {
   return (
     <div className="app-shell relative flex flex-col min-h-svh overflow-hidden">
 
-      {/* ── Hintergrund: echtes Erd-Foto, leicht geblurt + Dunkel-Overlay ── */}
+      {/* ── Hintergrund: Video, leicht geblurt + Dunkel-Overlay (Foto als Fallback) ── */}
       <div className="absolute inset-0 -z-10">
-        <img
-          src={HERO_IMG}
-          alt=""
-          aria-hidden="true"
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster={HERO_IMG}
           className="w-full h-full object-cover scale-105"
           style={{ filter: 'blur(2px) brightness(0.92)' }}
-        />
+        >
+          <source src="/welcome.mp4" type="video/mp4" />
+        </video>
         {/* Overlay für Lesbarkeit (oben + unten dunkler) */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/75" />
       </div>

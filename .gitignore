@@ -30,3 +30,6 @@ server/.env
 *.sw?
 
 .intern/
+
+# Lokale Design-Vorschau (kein App-Bestandteil)
+design-preview/
