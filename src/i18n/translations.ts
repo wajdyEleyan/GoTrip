@@ -35,6 +35,7 @@ const de = {
   // Navigation
   back: 'Zurück',
   trips: 'Reisen',
+  join: 'Beitreten',
   continue: 'Weiter',
   nextStep: 'Weiter',
   guestStart: "Los geht's",
@@ -185,6 +186,7 @@ const en: typeof de = {
   languageEs: 'Español',
   back: 'Back',
   trips: 'Trips',
+  join: 'Join',
   continue: 'Continue',
   nextStep: 'Next',
   guestStart: "Let's travel",
@@ -320,6 +322,7 @@ const es: typeof de = {
   languageEs: 'Español',
   back: 'Volver',
   trips: 'Viajes',
+  join: 'Unirse',
   continue: 'Continuar',
   nextStep: 'Siguiente',
   guestStart: '¡Vamos de viaje!',

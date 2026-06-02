@@ -1,14 +1,16 @@
 // src/components/shared/BottomNav.tsx
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { Home, Plus, LayoutGrid, Calendar, Sparkles, Users } from 'lucide-react'
+import { Map, Plus, Link2, LayoutGrid, Calendar, Sparkles, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/context/LanguageContext'
 
 interface BottomNavProps {
   onCreateClick?: () => void
+  onTripsClick?: () => void
+  onJoinClick?: () => void
 }
 
-export function BottomNav({ onCreateClick }: BottomNavProps = {}) {
+export function BottomNav({ onCreateClick, onTripsClick, onJoinClick }: BottomNavProps = {}) {
   const navigate = useNavigate()
   const { t } = useLanguage()
   const { pathname } = useLocation()
@@ -55,23 +57,26 @@ export function BottomNav({ onCreateClick }: BottomNavProps = {}) {
     )
   }
 
-  // ── Global: Trips + Create ──
+  // ── Global: Meine Reisen · Neue Reise · Beitreten ──
   return (
     <nav
       className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-bar border-t z-30"
       aria-label="Hauptnavigation"
     >
-      <ul className="flex items-center justify-around h-16 px-8 list-none m-0 p-0">
+      <ul className="flex items-center justify-around h-16 px-4 list-none m-0 p-0">
+        {/* Meine Reisen */}
         <li className="flex-1">
-          <NavLink to="/home" className={({ isActive }) => itemCls(isActive)} aria-label={t('trips')}>
-            {({ isActive }) => (
-              <>
-                <Home size={22} className={isActive ? 'text-primary' : 'text-gray-400'} />
-                <span>{t('trips')}</span>
-              </>
-            )}
-          </NavLink>
+          <button
+            onClick={() => onTripsClick ? onTripsClick() : navigate('/home')}
+            className={itemCls(false)}
+            aria-label={t('myTrips')}
+          >
+            <Map size={22} className="text-gray-400" />
+            <span>{t('trips')}</span>
+          </button>
         </li>
+
+        {/* Neue Reise (mittig, hervorgehoben) */}
         <li className="flex-1 flex justify-center">
           <button
             onClick={() => onCreateClick ? onCreateClick() : navigate('/create')}
@@ -82,6 +87,18 @@ export function BottomNav({ onCreateClick }: BottomNavProps = {}) {
               <Plus size={22} className="text-white" />
             </div>
             <span className="mt-0.5">{t('create')}</span>
+          </button>
+        </li>
+
+        {/* Beitreten */}
+        <li className="flex-1">
+          <button
+            onClick={() => onJoinClick ? onJoinClick() : navigate('/home')}
+            className={itemCls(false)}
+            aria-label={t('join')}
+          >
+            <Link2 size={22} className="text-gray-400" />
+            <span>{t('join')}</span>
           </button>
         </li>
       </ul>
