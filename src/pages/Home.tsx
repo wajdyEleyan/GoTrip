@@ -56,7 +56,7 @@ export default function Home() {
     <div className="app-shell relative flex flex-col min-h-svh overflow-hidden">
 
       {/* ── Hintergrund: Video, leicht geblurt + Dunkel-Overlay (Foto als Fallback) ── */}
-      <div className="absolute inset-0 -z-10">
+      <div className="absolute inset-0 z-0">
         <video
           autoPlay
           muted
