@@ -2,16 +2,16 @@
 @import "tailwindcss";
 
 @theme {
-  /* GoTrip Brand Colors — „Explore. Travel. Inspire." (Mint-Teal) */
-  --color-primary: #2EBDA8;        /* Mint-Teal */
-  --color-primary-hover: #249E8D;
-  --color-primary-soft: #D8F3EE;
-  --color-success: #3FBF6A;        /* YES */
-  --color-warning: #F2B23E;        /* MAYBE */
+  /* GoTrip Brand Colors — abgeleitet aus dem Hero-Video (Dschungel + türkises Wasser) */
+  --color-primary: #16808E;        /* tiefes Petrol-Türkis (Wasser) */
+  --color-primary-hover: #116975;
+  --color-primary-soft: #D6E9EB;
+  --color-success: #3E9D5B;        /* Wald-Grün (Vegetation) */
+  --color-warning: #E08A3C;        /* warmer Akzent (Kajak) */
   --color-danger: #E5533C;         /* NO */
-  --color-admin: #2EBDA8;
-  --color-muted: #EAF1F2;
-  --color-ink: #16323B;
+  --color-admin: #16808E;
+  --color-muted: #E7EEEF;
+  --color-ink: #143A40;            /* dunkles Petrol statt reinem Schwarz */
 
   /* Border Radius */
   --radius-xl: 1rem;

@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Globe, LogOut, ArrowRight, Plane } from 'lucide-react'
-import { BottomNav } from '@/components/shared/BottomNav'
 import { BottomSheet } from '@/components/shared/BottomSheet'
 import { GlassPopup } from '@/components/shared/GlassPopup'
 import { TripCard } from '@/components/trips/TripCard'
@@ -132,10 +131,10 @@ export default function Home() {
       </header>
 
       {/* ── Main: „Explore. Travel. Inspire." — Hero oben, Buttons unten ── */}
-      <main className="relative z-10 flex-1 flex flex-col px-6 pb-28">
+      <main className="relative z-10 flex-1 flex flex-col px-6 pb-10">
         {/* Hero-Slogan oben links */}
         <div className="mt-6">
-          <h1 className="text-5xl font-extrabold text-white leading-[1.05] tracking-tight drop-shadow-lg">
+          <h1 className="text-4xl font-extrabold text-white leading-[1.08] tracking-tight drop-shadow-lg">
             {t('sloganLine1')}<br />{t('sloganLine2')}<br />{t('sloganLine3')}
           </h1>
           <p className="text-sm text-white/85 mt-4 max-w-[240px] drop-shadow">
@@ -150,7 +149,7 @@ export default function Home() {
         <div className="flex flex-col gap-3">
           <button
             onClick={() => setSheet('create')}
-            className="w-full h-14 rounded-2xl bg-primary hover:bg-primary-hover text-white text-base font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-xl shadow-black/20"
+            className="w-full h-14 rounded-2xl bg-primary/90 hover:bg-primary text-white text-base font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-lg shadow-black/20"
           >
             {t('createNewTrip')}
             <ArrowRight size={18} />
@@ -161,14 +160,15 @@ export default function Home() {
           >
             {t('join')}
           </button>
+          {/* Meine Reisen — dezenter Zugang (ersetzt die untere Leiste) */}
+          <button
+            onClick={() => setSheet('trips')}
+            className="mt-1 text-sm text-white/80 hover:text-white underline underline-offset-4 transition-colors"
+          >
+            {t('myTrips')}{trips.length > 0 ? ` (${trips.length})` : ''}
+          </button>
         </div>
       </main>
-
-      <BottomNav
-        onCreateClick={() => setSheet('create')}
-        onTripsClick={() => setSheet('trips')}
-        onJoinClick={() => setSheet('join')}
-      />
 
       {/* ── Pop-up: Neue Reise ── */}
       <GlassPopup open={sheet === 'create'} title={t('createNewTrip')} onClose={() => setSheet(null)}>
