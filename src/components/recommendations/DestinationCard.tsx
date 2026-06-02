@@ -7,7 +7,6 @@ import { DataSourceBadges } from './DataSourceBadges'
 import { DestinationSkeleton } from '@/components/shared/SkeletonCard'
 import { cn } from '@/lib/utils'
 import type { RankedDestination } from '@/types/destination'
-import { formatScore } from '@/utils/scoring'
 
 interface DestinationCardProps {
   dest: RankedDestination
@@ -23,6 +22,22 @@ export function DestinationCard({ dest, rank, onVoteClick, showVoteButton = true
   const rankColor = rankColors[rank - 1] ?? 'bg-gray-200'
 
   if (dest.isLoading) return <DestinationSkeleton />
+
+  if (dest.dataError) {
+    return (
+      <div className="bg-white rounded-2xl border border-red-100 shadow-sm p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gray-200 text-gray-600 text-xs font-bold shrink-0 mt-0.5">{rank}</div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-semibold text-gray-900 truncate">{dest.name}</h3>
+            <p className="text-xs text-red-500 mt-1">
+              Echte Daten konnten nicht geladen werden (offline?). Erneut versuchen.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -74,9 +89,10 @@ export function DestinationCard({ dest, rank, onVoteClick, showVoteButton = true
         {dest.llmAnalysis && (
           <div className="mt-3">
             <DataSourceBadges
-              climateSrc={dest.climate?.source ?? 'mock'}
-              biodivSrc={dest.biodiversity?.source ?? 'mock'}
-              llmSrc={dest.llmAnalysis.source}
+              hasClimate={!!dest.climate}
+              hasBiodiv={!!dest.biodiversity}
+              hasNasa={!!dest.nasa}
+              hasEarthdata={!!dest.earthdata}
             />
           </div>
         )}

@@ -29,7 +29,7 @@ export function BudgetSlider({ value, onChange, min = 0, max = 2000 }: BudgetSli
           onChange={(e) => onChange(Number(e.target.value))}
           className="w-full h-2 appearance-none rounded-full outline-none cursor-pointer"
           style={{
-            background: `linear-gradient(to right, #6C63FF 0%, #6C63FF ${pct}%, #E5E7EB ${pct}%, #E5E7EB 100%)`,
+            background: `linear-gradient(to right, #0F7D8C 0%, #0F7D8C ${pct}%, #E5E7EB ${pct}%, #E5E7EB 100%)`,
           }}
           aria-label={`Budget: ${value} Euro`}
           aria-valuemin={min}

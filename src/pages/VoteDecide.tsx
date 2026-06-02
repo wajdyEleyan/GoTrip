@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
+import { StepNav } from '@/components/shared/StepNav'
 import { VotingCard } from '@/components/voting/VotingCard'
 import { useTripContext } from '@/context/TripContext'
 import { useAuth } from '@/context/AuthContext'
@@ -16,6 +17,7 @@ import {
 import { calcHybridScore } from '@/utils/scoring'
 import type { RankedDestination } from '@/types/destination'
 import { toast } from '@/components/shared/Toast'
+import { destinationImage, ambientImage } from '@/utils/destinationImage'
 
 export default function VoteDecide() {
   const { id } = useParams<{ id: string }>()
@@ -85,37 +87,66 @@ export default function VoteDecide() {
   const hasVoted = Object.values(myVotes).some((v) => v > 0)
 
   return (
-    <div className="app-shell flex flex-col min-h-svh bg-gray-50">
+    <div
+      className="app-shell flex flex-col min-h-svh"
+      style={{ ['--ambient' as any]: ambientImage(trip?.name ?? '') }}
+    >
       <PageHeader title="Vote & Decide" />
 
-      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-8">
-        <p className="text-sm text-gray-500 text-center">
+      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-5 pb-24">
+        <p className="text-sm text-gray-600 text-center">
           Bewerte jedes Reiseziel mit 0,5–5 Sternen
         </p>
 
         {ranked.length === 0 ? (
-          <div className="text-center py-10 text-gray-400 text-sm">
+          <div className="glass-card rounded-2xl px-6 py-10 text-center text-sm text-gray-500">
             Noch keine Reiseziele vorgeschlagen.
           </div>
         ) : (
           ranked.map((d) => (
-            <VotingCard
-              key={d.id}
-              dest={d}
-              myVote={myVotes[d.id] ?? 0}
-              myComment={d.myComment}
-              onVote={(stars, comment) => handleVote(d.id, stars, comment)}
-            />
+            <div key={d.id} className="flex flex-col gap-0">
+              {/* Photo header strip */}
+              <div className="photo-card h-28">
+                <img
+                  src={destinationImage(d.name, 600)}
+                  alt={d.name}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                />
+                <div className="photo-scrim" />
+                <div className="photo-title absolute inset-0 flex flex-col justify-end px-4 pb-3">
+                  <h3 className="text-base font-bold leading-tight truncate">{d.name}</h3>
+                  <div className="flex items-center gap-2 text-xs text-white/80 mt-0.5">
+                    {d.country && <span>{d.country}</span>}
+                    {d.climate && (
+                      <>
+                        {d.country && <span>·</span>}
+                        <span>{d.climate.temp_avg}°C · {d.climate.sunshine_hours}h Sonne</span>
+                      </>
+                    )}
+                  </div>
+                  {/* Vote summary chip */}
+                  <div className="absolute right-3 bottom-3 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow text-xs font-semibold text-gray-700">
+                    <span className="text-yellow-500">★</span>
+                    <span>{d.starsAvg > 0 ? d.starsAvg.toFixed(1) : '–'}</span>
+                    <span className="text-gray-400 font-normal">({d.voteCount})</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Voting controls — glass surface flush below photo */}
+              <div className="glass-card rounded-b-2xl rounded-t-none overflow-hidden shadow-[0_12px_30px_-18px_rgba(15,60,70,0.45)]">
+                <VotingCard
+                  dest={d}
+                  myVote={myVotes[d.id] ?? 0}
+                  myComment={d.myComment}
+                  onVote={(stars, comment) => handleVote(d.id, stars, comment)}
+                />
+              </div>
+            </div>
           ))
         )}
 
-        <Button
-          onClick={() => navigate(`/trip/${id}/final`)}
-          disabled={!hasVoted && ranked.length > 0}
-          className="w-full"
-        >
-          Ergebnis ansehen
-        </Button>
+        <StepNav tripId={id ?? ''} current="vote" disabled={!hasVoted} />
       </main>
     </div>
   )

@@ -9,7 +9,8 @@ import { useTripContext } from '@/context/TripContext'
 import { getTripByInviteCode } from '@/utils/storage'
 import { useAuth } from '@/context/AuthContext'
 import type { Member } from '@/types/trip'
-import { Users } from 'lucide-react'
+import { Users, Plane, CheckCircle2, XCircle } from 'lucide-react'
+import { ambientImage } from '@/utils/destinationImage'
 
 export default function JoinTrip() {
   const { code } = useParams<{ code: string }>()
@@ -30,37 +31,53 @@ export default function JoinTrip() {
 
   if (!trip) {
     return (
-      <div className="app-shell flex flex-col items-center justify-center min-h-svh px-6 text-center gap-4">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-2">
-          <span className="text-2xl">❌</span>
+      <div
+        className="app-shell flex flex-col items-center justify-center min-h-svh px-6 text-center gap-4"
+      >
+        <div className="glass-card w-full max-w-sm flex flex-col items-center gap-4 py-10 px-6">
+          <div className="w-16 h-16 bg-[var(--color-danger)]/10 rounded-full flex items-center justify-center">
+            <XCircle size={32} className="text-[var(--color-danger)]" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">Link ungültig</h1>
+          <p className="text-gray-500 text-sm">
+            Dieser Einladungslink ist abgelaufen oder ungültig.
+          </p>
+          <Button
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary-soft"
+            onClick={() => navigate('/home')}
+          >
+            Zur Startseite
+          </Button>
         </div>
-        <h1 className="text-xl font-bold text-gray-900">Link ungültig</h1>
-        <p className="text-gray-500 text-sm">
-          Dieser Einladungslink ist abgelaufen oder ungültig.
-        </p>
-        <Button variant="outline" onClick={() => navigate('/home')}>
-          Zur Startseite
-        </Button>
       </div>
     )
   }
 
   if (joined || isAlreadyMember) {
     return (
-      <div className="app-shell flex flex-col items-center justify-center min-h-svh px-6 text-center gap-4">
-        <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mb-2">
-          <span className="text-2xl">✅</span>
+      <div
+        className="app-shell flex flex-col items-center justify-center min-h-svh px-6 text-center gap-4"
+        style={{ ['--ambient' as any]: ambientImage(trip?.name ?? '') }}
+      >
+        <div className="glass-card w-full max-w-sm flex flex-col items-center gap-4 py-10 px-6">
+          <div className="w-16 h-16 bg-[var(--color-success)]/10 rounded-full flex items-center justify-center">
+            <CheckCircle2 size={32} className="text-[var(--color-success)]" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">
+            {isAlreadyMember && !joined ? 'Du bist dabei!' : 'Willkommen!'}
+          </h1>
+          <p className="text-gray-500 text-sm">
+            Du bist bereits Mitglied von <strong className="text-gray-800">{trip.name}</strong>.
+          </p>
+          <Button
+            className="w-full bg-primary hover:bg-primary/90 text-white"
+            onClick={() => { refreshTrips(); navigate(`/trip/${trip.id}/members`) }}
+          >
+            <Users size={16} className="mr-2" />
+            Mitgliederliste ansehen
+          </Button>
         </div>
-        <h1 className="text-xl font-bold text-gray-900">
-          {isAlreadyMember && !joined ? 'Du bist dabei!' : 'Willkommen!'}
-        </h1>
-        <p className="text-gray-500 text-sm">
-          Du bist bereits Mitglied von <strong>{trip.name}</strong>.
-        </p>
-        <Button onClick={() => { refreshTrips(); navigate(`/trip/${trip.id}/members`) }}>
-          <Users size={16} className="mr-2" />
-          Mitgliederliste ansehen
-        </Button>
       </div>
     )
   }
@@ -84,48 +101,65 @@ export default function JoinTrip() {
   }
 
   return (
-    <div className="app-shell flex flex-col min-h-svh bg-white">
-      {/* Decorative header */}
-      <div className="bg-gradient-to-b from-primary/10 to-white px-6 py-10 text-center">
-        <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md shadow-primary/25">
-          <span className="text-2xl">✈️</span>
-        </div>
-        <h1 className="text-xl font-bold text-gray-900 mb-1">Du wurdest eingeladen!</h1>
-        <p className="text-gray-500 text-sm">
-          Tritt <strong className="text-gray-800">{trip.name}</strong> bei
-        </p>
-      </div>
-
-      {/* Trip Info */}
-      <div className="mx-4 mt-4 p-4 bg-muted rounded-xl text-sm text-gray-600">
-        <p>📅 {trip.startDate} – {trip.endDate}</p>
-        <p>👥 {trip.members.length} Mitglieder</p>
-      </div>
-
-      {/* Join Form */}
-      <div className="px-4 py-6 flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="join-name">Dein Name</Label>
-          <Input
-            id="join-name"
-            placeholder="z.B. Max"
-            value={memberName}
-            onChange={(e) => {
-              setMemberName(e.target.value)
-              setNameError('')
-            }}
-            onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
-            autoFocus
-            aria-describedby={nameError ? 'join-name-error' : undefined}
-          />
-          {nameError && (
-            <p id="join-name-error" className="text-xs text-red-500" role="alert">{nameError}</p>
-          )}
+    <div
+      className="app-shell flex flex-col items-center justify-center min-h-svh px-4 py-10 gap-4"
+      style={{ ['--ambient' as any]: ambientImage(trip?.name ?? '') }}
+    >
+      <div className="glass-card w-full max-w-sm flex flex-col gap-0 overflow-hidden">
+        {/* Decorative header */}
+        <div className="flex flex-col items-center gap-3 px-6 py-8 bg-primary/5 border-b border-primary/10">
+          <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-md shadow-primary/25">
+            <Plane size={26} className="text-white" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">Du wurdest eingeladen!</h1>
+          <p className="text-gray-500 text-sm">
+            Tritt <strong className="text-gray-800">{trip.name}</strong> bei
+          </p>
         </div>
 
-        <Button onClick={handleJoin} className="w-full">
-          Beitreten
-        </Button>
+        {/* Trip Info */}
+        <div className="mx-4 mt-4 p-4 rounded-xl bg-primary-soft text-sm text-gray-600 flex flex-col gap-1">
+          <p className="flex items-center gap-2">
+            <span className="text-primary font-medium">📅</span>
+            {trip.startDate} – {trip.endDate}
+          </p>
+          <p className="flex items-center gap-2">
+            <span className="text-primary font-medium">
+              <Users size={14} className="inline" />
+            </span>
+            {trip.members.length} Mitglieder
+          </p>
+        </div>
+
+        {/* Join Form */}
+        <div className="px-4 py-6 flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="join-name">Dein Name</Label>
+            <Input
+              id="join-name"
+              className="glass-field"
+              placeholder="z.B. Max"
+              value={memberName}
+              onChange={(e) => {
+                setMemberName(e.target.value)
+                setNameError('')
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+              autoFocus
+              aria-describedby={nameError ? 'join-name-error' : undefined}
+            />
+            {nameError && (
+              <p id="join-name-error" className="text-xs text-[var(--color-danger)]" role="alert">{nameError}</p>
+            )}
+          </div>
+
+          <Button
+            onClick={handleJoin}
+            className="w-full bg-primary hover:bg-primary/90 text-white font-semibold"
+          >
+            Beitreten
+          </Button>
+        </div>
       </div>
     </div>
   )

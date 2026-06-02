@@ -69,14 +69,14 @@ export default function BudgetTracker() {
   if (!trip) {
     return (
       <div className="app-shell flex flex-col items-center justify-center min-h-svh px-6 text-center">
-        <p className="text-gray-500 mb-4">Reise nicht gefunden.</p>
+        <p className="text-white/70 mb-4">Reise nicht gefunden.</p>
         <Button variant="outline" onClick={() => navigate('/home')}>Zur Übersicht</Button>
       </div>
     )
   }
 
   return (
-    <div className="app-shell flex flex-col min-h-svh bg-gray-50">
+    <div className="app-shell flex flex-col min-h-svh">
       <PageHeader title="Budget-Tracker" />
 
       <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-8">
@@ -102,8 +102,8 @@ export default function BudgetTracker() {
 
         {/* Expense list */}
         {expenses.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4">
-            <h3 className="text-sm font-semibold text-gray-700 py-3 border-b border-gray-100">
+          <div className="glass-card px-4">
+            <h3 className="text-sm font-semibold text-gray-700 py-3 border-b border-white/30">
               Alle Ausgaben
             </h3>
             {[...expenses].sort((a, b) => b.date.localeCompare(a.date)).map((exp) => (
@@ -126,7 +126,7 @@ export default function BudgetTracker() {
           />
         )}
 
-        <Button variant="outline" onClick={() => navigate(`/trip/${id}/final`)} className="w-full">
+        <Button variant="outline" onClick={() => navigate(`/trip/${id}/final`)} className="w-full border-white/40 text-white hover:bg-white/10">
           Zurück zur Übersicht
         </Button>
       </main>

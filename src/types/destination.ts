@@ -7,21 +7,38 @@ export interface ClimateData {
   temp_max: number
   precipitation_mm: number
   sunshine_hours: number
-  source: 'copernicus' | 'mock'
+  source: 'copernicus'       // ERA5 via Open-Meteo (echte Daten)
 }
 
 export interface BiodiversityData {
   species_count: number
   highlight: string
-  source: 'gbif' | 'mock'
+  source: 'gbif'             // echte GBIF-Daten
 }
 
-export interface LLMAnalysis {
+export interface NasaData {
+  temp_avg: number | null          // °C
+  solar_irradiance: number | null  // kWh/m²/Tag
+  humidity: number | null          // %
+  wind_speed: number | null        // m/s
+  source: 'nasa_power'
+}
+
+export interface EarthdataData {
+  granule_count: number
+  dataset: string
+  source: 'earthdata'
+}
+
+export interface DestinationAnalysis {
   score: number              // 0–100
   reasoning: string
   dataPoints: string[]
-  source: 'llm' | 'mock'
+  source: 'engine'           // regelbasiert aus echten Messdaten (kein LLM)
 }
+
+// Rückwärtskompatibler Alias (vormals LLM-basiert, jetzt regelbasiert).
+export type LLMAnalysis = DestinationAnalysis
 
 export interface Destination {
   id: string
@@ -33,8 +50,11 @@ export interface Destination {
   createdAt: string
   climate?: ClimateData
   biodiversity?: BiodiversityData
-  llmAnalysis?: LLMAnalysis
+  nasa?: NasaData
+  earthdata?: EarthdataData
+  llmAnalysis?: DestinationAnalysis
   isLoading?: boolean
+  dataError?: boolean        // true, wenn echte Daten nicht geladen werden konnten
 }
 
 export interface DestinationVote {

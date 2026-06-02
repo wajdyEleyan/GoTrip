@@ -3,7 +3,7 @@
 // Interactive monthly calendar for marking personal availability
 import { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isToday } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isToday } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { CalendarDay } from './CalendarDay'
 import type { AvailabilityStatus } from '@/types/availability'

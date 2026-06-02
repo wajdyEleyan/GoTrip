@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/context/LanguageContext'
 import { useTripContext } from '@/context/TripContext'
 import { toast } from '@/components/shared/Toast'
+import { destinationImage } from '@/utils/destinationImage'
 import type { Trip } from '@/types/trip'
 
 const dateLocales = { de, en: enUS, es }
@@ -26,6 +27,7 @@ export function TripCard({ trip }: TripCardProps) {
   const startFormatted = format(new Date(trip.startDate), 'd. MMM', { locale })
   const endFormatted = format(new Date(trip.endDate), 'd. MMM yyyy', { locale })
   const memberCount = trip.members.length
+  const img = destinationImage(trip.name, 600)
 
   function handleDelete(e: React.MouseEvent) {
     e.stopPropagation()
@@ -45,14 +47,14 @@ export function TripCard({ trip }: TripCardProps) {
 
   if (showConfirm) {
     return (
-      <div className="bg-white rounded-2xl border border-red-100 shadow-sm p-4">
+      <div className="glass-card rounded-2xl p-4">
         <div className="flex items-start gap-3 mb-4">
           <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
             <AlertTriangle size={18} className="text-red-500" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900">{t('deleteConfirmTitle')}</p>
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+            <p className="text-xs text-gray-600 mt-1 leading-relaxed">
               {t('deleteConfirmText', { name: trip.name })}
             </p>
           </div>
@@ -79,46 +81,44 @@ export function TripCard({ trip }: TripCardProps) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-      {/* Main clickable area */}
+    <div className="rounded-2xl overflow-hidden glass-card">
+      {/* Photo cover — clickable */}
       <button
         onClick={() => navigate(`/trip/${trip.id}/dashboard`)}
-        className="w-full text-left p-4 pb-3"
+        className="block w-full text-left photo-card !rounded-none !shadow-none h-36"
         aria-label={`Trip: ${trip.name}`}
       >
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <h3 className="text-base font-bold text-gray-900 line-clamp-1">{trip.name}</h3>
-          <span className="shrink-0 text-xs font-semibold bg-primary/10 text-primary px-2.5 py-1 rounded-full whitespace-nowrap">
-            {memberCount} {memberCount === 1 ? t('membersLabel') : t('membersLabelPlural')}
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-1.5 text-sm text-gray-500">
-          <div className="flex items-center gap-2">
-            <Calendar size={14} className="shrink-0 text-gray-400" />
+        <img src={img} alt="" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+        <div className="photo-scrim" />
+        {/* member badge */}
+        <span className="absolute top-3 right-3 z-[1] inline-flex items-center gap-1 bg-white/90 text-gray-900 text-xs font-bold px-2.5 py-1 rounded-full">
+          <Users size={12} className="text-gray-700" />
+          {memberCount}
+        </span>
+        {/* title */}
+        <div className="photo-title absolute bottom-3 left-3 right-3">
+          <h3 className="text-base font-bold line-clamp-1">{trip.name}</h3>
+          <div className="flex items-center gap-1.5 text-xs opacity-95 mt-0.5">
+            <Calendar size={12} />
             <span>{startFormatted} – {endFormatted}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Users size={14} className="shrink-0 text-gray-400" />
-            <span>{memberCount} {memberCount === 1 ? t('membersLabel') : t('membersLabelPlural')}</span>
           </div>
         </div>
       </button>
 
       {/* Edit / Delete action bar */}
-      <div className="flex items-center border-t border-gray-50 px-4 py-2 gap-2">
+      <div className="flex items-center px-4 py-2 gap-2 border-t border-white/40">
         <button
           onClick={handleEdit}
-          className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-primary transition-colors py-1 px-2 rounded-lg hover:bg-primary/5"
+          className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-primary transition-colors py-1 px-2 rounded-lg hover:bg-primary/5"
           aria-label={`${t('edit')} ${trip.name}`}
         >
           <Pencil size={13} />
           {t('edit')}
         </button>
-        <div className="w-px h-4 bg-gray-100" />
+        <div className="w-px h-4 bg-gray-200" />
         <button
           onClick={handleDelete}
-          className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-red-500 transition-colors py-1 px-2 rounded-lg hover:bg-red-50"
+          className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-red-500 transition-colors py-1 px-2 rounded-lg hover:bg-red-50"
           aria-label={`${t('delete')} ${trip.name}`}
         >
           <Trash2 size={13} />

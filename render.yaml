@@ -1,0 +1,19 @@
+# Render Blueprint für GoTrip
+# Ein einziger Web-Service: Express liefert den Frontend-Build (dist/) UND
+# den /api/earthdata-Endpoint aus → Frontend & API auf derselben Domain.
+# Anlegen: Render → New → Blueprint → dieses Repo wählen.
+services:
+  - type: web
+    name: gotrip
+    runtime: node
+    plan: free
+    # devDependencies (vite, tsc) für den Build erzwingen, dann Server-Deps:
+    buildCommand: npm install --include=dev && npm run build && npm install --prefix server
+    startCommand: node server/index.js
+    envVars:
+      # NASA Earthdata Login Token — NICHT hier eintragen!
+      # Im Render-Dashboard unter "Environment" setzen (sync: false).
+      - key: EARTHDATA_TOKEN
+        sync: false
+      - key: NODE_VERSION
+        value: "22"

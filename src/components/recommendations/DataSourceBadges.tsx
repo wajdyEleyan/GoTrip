@@ -1,30 +1,33 @@
 // Autor: Eya Mathlouthi
 // src/components/recommendations/DataSourceBadges.tsx
+// Zeigt, welche ECHTEN Datenquellen in die Bewertung eingeflossen sind.
 import { cn } from '@/lib/utils'
 
 interface DataSourceBadgesProps {
-  climateSrc: 'copernicus' | 'mock'
-  biodivSrc: 'gbif' | 'mock'
-  llmSrc: 'llm' | 'mock'
+  hasClimate?: boolean
+  hasBiodiv?: boolean
+  hasNasa?: boolean
+  hasEarthdata?: boolean
 }
 
 const BADGES = [
-  { key: 'copernicus', label: 'Copernicus', color: 'bg-blue-100 text-blue-700', icon: '🛰️' },
+  { key: 'copernicus', label: 'Copernicus ERA5', color: 'bg-blue-100 text-blue-700', icon: '🛰️' },
   { key: 'gbif', label: 'GBIF', color: 'bg-green-100 text-green-700', icon: '🌿' },
-  { key: 'ki-engine', label: 'ki-engine AI', color: 'bg-violet-100 text-violet-700', icon: '✨' },
-  { key: 'mock', label: 'Mock-Daten', color: 'bg-gray-100 text-gray-500', icon: '🔧' },
+  { key: 'nasa', label: 'NASA POWER', color: 'bg-indigo-100 text-indigo-700', icon: '🚀' },
+  { key: 'earthdata', label: 'NASA Earthdata', color: 'bg-violet-100 text-violet-700', icon: '📡' },
 ]
 
-export function DataSourceBadges({ climateSrc, biodivSrc, llmSrc }: DataSourceBadgesProps) {
+export function DataSourceBadges({ hasClimate, hasBiodiv, hasNasa, hasEarthdata }: DataSourceBadgesProps) {
   const active = new Set<string>()
-  if (climateSrc === 'copernicus') active.add('copernicus')
-  else active.add('mock')
-  if (biodivSrc === 'gbif') active.add('gbif')
-  if (llmSrc === 'llm') active.add('ki-engine')
-  else if (!active.has('mock')) active.add('mock')
+  if (hasClimate) active.add('copernicus')
+  if (hasBiodiv) active.add('gbif')
+  if (hasNasa) active.add('nasa')
+  if (hasEarthdata) active.add('earthdata')
+
+  if (active.size === 0) return null
 
   return (
-    <div className="flex flex-wrap gap-1.5" aria-label="Datenquellen">
+    <div className="flex flex-wrap gap-1.5" aria-label="Echte Datenquellen">
       {BADGES.filter((b) => active.has(b.key)).map((b) => (
         <span
           key={b.key}

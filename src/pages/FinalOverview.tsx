@@ -15,6 +15,7 @@ import {
   getTripActivities,
 } from '@/utils/storage'
 import { calcHybridScore } from '@/utils/scoring'
+import { destinationImage, ambientImage } from '@/utils/destinationImage'
 import type { Destination } from '@/types/destination'
 import type { Activity } from '@/types/activity'
 
@@ -93,30 +94,61 @@ export default function FinalOverview() {
   const scorePercent = winner ? Math.round(winner.hybridScore * 100) : 0
 
   return (
-    <div className="app-shell flex flex-col min-h-svh bg-gray-50">
+    <div
+      className="app-shell flex flex-col min-h-svh"
+      style={{ ['--ambient' as any]: ambientImage(winner?.name ?? trip.name ?? '') }}
+    >
       <PageHeader title={t('stepFinal')} />
 
       <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-8">
-        {/* Hero banner */}
-        <div className="bg-primary rounded-3xl p-6 text-white text-center shadow-lg shadow-primary/25">
-          <div className="text-4xl mb-2">🎉</div>
-          <h1 className="text-xl font-bold mb-1">{t('tripFinished')}</h1>
-          <p className="text-primary/80 text-sm">{trip.name}</p>
-        </div>
 
-        {/* Winning destination */}
+        {/* Destination HERO photo-card */}
         {winner ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Trophy size={18} className="text-amber-500" />
-              <span className="text-sm font-bold text-gray-700">{t('yourDestination')}</span>
+          <div className="photo-card" style={{ height: '220px' }}>
+            <img
+              src={destinationImage(winner.name, 800)}
+              alt={winner.name}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+            />
+            <div className="photo-scrim" />
+            {/* Trophy badge */}
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+              <Trophy size={14} className="text-amber-300" />
+              <span className="text-xs font-bold text-white">{t('yourDestination')}</span>
             </div>
+            {/* Celebration badge */}
+            <div className="absolute top-3 right-3 text-2xl">🎉</div>
+            {/* Bottom title block */}
+            <div className="photo-title absolute bottom-0 left-0 right-0 px-4 pb-4 pt-8">
+              <h1 className="text-xl font-bold leading-tight">{winner.name}</h1>
+              <p className="text-sm text-white/80 mt-0.5">{winner.country}</p>
+              <p className="text-xs text-white/70 mt-1">
+                {new Date(trip.startDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
+                {' – '}
+                {new Date(trip.endDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </p>
+            </div>
+          </div>
+        ) : (
+          /* Fallback hero when no winner yet */
+          <div className="glass-card rounded-3xl p-6 text-center">
+            <div className="text-4xl mb-2">🎉</div>
+            <h1 className="text-xl font-bold text-[#16323B] mb-1">{t('tripFinished')}</h1>
+            <p className="text-primary text-sm font-medium">{trip.name}</p>
+          </div>
+        )}
+
+        {/* Winning destination details */}
+        {winner ? (
+          <div className="glass-card rounded-2xl p-4">
             <div className="flex items-start gap-3">
               <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold text-gray-900">{winner.name}</h2>
-                <p className="text-sm text-gray-500">{winner.country}</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <Trophy size={15} className="text-amber-500 shrink-0" />
+                  <h2 className="text-base font-bold text-[#16323B] truncate">{winner.name}</h2>
+                </div>
                 {winner.climate && (
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-gray-500 mt-0.5">
                     🌡️ {winner.climate.temp_avg}°C · ☀️ {winner.climate.sunshine_hours}h
                   </p>
                 )}
@@ -130,8 +162,8 @@ export default function FinalOverview() {
               <ScoreRing score={winner.hybridScore} size={64} />
             </div>
             {winner.llmAnalysis?.reasoning && (
-              <div className="mt-3 bg-gray-50 rounded-xl px-3 py-2">
-                <p className="text-xs text-gray-500 leading-relaxed">{winner.llmAnalysis.reasoning}</p>
+              <div className="mt-3 bg-primary-soft/60 rounded-xl px-3 py-2">
+                <p className="text-xs text-[#16323B]/70 leading-relaxed">{winner.llmAnalysis.reasoning}</p>
               </div>
             )}
             {winner.climate && (
@@ -141,67 +173,67 @@ export default function FinalOverview() {
             )}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center text-gray-400 text-sm py-8">
+          <div className="glass-card rounded-2xl p-4 text-center text-gray-400 text-sm py-8">
             {t('noDestinationChosen')}
           </div>
         )}
 
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1">
-            <div className="flex items-center gap-2 text-gray-400">
+          <div className="glass-card rounded-2xl p-4 flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-primary">
               <Users size={15} />
               <span className="text-xs font-semibold">{t('memberCount')}</span>
             </div>
-            <span className="text-2xl font-bold text-gray-900">{trip.members.length}</span>
+            <span className="text-2xl font-bold text-[#16323B]">{trip.members.length}</span>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1">
-            <div className="flex items-center gap-2 text-gray-400">
+          <div className="glass-card rounded-2xl p-4 flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-primary">
               <Wallet size={15} />
               <span className="text-xs font-semibold">{t('budgetPerPersonLabel')}</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">
+            <span className="text-xl font-bold text-[#16323B]">
               {avgBudget != null ? `${avgBudget}€` : '–'}
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-500">
               {avgBudget != null ? t('avgBudget') : ''}
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1">
-            <div className="flex items-center gap-2 text-gray-400">
+          <div className="glass-card rounded-2xl p-4 flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-primary">
               <MapPin size={15} />
               <span className="text-xs font-semibold">{t('period')}</span>
             </div>
-            <span className="text-sm font-bold text-gray-900">
+            <span className="text-sm font-bold text-[#16323B]">
               {new Date(trip.startDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-500">
               bis {new Date(trip.endDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1">
-            <div className="flex items-center gap-2 text-gray-400">
+          <div className="glass-card rounded-2xl p-4 flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-primary">
               <Thermometer size={15} />
               <span className="text-xs font-semibold">{t('aiScore')}</span>
             </div>
-            <span className="text-2xl font-bold text-gray-900">{scorePercent}%</span>
-            <span className="text-xs text-gray-400">{t('hybridScore')}</span>
+            <span className="text-2xl font-bold text-[#16323B]">{scorePercent}%</span>
+            <span className="text-xs text-gray-500">{t('hybridScore')}</span>
           </div>
         </div>
 
         {/* Top Activities */}
         {topActivities.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <h3 className="text-sm font-bold text-gray-700 mb-3">{t('topActivities')}</h3>
+          <div className="glass-card rounded-2xl p-4">
+            <h3 className="text-sm font-bold text-[#16323B] mb-3">{t('topActivities')}</h3>
             <div className="flex flex-col gap-2">
               {topActivities.map((act, i) => (
                 <div key={act.id} className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-gray-400 w-4">{i + 1}.</span>
+                  <span className="text-xs font-bold text-primary/60 w-4">{i + 1}.</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{act.name}</p>
+                    <p className="text-sm font-medium text-[#16323B] truncate">{act.name}</p>
                   </div>
                   <div className="flex items-center gap-1 text-xs text-success font-semibold">
                     <span>👍</span>
@@ -214,8 +246,8 @@ export default function FinalOverview() {
         )}
 
         {/* Members */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <h3 className="text-sm font-bold text-gray-700 mb-3">{t('group')}</h3>
+        <div className="glass-card rounded-2xl p-4">
+          <h3 className="text-sm font-bold text-[#16323B] mb-3">{t('group')}</h3>
           <div className="flex flex-wrap gap-2">
             {trip.members.map((m) => (
               <div
@@ -231,13 +263,24 @@ export default function FinalOverview() {
 
         {/* Navigation */}
         <div className="flex flex-col gap-2 mt-2">
-          <Button onClick={() => navigate(`/trip/${id}/budget`)} className="w-full h-12 rounded-xl">
+          <Button
+            onClick={() => navigate(`/trip/${id}/budget`)}
+            className="w-full h-12 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold"
+          >
             {t('openBudgetTracker')}
           </Button>
-          <Button variant="outline" onClick={() => navigate(`/trip/${id}/activities`)} className="w-full h-12 rounded-xl">
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/trip/${id}/activities`)}
+            className="w-full h-12 rounded-xl border-primary/30 text-primary hover:bg-primary-soft"
+          >
             {t('editActivities')}
           </Button>
-          <Button variant="outline" onClick={() => navigate('/home')} className="w-full h-12 rounded-xl">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/home')}
+            className="w-full h-12 rounded-xl border-primary/30 text-primary hover:bg-primary-soft"
+          >
             {t('toHomePage')}
           </Button>
         </div>

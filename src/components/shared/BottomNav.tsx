@@ -1,31 +1,69 @@
 // src/components/shared/BottomNav.tsx
-import { NavLink, useNavigate } from 'react-router-dom'
-import { Home, Plus } from 'lucide-react'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { Home, Plus, LayoutGrid, Calendar, Sparkles, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/context/LanguageContext'
 
-export function BottomNav() {
+interface BottomNavProps {
+  onCreateClick?: () => void
+}
+
+export function BottomNav({ onCreateClick }: BottomNavProps = {}) {
   const navigate = useNavigate()
   const { t } = useLanguage()
+  const { pathname } = useLocation()
 
+  // Trip-Kontext erkennen: /trip/:id/...
+  const tripMatch = pathname.match(/^\/trip\/([^/]+)/)
+  const tripId = tripMatch?.[1]
+
+  const itemCls = (active: boolean) =>
+    cn(
+      'flex flex-col items-center justify-center gap-0.5 h-full min-h-[44px] flex-1 text-[11px] font-medium transition-colors',
+      active ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
+    )
+
+  // ── Trip-Kontext: 1-Tap-Sprünge ──
+  if (tripId) {
+    const base = `/trip/${tripId}`
+    const items = [
+      { to: `${base}/dashboard`, icon: LayoutGrid, label: t('navOverview') },
+      { to: `${base}/availability`, icon: Calendar, label: t('navCalendar') },
+      { to: `${base}/recommendation`, icon: Sparkles, label: t('navRecommendation') },
+      { to: `${base}/members`, icon: Users, label: t('navGroup') },
+    ]
+    return (
+      <nav
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-bar border-t z-30"
+        aria-label="Trip-Navigation"
+      >
+        <ul className="flex items-center justify-around h-16 px-3 list-none m-0 p-0">
+          {items.map(({ to, icon: Icon, label }) => (
+            <li key={to} className="flex-1">
+              <NavLink to={to} end className={({ isActive }) => itemCls(isActive)} aria-label={label}>
+                {({ isActive }) => (
+                  <>
+                    <Icon size={21} className={isActive ? 'text-primary' : 'text-gray-400'} />
+                    <span>{label}</span>
+                  </>
+                )}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )
+  }
+
+  // ── Global: Trips + Create ──
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/95 backdrop-blur border-t border-gray-100"
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-bar border-t z-30"
       aria-label="Hauptnavigation"
     >
       <ul className="flex items-center justify-around h-16 px-8 list-none m-0 p-0">
-        {/* Home */}
         <li className="flex-1">
-          <NavLink
-            to="/home"
-            className={({ isActive }) =>
-              cn(
-                'flex flex-col items-center justify-center gap-0.5 h-full min-h-[44px] text-xs font-medium transition-colors',
-                isActive ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
-              )
-            }
-            aria-label={t('trips')}
-          >
+          <NavLink to="/home" className={({ isActive }) => itemCls(isActive)} aria-label={t('trips')}>
             {({ isActive }) => (
               <>
                 <Home size={22} className={isActive ? 'text-primary' : 'text-gray-400'} />
@@ -34,15 +72,13 @@ export function BottomNav() {
             )}
           </NavLink>
         </li>
-
-        {/* Create Trip — center FAB-style */}
         <li className="flex-1 flex justify-center">
           <button
-            onClick={() => navigate('/create')}
-            className="flex flex-col items-center justify-center gap-0.5 min-h-[44px] w-full text-xs font-medium text-gray-400 hover:text-primary transition-colors"
+            onClick={() => onCreateClick ? onCreateClick() : navigate('/create')}
+            className="flex flex-col items-center justify-center gap-0.5 min-h-[44px] w-full text-[11px] font-medium text-gray-400 hover:text-primary transition-colors"
             aria-label={t('create')}
           >
-            <div className="w-11 h-11 bg-primary rounded-full flex items-center justify-center shadow-md shadow-primary/30 -mt-4">
+            <div className="w-11 h-11 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/40 -mt-4">
               <Plus size={22} className="text-white" />
             </div>
             <span className="mt-0.5">{t('create')}</span>

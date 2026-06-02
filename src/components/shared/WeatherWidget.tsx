@@ -29,7 +29,7 @@ export function WeatherWidget({ climate, destinationName, compact = false }: Wea
         <span>{tempEmoji} {climate.temp_avg}°C</span>
         <span>🌧️ {climate.precipitation_mm}mm</span>
         <span>☀️ {climate.sunshine_hours}h</span>
-        <span className="text-gray-400 text-xs">{climate.source === 'mock' ? 'Mock' : 'Copernicus'}</span>
+        <span className="text-gray-400 text-xs">Copernicus</span>
       </div>
     )
   }
@@ -97,7 +97,7 @@ export function WeatherWidget({ climate, destinationName, compact = false }: Wea
       </div>
 
       <p className="text-xs text-gray-400 mt-3 text-right">
-        Quelle: {climate.source === 'copernicus' ? 'Copernicus ERA5' : 'Mock-Daten'}
+        Quelle: Copernicus ERA5
       </p>
     </div>
   )

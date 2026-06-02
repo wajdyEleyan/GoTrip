@@ -21,7 +21,7 @@ export function PageHeader({ title, showBack = true, backTo, rightSlot }: PageHe
   }
 
   return (
-    <header className="flex items-center justify-between h-14 px-4 bg-white/90 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
+    <header className="flex items-center justify-between h-14 px-4 glass-bar border-b sticky top-0 z-10">
       {showBack ? (
         <button
           onClick={handleBack}

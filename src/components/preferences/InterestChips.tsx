@@ -1,7 +1,9 @@
 // Autor: Amal Najah
 // src/components/preferences/InterestChips.tsx
+import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { InterestType } from '@/types/preferences'
+import { destinationImage } from '@/utils/destinationImage'
 
 const INTERESTS: { key: InterestType; label: string; emoji: string }[] = [
   { key: 'beach', label: 'Beach', emoji: '🏖️' },
@@ -44,14 +46,34 @@ export function InterestChips({ selected, onChange }: InterestChipsProps) {
             onClick={() => toggle(key)}
             aria-pressed={isSelected}
             className={cn(
-              'flex flex-col items-center justify-center gap-1 py-3 rounded-2xl border text-xs font-medium transition-all active:scale-95 min-h-[72px]',
+              'photo-card min-h-[78px] transition-all active:scale-95 focus:outline-none',
               isSelected
-                ? 'bg-primary border-primary text-white shadow-sm shadow-primary/25'
-                : 'bg-white border-gray-200 text-gray-700 hover:border-primary/40 hover:bg-primary/5'
+                ? 'ring-[3px] ring-primary shadow-lg shadow-primary/30 scale-[1.02]'
+                : 'ring-0 opacity-80 grayscale-[0.35] hover:opacity-100 hover:grayscale-0'
             )}
           >
-            <span className="text-xl leading-none" aria-hidden="true">{emoji}</span>
-            <span>{label}</span>
+            <img
+              src={destinationImage(label, 200)}
+              alt=""
+              aria-hidden="true"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+            />
+            <div
+              className="photo-scrim"
+              style={isSelected ? { background: 'linear-gradient(180deg, rgba(15,125,140,0.25), rgba(15,125,140,0.7))' } : undefined}
+            />
+
+            {/* Auswahl-Häkchen */}
+            {isSelected && (
+              <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-md ring-2 ring-white">
+                <Check size={12} strokeWidth={3} className="text-white" />
+              </div>
+            )}
+
+            <div className="photo-title absolute inset-0 flex flex-col items-center justify-end pb-2 px-1 gap-0.5">
+              <span className="text-base leading-none" aria-hidden="true">{emoji}</span>
+              <span className="text-[11px] font-semibold leading-tight text-center">{label}</span>
+            </div>
           </button>
         )
       })}

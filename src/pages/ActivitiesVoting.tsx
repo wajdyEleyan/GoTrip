@@ -12,6 +12,8 @@ import { useAuth } from '@/context/AuthContext'
 import { getTripActivities, saveActivity } from '@/utils/storage'
 import { toast } from '@/components/shared/Toast'
 import type { Activity } from '@/types/activity'
+import { ambientImage } from '@/utils/destinationImage'
+import { StepNav } from '@/components/shared/StepNav'
 
 export default function ActivitiesVoting() {
   const { id } = useParams<{ id: string }>()
@@ -80,20 +82,23 @@ export default function ActivitiesVoting() {
   }
 
   return (
-    <div className="app-shell flex flex-col min-h-svh bg-white">
+    <div
+      className="app-shell flex flex-col min-h-svh"
+      style={{ ['--ambient' as any]: ambientImage(trip?.name ?? '') }}
+    >
       <PageHeader title="Activities Voting" />
 
       <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-8">
-        <p className="text-sm text-gray-500">
-          Was wollt ihr in <strong>{trip.name}</strong> unternehmen?
+        <p className="text-sm text-gray-700 font-medium">
+          Was wollt ihr in <strong className="text-gray-900">{trip.name}</strong> unternehmen?
         </p>
 
         {sorted.length === 0 ? (
-          <div className="text-center py-8 text-gray-400 text-sm">
+          <div className="glass-card text-center py-10 text-gray-500 text-sm rounded-2xl">
             Noch keine Aktivitäten — sei der Erste!
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4">
+          <div className="glass-card px-4 divide-y divide-gray-100 rounded-2xl">
             {sorted.map((act) => (
               <ActivityCard
                 key={act.id}
@@ -113,8 +118,13 @@ export default function ActivitiesVoting() {
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
               autoFocus
+              className="glass-field text-gray-900 placeholder:text-gray-400 focus-visible:ring-primary"
             />
-            <Button onClick={handleAdd} disabled={!newName.trim()}>
+            <Button
+              onClick={handleAdd}
+              disabled={!newName.trim()}
+              className="bg-primary hover:bg-primary/90 text-white shrink-0"
+            >
               <Plus size={16} />
             </Button>
           </div>
@@ -123,13 +133,12 @@ export default function ActivitiesVoting() {
             onClick={() => setShowInput(true)}
             className="flex items-center gap-2 w-full p-4 rounded-2xl border-2 border-dashed border-gray-200 text-sm font-medium text-gray-500 hover:border-primary hover:text-primary transition-colors"
           >
-            <Plus size={18} />+ Aktivität hinzufügen
+            <Plus size={18} className="shrink-0" />
+            + Aktivität hinzufügen
           </button>
         )}
 
-        <Button onClick={() => navigate(`/trip/${id}/final`)} className="w-full mt-2">
-          Zum Abschluss
-        </Button>
+        <StepNav tripId={id ?? ''} current="activities" />
       </main>
     </div>
   )

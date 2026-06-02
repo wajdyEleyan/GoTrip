@@ -1,16 +1,9 @@
-// src/pages/CreateTrip.tsx
-import { PageHeader } from '@/components/shared/PageHeader'
-import { TripForm } from '@/components/trips/TripForm'
-import { useLanguage } from '@/context/LanguageContext'
+// src/pages/CreateTrip.tsx — Redirect zu Home (Erstellen läuft jetzt via Sheet)
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export default function CreateTrip() {
-  const { t } = useLanguage()
-  return (
-    <div className="app-shell flex flex-col min-h-svh bg-white">
-      <PageHeader title={t('createNewTrip')} backTo="/home" />
-      <main className="flex-1 px-4 py-6 overflow-y-auto">
-        <TripForm />
-      </main>
-    </div>
-  )
+  const navigate = useNavigate()
+  useEffect(() => { navigate('/home', { replace: true }) }, [])
+  return null
 }

@@ -1,17 +1,21 @@
 // src/pages/GroupMembers.tsx
-import { useParams, useNavigate, Link } from 'react-router-dom'
-import { UserPlus, ChevronRight } from 'lucide-react'
+import { useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { UserPlus, ChevronDown, ChevronUp } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { MemberList } from '@/components/members/MemberList'
+import { InviteLink } from '@/components/members/InviteLink'
 import { Button } from '@/components/ui/button'
 import { useTripContext } from '@/context/TripContext'
 import { useLanguage } from '@/context/LanguageContext'
+import { StepNav } from '@/components/shared/StepNav'
 
 export default function GroupMembers() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { getTripById } = useTripContext()
   const { t } = useLanguage()
+  const [showInvite, setShowInvite] = useState(false)
 
   const trip = id ? getTripById(id) : undefined
 
@@ -27,37 +31,41 @@ export default function GroupMembers() {
   const memberCount = trip.members.length
 
   return (
-    <div className="app-shell flex flex-col min-h-svh bg-white">
+    <div className="app-shell flex flex-col min-h-svh">
       <PageHeader title={trip.name} />
 
       <main className="flex-1 px-4 py-4 overflow-y-auto flex flex-col gap-4 pb-8">
-        {/* Counter + Invite Link */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-gray-900">
+        {/* Counter + Invite Toggle */}
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-sm font-bold text-gray-800">
             {t('membersCount', { count: String(memberCount) })}
           </h2>
-          <Link
-            to={`/trip/${trip.id}/invite`}
-            className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+          <button
+            onClick={() => setShowInvite((v) => !v)}
+            className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:opacity-80 transition-opacity"
           >
             <UserPlus size={14} />
             {t('inviteMore')}
-          </Link>
+            {showInvite ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
         </div>
 
-        {/* Member List */}
-        <div className="flex-1">
+        {/* Inline Invite Panel */}
+        {showInvite && (
+          <div className="glass-card rounded-2xl p-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              {t('inviteFriends')}
+            </p>
+            <InviteLink inviteCode={trip.inviteCode} />
+          </div>
+        )}
+
+        {/* Member List inside glass-card */}
+        <div className="glass-card rounded-2xl overflow-hidden">
           <MemberList members={trip.members} />
         </div>
 
-        {/* Next Button */}
-        <Button
-          onClick={() => navigate(`/trip/${trip.id}/availability`)}
-          className="w-full h-12 rounded-xl"
-        >
-          {t('nextAvailability')}
-          <ChevronRight size={16} className="ml-1" />
-        </Button>
+        <StepNav tripId={id ?? ''} current="members" />
       </main>
     </div>
   )
