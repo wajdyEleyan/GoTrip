@@ -9,7 +9,7 @@ import type {
 import type { MemberPreferences } from '@/types/preferences'
 import { computeDestinationScore } from './scoreEngine'
 import {
-  geocode, fetchClimate, fetchBiodiversity, fetchNasaPower, fetchEarthdata,
+  geocode, fetchClimate, fetchBiodiversity, fetchNasaPower, fetchEarthdata, fetchCoastal,
 } from './realData'
 
 export interface AnalyzeRequest {
@@ -50,11 +50,12 @@ export async function analyzeDestination(req: AnalyzeRequest): Promise<AnalyzeRe
     throw new Error(`Ort „${req.destination}" konnte nicht gefunden werden.`)
   }
 
-  const [climate, biodiversity, nasa, earthdata] = await Promise.all([
+  const [climate, biodiversity, nasa, earthdata, coastal] = await Promise.all([
     fetchClimate(geo.lat, geo.lon, req.startDate).catch(() => null),
     fetchBiodiversity(geo.countryCode, geo.name).catch(() => null),
     fetchNasaPower(geo.lat, geo.lon, req.startDate).catch(() => null),
     fetchEarthdata(geo.lat, geo.lon, req.startDate).catch(() => null),
+    fetchCoastal(geo.lat, geo.lon).catch(() => false),
   ])
 
   // Ohne jegliche Klimaquelle ist keine sinnvolle Bewertung möglich.
@@ -67,6 +68,8 @@ export async function analyzeDestination(req: AnalyzeRequest): Promise<AnalyzeRe
     interests,
     budgetMin: req.budgetMin,
     budgetMax: req.budgetMax,
+    coastal,
+    population: geo.population,
   })
 
   return {

@@ -13,6 +13,7 @@ export interface GeoPoint {
   countryCode: string
   name: string
   country: string
+  population?: number
 }
 
 const timeout = (ms: number) => AbortSignal.timeout(ms)
@@ -32,6 +33,22 @@ export async function geocode(destination: string): Promise<GeoPoint | null> {
     countryCode: r.country_code ?? 'DE',
     name: r.name,
     country: r.country ?? '',
+    population: typeof r.population === 'number' ? r.population : undefined,
+  }
+}
+
+// ── Küstennähe (Open-Meteo Marine API) ───────────────────────────────────────
+// Liefert nur an der Küste Wellendaten → ideal als „Meer/Strand vorhanden?".
+export async function fetchCoastal(lat: number, lon: number): Promise<boolean> {
+  try {
+    const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&daily=wave_height_max&forecast_days=1`
+    const resp = await fetch(url, { signal: timeout(7000) })
+    if (!resp.ok) return false
+    const data = await resp.json()
+    if (data.error) return false
+    return data.daily?.wave_height_max?.[0] != null
+  } catch {
+    return false
   }
 }
 

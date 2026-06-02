@@ -93,7 +93,9 @@ export function RecommendationSheet({ trip, user, onNext }: Props) {
 
   return (
     <div className="px-4 py-4 flex flex-col gap-4 pb-6">
-      <p className="text-xs text-gray-500 text-center">Score = KI × 40% + Sterne × 60%</p>
+      <p className="text-xs text-gray-500 text-center">
+        <strong className="text-gray-700">Daten-Score</strong> aus echten Messdaten (Klima · Natur · Lage · Interessen). Sterne kommen durchs Abstimmen dazu.
+      </p>
 
       {ranked.length === 0 ? (
         <div className="flex flex-col items-center py-8 gap-2 text-center">

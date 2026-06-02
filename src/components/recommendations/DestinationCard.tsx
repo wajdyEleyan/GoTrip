@@ -79,9 +79,12 @@ export function DestinationCard({ dest, rank, onVoteClick, showVoteButton = true
             </div>
           </div>
 
-          {/* Score ring */}
+          {/* Score ring — zeigt den reinen Daten-Score (Sterne separat unten) */}
           {dest.llmAnalysis && (
-            <ScoreRing score={dest.hybridScore} size={60} />
+            <div className="flex flex-col items-center gap-0.5 shrink-0">
+              <ScoreRing score={dest.llmAnalysis.score / 100} size={60} />
+              <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wide">Daten</span>
+            </div>
           )}
         </div>
 
