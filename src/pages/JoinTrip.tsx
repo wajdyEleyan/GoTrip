@@ -1,15 +1,16 @@
 // Autor: Wajdy Eleyan
 // src/pages/JoinTrip.tsx — /join/:code: Einladungslink beitreten
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useTripContext } from '@/context/TripContext'
 import { getTripByInviteCode } from '@/utils/storage'
+import { pullTrip, setActiveTrip } from '@/services/tripSync'
 import { useAuth } from '@/context/AuthContext'
-import type { Member } from '@/types/trip'
-import { Users, Plane, CheckCircle2, XCircle } from 'lucide-react'
+import type { Trip, Member } from '@/types/trip'
+import { Users, Plane, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import { ambientImage } from '@/utils/destinationImage'
 
 export default function JoinTrip() {
@@ -18,16 +19,42 @@ export default function JoinTrip() {
   const { addMember, refreshTrips } = useTripContext()
   const { user } = useAuth()
 
-  const trip = code ? getTripByInviteCode(code) : undefined
-
+  const [trip, setTrip] = useState<Trip | undefined>(undefined)
+  const [loading, setLoading] = useState(true)
   const [memberName, setMemberName] = useState(user?.name ?? '')
   const [nameError, setNameError] = useState('')
   const [joined, setJoined] = useState(false)
+
+  // Reise zuerst aus der geteilten DB holen (Freund hat sie nicht lokal),
+  // dann aus dem (nun aktualisierten) localStorage lesen.
+  useEffect(() => {
+    let active = true
+    async function load() {
+      if (!code) { setLoading(false); return }
+      await pullTrip(code)
+      if (!active) return
+      const found = getTripByInviteCode(code)
+      if (found) setActiveTrip(found.id, code)
+      setTrip(found)
+      setLoading(false)
+    }
+    void load()
+    return () => { active = false }
+  }, [code])
 
   // Check if user is already a member (Scenario D — re-join edge case)
   const isAlreadyMember = trip?.members.some(
     (m) => m.id === user?.id || m.name.toLowerCase() === memberName.toLowerCase()
   )
+
+  if (loading) {
+    return (
+      <div className="app-shell flex flex-col items-center justify-center min-h-svh px-6 text-center gap-3">
+        <Loader2 size={28} className="text-primary animate-spin" />
+        <p className="text-gray-500 text-sm">Reise wird geladen…</p>
+      </div>
+    )
+  }
 
   if (!trip) {
     return (

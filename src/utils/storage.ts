@@ -6,6 +6,7 @@ import type { MemberPreferences } from '@/types/preferences'
 import type { Destination, DestinationVote } from '@/types/destination'
 import type { Activity } from '@/types/activity'
 import type { Expense } from '@/types/expense'
+import { scheduleSync } from '@/services/tripSync'
 
 const TRIPS_KEY = 'gotrip_trips'
 const AUTH_KEY = 'gotrip_auth'
@@ -14,6 +15,7 @@ export function saveTrip(trip: Trip): void {
   const trips = getTrips()
   trips.push(trip)
   localStorage.setItem(TRIPS_KEY, JSON.stringify(trips))
+  scheduleSync()
 }
 
 export function getTrips(): Trip[] {
@@ -32,6 +34,7 @@ export function getTripById(id: string): Trip | undefined {
 export function updateTrip(updated: Trip): void {
   const trips = getTrips().map((t) => (t.id === updated.id ? updated : t))
   localStorage.setItem(TRIPS_KEY, JSON.stringify(trips))
+  scheduleSync()
 }
 
 export function deleteTrip(id: string): void {
@@ -72,6 +75,7 @@ export function saveMemberAvailability(data: MemberAvailability): void {
   )
   all.push(data)
   localStorage.setItem(AVAIL_KEY, JSON.stringify(all))
+  scheduleSync()
 }
 
 export function getTripAvailabilities(tripId: string): MemberAvailability[] {
@@ -96,6 +100,7 @@ export function saveMemberPreferences(prefs: MemberPreferences): void {
   )
   all.push(prefs)
   localStorage.setItem(PREFS_KEY, JSON.stringify(all))
+  scheduleSync()
 }
 
 export function getTripPreferences(tripId: string): MemberPreferences[] {
@@ -122,6 +127,7 @@ export function saveDestination(dest: Destination): void {
   if (idx >= 0) all[idx] = dest
   else all.push(dest)
   localStorage.setItem(DEST_KEY, JSON.stringify(all))
+  scheduleSync()
 }
 
 // ─── Destination Votes ───────────────────────────────────────────────────────
@@ -142,6 +148,7 @@ export function saveVote(vote: DestinationVote): void {
   if (idx >= 0) all[idx] = vote
   else all.push(vote)
   localStorage.setItem(VOTES_KEY, JSON.stringify(all))
+  scheduleSync()
 }
 
 export function getMemberVote(destinationId: string, memberId: string): DestinationVote | undefined {
@@ -166,6 +173,7 @@ export function saveActivity(act: Activity): void {
   if (idx >= 0) all[idx] = act
   else all.push(act)
   localStorage.setItem(ACT_KEY, JSON.stringify(all))
+  scheduleSync()
 }
 
 // ─── Expenses ────────────────────────────────────────────────────────────────
@@ -184,6 +192,7 @@ export function saveExpense(exp: Expense): void {
   if (idx >= 0) all[idx] = exp
   else all.push(exp)
   localStorage.setItem(EXP_KEY, JSON.stringify(all))
+  scheduleSync()
 }
 
 export function deleteExpense(expId: string): void {

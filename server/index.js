@@ -21,7 +21,84 @@ const PORT = process.env.PORT || 3001
 const EARTHDATA_TOKEN = process.env.EARTHDATA_TOKEN
 
 app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:4173'] }))
-app.use(express.json())
+app.use(express.json({ limit: '2mb' }))
+
+// ─── Geteilte Reise-Datenbank (Postgres / Neon) ─────────────────────────────
+// Speichert pro Reise EIN Dokument (alle Daten) unter ihrem inviteCode, damit
+// alle Gruppenmitglieder dieselbe Reise sehen. Ohne DATABASE_URL ist die
+// Sync-API inaktiv → die App läuft dann rein lokal pro Browser (wie zuvor).
+let pool = null
+const DATABASE_URL = process.env.DATABASE_URL
+if (DATABASE_URL) {
+  const { Pool } = require('pg')
+  pool = new Pool({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } })
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS trips (
+      invite_code TEXT PRIMARY KEY,
+      data        JSONB NOT NULL,
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `).then(() => console.log('DB: Tabelle "trips" bereit'))
+    .catch((e) => console.error('DB-Init-Fehler:', e.message))
+}
+
+// Arrays nach Schlüssel mergen: vorhandene bleiben, eingehende gewinnen bei
+// Konflikt. So gehen Beiträge anderer Mitglieder nicht verloren.
+function mergeArray(existing = [], incoming = [], keyFn) {
+  const map = new Map()
+  for (const it of existing) map.set(keyFn(it), it)
+  for (const it of incoming) map.set(keyFn(it), it)
+  return [...map.values()]
+}
+
+function mergeTrip(existing, incoming) {
+  if (!existing) return incoming
+  // Mitglieder leben in trip.members und müssen vereint werden (Beitreten!).
+  const baseTrip = incoming.trip ?? existing.trip
+  const members = mergeArray(existing.trip?.members, incoming.trip?.members, (m) => m.id)
+  return {
+    trip:           { ...baseTrip, members },
+    availabilities: mergeArray(existing.availabilities, incoming.availabilities, (a) => a.memberId),
+    preferences:    mergeArray(existing.preferences, incoming.preferences, (p) => p.memberId),
+    destinations:   mergeArray(existing.destinations, incoming.destinations, (d) => d.id),
+    votes:          mergeArray(existing.votes, incoming.votes, (v) => `${v.destinationId}|${v.memberId}`),
+    activities:     mergeArray(existing.activities, incoming.activities, (a) => a.id),
+    expenses:       mergeArray(existing.expenses, incoming.expenses, (e) => e.id),
+  }
+}
+
+// GET /api/trips/:code → ganzes Reise-Bündel
+app.get('/api/trips/:code', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  try {
+    const { rows } = await pool.query('SELECT data FROM trips WHERE invite_code = $1', [req.params.code])
+    if (!rows.length) return res.status(404).json({ error: 'Reise nicht gefunden' })
+    res.json(rows[0].data)
+  } catch (e) {
+    console.error('DB GET-Fehler:', e.message)
+    res.status(500).json({ error: 'DB-Fehler' })
+  }
+})
+
+// PUT /api/trips/:code → Bündel mit dem gespeicherten Stand mergen & speichern
+app.put('/api/trips/:code', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  const incoming = req.body
+  if (!incoming || typeof incoming !== 'object') return res.status(400).json({ error: 'Ungültige Daten' })
+  try {
+    const { rows } = await pool.query('SELECT data FROM trips WHERE invite_code = $1', [req.params.code])
+    const merged = mergeTrip(rows[0]?.data, incoming)
+    await pool.query(
+      `INSERT INTO trips (invite_code, data, updated_at) VALUES ($1, $2, now())
+       ON CONFLICT (invite_code) DO UPDATE SET data = $2, updated_at = now()`,
+      [req.params.code, merged],
+    )
+    res.json(merged)
+  } catch (e) {
+    console.error('DB PUT-Fehler:', e.message)
+    res.status(500).json({ error: 'DB-Fehler' })
+  }
+})
 
 // ─── NASA Earthdata (CMR) ───────────────────────────────────────────────────
 // Nutzt den Earthdata Login Token (Bearer/JWT) gegen das Common Metadata
@@ -94,6 +171,7 @@ app.get('/api/earthdata', async (req, res) => {
 app.get('/health', (_req, res) => res.json({
   status: 'ok',
   earthdata: !!EARTHDATA_TOKEN,
+  database: !!pool,
 }))
 
 // ─── Produktion (z. B. Render): Frontend-Build mit ausliefern ───────────────
@@ -110,6 +188,7 @@ if (fs.existsSync(distDir)) {
 
 app.listen(PORT, () => {
   console.log(`GoTrip-Server läuft auf Port ${PORT}`)
+  console.log(`Geteilte Reise-DB: ${pool ? '✓ verbunden (Mehrnutzer aktiv)' : '✗ keine DATABASE_URL (nur lokal pro Browser)'}`)
   console.log(`NASA Earthdata (CMR): ${EARTHDATA_TOKEN ? '✓ Token gesetzt' : '✗ kein Token (EARTHDATA_TOKEN)'}`)
   console.log(`Frontend-Build: ${fs.existsSync(distDir) ? '✓ wird aus /dist ausgeliefert' : '– (Dev: via Vite)'}`)
   console.log(`Übrige Daten (Copernicus, GBIF, NASA POWER) holt das Frontend direkt.`)

@@ -11,6 +11,10 @@ services:
     buildCommand: npm install --include=dev && npm run build && npm install --prefix server
     startCommand: node server/index.js
     envVars:
+      # Postgres-Verbindung (Neon/Supabase) für geteilte Reisen.
+      # Im Render-Dashboard unter "Environment" setzen (Connection String).
+      - key: DATABASE_URL
+        sync: false
       # NASA Earthdata Login Token — NICHT hier eintragen!
       # Im Render-Dashboard unter "Environment" setzen (sync: false).
       - key: EARTHDATA_TOKEN

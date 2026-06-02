@@ -22,6 +22,7 @@ import { useTripContext } from '@/context/TripContext'
 import { useAuth } from '@/context/AuthContext'
 import { useLanguage } from '@/context/LanguageContext'
 import { getMemberPreferences, getTripDestinations } from '@/utils/storage'
+import { setActiveTrip, pullTrip, startPolling, stopPolling } from '@/services/tripSync'
 import { ambientImage } from '@/utils/destinationImage'
 import { firstIncompleteStep, stepLabelKey, type PlanStep } from '@/utils/flow'
 import type { InterestType } from '@/types/preferences'
@@ -61,6 +62,7 @@ export default function TripDashboard() {
   const [myBudget, setMyBudget] = useState<number | null>(null)
   const [myInterests, setMyInterests] = useState<InterestType[]>([])
   const [destCount, setDestCount] = useState(0)
+  const [syncTick, setSyncTick] = useState(0)
 
   useEffect(() => {
     if (!id || !user) return
@@ -68,7 +70,23 @@ export default function TripDashboard() {
     setMyBudget(mine?.budgetPerPerson ?? null)
     setMyInterests(mine?.interests ?? [])
     setDestCount(getTripDestinations(id).length)
-  }, [id, user, openTile])
+  }, [id, user, openTile, syncTick])
+
+  // Geteilte Reise: vom Server laden, regelmäßig aktualisieren, bei Updates neu rendern.
+  const tripCode = trip?.inviteCode
+  useEffect(() => {
+    if (!id || !tripCode) return
+    setActiveTrip(id, tripCode)
+    void pullTrip(tripCode)
+    startPolling()
+    const onSync = () => setSyncTick((t) => t + 1)
+    window.addEventListener('gotrip-sync', onSync)
+    return () => {
+      window.removeEventListener('gotrip-sync', onSync)
+      stopPolling()
+      setActiveTrip(null)
+    }
+  }, [id, tripCode])
 
   function closePopup() { setOpenTile(null) }
 
