@@ -100,7 +100,7 @@ export default function Login() {
         {/* Login Form — glass card */}
         <div className="glass-card w-full max-w-sm rounded-2xl p-5 flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="username" className="text-sm font-semibold text-gray-700">{t('yourName')}</Label>
+            <Label htmlFor="username" className="text-sm font-semibold text-gray-700">{t('usernameLabel')}</Label>
             <div className="glass-field rounded-xl overflow-hidden">
               <Input
                 id="username"
@@ -112,6 +112,7 @@ export default function Login() {
                 className="h-12 rounded-xl border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-gray-400"
               />
             </div>
+            <p className="text-xs text-gray-500 leading-snug">{t('usernameHint')}</p>
           </div>
 
           <Button
@@ -119,7 +120,7 @@ export default function Login() {
             disabled={!name.trim() || busy}
             className="w-full h-12 rounded-xl text-base font-semibold bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/30 disabled:opacity-40"
           >
-            {busy ? '…' : t('guestStart')}
+            {busy ? '…' : t('signIn')}
           </Button>
         </div>
       </div>
