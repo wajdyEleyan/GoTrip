@@ -40,6 +40,18 @@ if (DATABASE_URL) {
     )
   `).then(() => console.log('DB: Tabelle "trips" bereit'))
     .catch((e) => console.error('DB-Init-Fehler:', e.message))
+
+  // Benutzerkonten: Username ist die (eindeutige) Identität. Pro Konto merken
+  // wir die Einladungscodes der Reisen, an denen es beteiligt ist — so sieht
+  // ein Nutzer seine Reisen auf JEDEM Gerät, sobald er sich mit dem Namen anmeldet.
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      username    TEXT PRIMARY KEY,
+      codes       JSONB NOT NULL DEFAULT '[]'::jsonb,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `).then(() => console.log('DB: Tabelle "users" bereit'))
+    .catch((e) => console.error('DB-Init-Fehler (users):', e.message))
 }
 
 // Arrays nach Schlüssel mergen: vorhandene bleiben, eingehende gewinnen bei
@@ -96,6 +108,48 @@ app.put('/api/trips/:code', async (req, res) => {
     res.json(merged)
   } catch (e) {
     console.error('DB PUT-Fehler:', e.message)
+    res.status(500).json({ error: 'DB-Fehler' })
+  }
+})
+
+// ─── Benutzerkonten ─────────────────────────────────────────────────────────
+// POST /api/login {username} → Konto holen oder neu anlegen.
+// Eindeutiger Username (PRIMARY KEY) verhindert doppelte Namen. Gibt die
+// Einladungscodes der Reisen des Kontos zurück (für „sieht seine Daten überall").
+app.post('/api/login', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  const username = String(req.body?.username || '').trim()
+  if (!username) return res.status(400).json({ error: 'Username erforderlich' })
+  try {
+    const ins = await pool.query(
+      'INSERT INTO users (username) VALUES ($1) ON CONFLICT (username) DO NOTHING',
+      [username],
+    )
+    const { rows } = await pool.query('SELECT codes FROM users WHERE username = $1', [username])
+    res.json({ username, codes: rows[0]?.codes ?? [], isNew: ins.rowCount === 1 })
+  } catch (e) {
+    console.error('DB login-Fehler:', e.message)
+    res.status(500).json({ error: 'DB-Fehler' })
+  }
+})
+
+// POST /api/users/:username/codes {code} → Reise (inviteCode) dem Konto zuordnen.
+app.post('/api/users/:username/codes', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  const username = String(req.params.username || '').trim()
+  const code = String(req.body?.code || '').trim()
+  if (!username || !code) return res.status(400).json({ error: 'username & code erforderlich' })
+  try {
+    await pool.query('INSERT INTO users (username) VALUES ($1) ON CONFLICT (username) DO NOTHING', [username])
+    await pool.query(
+      `UPDATE users SET codes = (
+         SELECT jsonb_agg(DISTINCT e) FROM jsonb_array_elements_text(codes || to_jsonb($2::text)) e
+       ) WHERE username = $1`,
+      [username, code],
+    )
+    res.json({ ok: true })
+  } catch (e) {
+    console.error('DB codes-Fehler:', e.message)
     res.status(500).json({ error: 'DB-Fehler' })
   }
 })

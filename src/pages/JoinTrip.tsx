@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { useTripContext } from '@/context/TripContext'
 import { getTripByInviteCode } from '@/utils/storage'
 import { pullTrip, setActiveTrip } from '@/services/tripSync'
+import { attachCodeToAccount } from '@/services/account'
 import { useAuth } from '@/context/AuthContext'
 import type { Trip, Member } from '@/types/trip'
 import { Users, Plane, CheckCircle2, XCircle, Loader2, Calendar } from 'lucide-react'
@@ -124,6 +125,8 @@ export default function JoinTrip() {
     }
 
     addMember(trip!.id, newMember)
+    // Reise dem (eingeloggten) Konto zuordnen → erscheint nach Login auf jedem Gerät.
+    if (user && code) void attachCodeToAccount(user.name, code)
     setJoined(true)
   }
 

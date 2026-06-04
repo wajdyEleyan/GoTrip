@@ -21,10 +21,15 @@ export default function Login() {
   const navigate = useNavigate()
   const { t, lang, setLang } = useLanguage()
   const [name, setName] = useState('')
+  const [busy, setBusy] = useState(false)
 
-  // 1-Klick-Login: Name ist optional, sonst „Gast" (3-Klick-Regel, FR-1)
-  function handleStart() {
-    login(name.trim() || 'Gast')
+  // Anmeldung per (eindeutigem) Username: existiert er, kommt man rein und
+  // sieht seine Reisen; sonst wird das Konto neu angelegt.
+  async function handleStart() {
+    const username = name.trim()
+    if (!username || busy) return
+    setBusy(true)
+    await login(username)
     navigate('/home')
   }
 
@@ -111,9 +116,10 @@ export default function Login() {
 
           <Button
             onClick={handleStart}
-            className="w-full h-12 rounded-xl text-base font-semibold bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/30"
+            disabled={!name.trim() || busy}
+            className="w-full h-12 rounded-xl text-base font-semibold bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/30 disabled:opacity-40"
           >
-            {t('guestStart')}
+            {busy ? '…' : t('guestStart')}
           </Button>
         </div>
       </div>
