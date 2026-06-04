@@ -24,11 +24,11 @@ import { useLanguage } from '@/context/LanguageContext'
 import { getMemberPreferences, getTripDestinations } from '@/utils/storage'
 import { setActiveTrip, pullTrip, startPolling, stopPolling } from '@/services/tripSync'
 import { TRIP_BG } from '@/utils/destinationImage'
-import { firstIncompleteStep, stepLabelKey, type PlanStep } from '@/utils/flow'
+import type { PlanStep } from '@/utils/flow'
 import type { InterestType } from '@/types/preferences'
 import {
-  Users, Calendar, Heart, Sparkles, Star, Zap, Trophy, Wallet, CalendarRange,
-  MapPin, Wallet as WalletIcon, ChevronRight, ArrowRight,
+  Users, Calendar, Heart, MapPinned, Star, Zap, Trophy, Wallet, CalendarRange,
+  MapPin, Wallet as WalletIcon,
   Umbrella, Building2, Trees, Mountain, Landmark, Music, Flower2, Utensils, ShoppingBag,
   type LucideIcon,
 } from 'lucide-react'
@@ -45,7 +45,7 @@ const STEPS = [
   { key: 'members' as TileKey, labelKey: 'stepMembers' as const, icon: Users, descKey: 'stepMembersDesc' as const },
   { key: 'availability' as TileKey, labelKey: 'stepAvailability' as const, icon: Calendar, descKey: 'stepAvailabilityDesc' as const },
   { key: 'preferences' as TileKey, labelKey: 'stepPreferences' as const, icon: Heart, descKey: 'stepPreferencesDesc' as const },
-  { key: 'recommendation' as TileKey, labelKey: 'stepRecommendation' as const, icon: Sparkles, descKey: 'stepRecommendationDesc' as const },
+  { key: 'recommendation' as TileKey, labelKey: 'tileDestination' as const, icon: MapPinned, descKey: 'stepRecommendationDesc' as const },
   { key: 'vote' as TileKey, labelKey: 'stepVote' as const, icon: Star, descKey: 'stepVoteDesc' as const },
   { key: 'activities' as TileKey, labelKey: 'stepActivities' as const, icon: Zap, descKey: 'stepActivitiesDesc' as const },
   { key: 'final' as TileKey, labelKey: 'stepFinal' as const, icon: Trophy, descKey: 'stepFinalDesc' as const },
@@ -107,7 +107,6 @@ export default function TripDashboard() {
     )
   }
 
-  const nextStep = firstIncompleteStep(trip.id)
   const openStep = STEPS.find(s => s.key === openTile)
 
   const datesSet = trip.startDate !== trip.endDate
@@ -147,11 +146,11 @@ export default function TripDashboard() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: TRIP_BG, filter: 'blur(2px)', transform: 'scale(1.08)' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/72 via-white/90 to-white/96" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/70 to-white/90" />
       </div>
 
       <div className="relative z-10 flex flex-col min-h-svh">
-        <PageHeader title={trip.name} backTo="/home" transparent onLight />
+        <PageHeader title={trip.name} showBack={false} transparent onLight />
 
         <main className="flex-1 px-4 py-5 pb-28 overflow-y-auto flex flex-col gap-3">
           {/* Zusammenfassung — weiße Frost-Karte */}
@@ -190,23 +189,8 @@ export default function TripDashboard() {
             )}
           </div>
 
-          {/* Smart Next — nächster offener Schritt (einziger kräftiger Petrol-Block) */}
-          <button
-            onClick={() => setOpenTile(nextStep)}
-            className="w-full rounded-2xl bg-primary text-white p-4 flex items-center gap-3 shadow-lg shadow-primary/30 active:scale-[0.98] transition-transform"
-          >
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-              <ArrowRight size={20} className="text-white" />
-            </div>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-[11px] font-semibold text-white/80 uppercase tracking-wide">Vorschlag</p>
-              <p className="font-bold text-sm truncate">{t(stepLabelKey(nextStep) as any)}</p>
-            </div>
-            <ChevronRight size={18} className="text-white/70" />
-          </button>
-
           {/* Section label */}
-          <p className="text-xs font-bold text-ink/50 uppercase tracking-wider px-1 mt-1">{t('whatToDo')}</p>
+          <p className="text-xs font-bold text-ink/60 uppercase tracking-wider px-1 mt-1">{t('whatToDo')}</p>
 
           {/* Kacheln — zwei Spalten, kompakt, neutral; Petrol nur bei Hover */}
           <div className="grid grid-cols-2 gap-3">

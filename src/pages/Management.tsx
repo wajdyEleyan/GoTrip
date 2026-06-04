@@ -2,11 +2,12 @@
 // Gesamtübersicht über die Bar: zeigt ALLES, was die Gruppe eingegeben hat —
 // gemeinsame Reiseziele + Bewertungen und pro Mitglied Verfügbarkeit, Interessen,
 // Budget und abgegebene Bewertungen. Reine Lese-Ansicht (für alle sichtbar).
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Users, Star, MapPin, CalendarCheck, Heart, Wallet,
   Umbrella, Building2, Trees, Mountain, Landmark, Music, Flower2, Utensils, ShoppingBag, Zap, ThumbsUp,
+  Sparkles, ChevronDown, ChevronUp,
   type LucideIcon,
 } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -36,6 +37,7 @@ export default function Management() {
 
   const trip = id ? getTripById(id) : undefined
   const [, setSyncTick] = useState(0)
+  const [openData, setOpenData] = useState<string | null>(null)
 
   const tripCode = trip?.inviteCode
   useEffect(() => {
@@ -75,6 +77,7 @@ export default function Management() {
     return {
       id: d.id, name: d.name, dataScore, starsAvg, voteCount: votes.length,
       hybrid: calcHybridScore(d.llmAnalysis?.score ?? 50, starsAvg),
+      dest: d,
     }
   }).sort((a, b) => b.hybrid - a.hybrid)
 
@@ -108,21 +111,85 @@ export default function Management() {
               <div className="rounded-2xl bg-white/80 border border-white/90 shadow-sm p-4 text-sm text-gray-500 text-center">
                 Noch keine Reiseziele vorgeschlagen.
               </div>
-            ) : rankedDest.map(d => (
-              <div key={d.id} className="rounded-2xl bg-white/85 backdrop-blur-md border border-white/90 shadow-sm p-3.5 flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-ink truncate">{d.name}</p>
-                  <p className="text-[11px] text-ink/50 mt-0.5">{d.voteCount} {d.voteCount === 1 ? 'Stimme' : 'Stimmen'}</p>
+            ) : rankedDest.map(d => {
+              const open = openData === d.id
+              const dest = d.dest
+              const an = dest.llmAnalysis
+              return (
+                <div key={d.id} className="rounded-2xl bg-white/85 backdrop-blur-md border border-white/90 shadow-sm overflow-hidden">
+                  <div className="p-3.5 flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-ink truncate">{d.name}</p>
+                      <p className="text-[11px] text-ink/50 mt-0.5">{d.voteCount} {d.voteCount === 1 ? 'Stimme' : 'Stimmen'}</p>
+                    </div>
+                    {d.dataScore > 0 && (
+                      <span className="text-xs font-bold text-primary shrink-0">{d.dataScore}%</span>
+                    )}
+                    <span className="flex items-center gap-1 text-xs font-bold text-amber-500 shrink-0">
+                      <Star size={13} className="fill-amber-400 text-amber-400" />
+                      {d.starsAvg > 0 ? d.starsAvg.toFixed(1) : '–'}
+                    </span>
+                  </div>
+
+                  {/* KI-Analyse-Zeile — Klick zeigt alle gesammelten API-Daten */}
+                  <button
+                    onClick={() => setOpenData(open ? null : d.id)}
+                    className="w-full flex items-center justify-between px-3.5 py-2.5 border-t border-gray-100 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors"
+                    aria-expanded={open}
+                  >
+                    <span className="flex items-center gap-1.5"><Sparkles size={13} /> KI-Analyse · alle Daten</span>
+                    {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                  </button>
+
+                  {open && (
+                    <div className="px-3.5 pb-3.5 pt-1 flex flex-col gap-2.5 text-[12px] text-ink/80 border-t border-gray-50">
+                      {dest.dataError ? (
+                        <p className="text-danger">Echte Daten konnten nicht geladen werden.</p>
+                      ) : !an ? (
+                        <p className="text-ink/40 italic">Noch keine Analyse — Ziel in „Reiseziel" hinzufügen.</p>
+                      ) : (
+                        <>
+                          {dest.climate && (
+                            <DataBlock label="Klima · Copernicus/ERA5">
+                              ⌀ {dest.climate.temp_avg}°C ({dest.climate.temp_min}–{dest.climate.temp_max}°C) · {dest.climate.precipitation_mm} mm Niederschlag · {dest.climate.sunshine_hours} h Sonne
+                            </DataBlock>
+                          )}
+                          {dest.biodiversity && (
+                            <DataBlock label="Natur · GBIF">
+                              {dest.biodiversity.species_count.toLocaleString('de-DE')} Arten · {dest.biodiversity.highlight}
+                            </DataBlock>
+                          )}
+                          {dest.nasa && (
+                            <DataBlock label="NASA POWER">
+                              {dest.nasa.solar_irradiance != null && <>{dest.nasa.solar_irradiance} kWh/m²/Tag Sonne · </>}
+                              {dest.nasa.humidity != null && <>{dest.nasa.humidity}% Luftfeuchte · </>}
+                              {dest.nasa.wind_speed != null && <>{dest.nasa.wind_speed} m/s Wind</>}
+                            </DataBlock>
+                          )}
+                          {dest.earthdata && (
+                            <DataBlock label="NASA Earthdata">
+                              {dest.earthdata.granule_count} Datensätze · {dest.earthdata.dataset}
+                            </DataBlock>
+                          )}
+                          <DataBlock label={`Begründung · Score ${an.score}%`}>
+                            {an.reasoning}
+                          </DataBlock>
+                          {an.dataPoints.length > 0 && (
+                            <ul className="flex flex-col gap-1 mt-0.5">
+                              {an.dataPoints.map((pt, i) => (
+                                <li key={i} className="flex items-start gap-1.5">
+                                  <span className="text-primary mt-0.5">•</span><span>{pt}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {d.dataScore > 0 && (
-                  <span className="text-xs font-bold text-primary shrink-0">{d.dataScore}%</span>
-                )}
-                <span className="flex items-center gap-1 text-xs font-bold text-amber-500 shrink-0">
-                  <Star size={13} className="fill-amber-400 text-amber-400" />
-                  {d.starsAvg > 0 ? d.starsAvg.toFixed(1) : '–'}
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </section>
 
           {/* Pro Mitglied — alles im Überblick */}
@@ -214,6 +281,16 @@ export default function Management() {
 
         <BottomNav />
       </div>
+    </div>
+  )
+}
+
+// Beschrifteter Datenblock für die aufgeklappte KI-Analyse.
+function DataBlock({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <p className="text-[10px] font-bold text-ink/45 uppercase tracking-wide mb-0.5">{label}</p>
+      <p className="leading-snug">{children}</p>
     </div>
   )
 }

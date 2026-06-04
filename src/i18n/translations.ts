@@ -81,6 +81,7 @@ const de = {
   membersLabelPlural: 'Mitglieder',
   // TripDashboard
   whatToDo: 'Was möchtest du tun?',
+  tileDestination: 'Reiseziel',
   budgetFromPrefs: 'Budget (Ø aus Präferenzen)',
   overlapPeriod: 'Überschneidungszeitraum',
   noOverlapYet: 'Noch keine Präferenzen eingegeben',
@@ -232,6 +233,7 @@ const en: typeof de = {
   membersLabel: 'Member',
   membersLabelPlural: 'Members',
   whatToDo: 'What would you like to do?',
+  tileDestination: 'Destination',
   budgetFromPrefs: 'Budget (avg from preferences)',
   overlapPeriod: 'Overlap Period',
   noOverlapYet: 'No preferences entered yet',
@@ -373,6 +375,7 @@ const es: typeof de = {
   membersLabel: 'Miembro',
   membersLabelPlural: 'Miembros',
   whatToDo: '¿Qué deseas hacer?',
+  tileDestination: 'Destino',
   budgetFromPrefs: 'Presupuesto (prom. de preferencias)',
   overlapPeriod: 'Período de coincidencia',
   noOverlapYet: 'Aún no hay preferencias',
