@@ -21,13 +21,25 @@ type ActiveSheet = 'create' | 'trips' | 'join' | null
 export default function Home() {
   const navigate = useNavigate()
   const { trips, refreshTrips } = useTripContext()
-  const { user, logout } = useAuth()
+  const { user, login, logout, isLoading } = useAuth()
   const { t, lang, setLang } = useLanguage()
 
   const [sheet, setSheet] = useState<ActiveSheet>(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
   const [joinCode, setJoinCode] = useState('')
+  const [loginName, setLoginName] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  // Anmeldung passiert auf DEMSELBEN Startscreen — kein Wechsel der Seite.
+  async function handleLogin() {
+    const username = loginName.trim()
+    if (!username || busy) return
+    setBusy(true)
+    await login(username)
+    setBusy(false)
+    // user ist jetzt gesetzt → derselbe Screen zeigt nun „Neue Reise / Beitreten".
+  }
   const profileRef = useRef<HTMLDivElement>(null)
   const langRef = useRef<HTMLDivElement>(null)
 
@@ -49,6 +61,15 @@ export default function Home() {
   function goJoin() {
     const code = joinCode.trim()
     if (code) navigate(`/join/${code}`)
+  }
+
+  // Kurzer Ladezustand, bis die gespeicherte Sitzung gelesen ist (kein Login-Flackern).
+  if (isLoading) {
+    return (
+      <div className="app-shell flex items-center justify-center min-h-svh">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
   }
 
   return (
@@ -103,7 +124,8 @@ export default function Home() {
               )}
             </div>
 
-            {/* Profile */}
+            {/* Profile — nur wenn eingeloggt */}
+            {user && (
             <div className="relative" ref={profileRef}>
               <button onClick={() => { setProfileOpen(v => !v); setLangOpen(false) }}
                 className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-md ring-1 ring-white/30 text-white font-bold text-xs hover:bg-white/25 transition-colors">
@@ -126,6 +148,7 @@ export default function Home() {
                 </div>
               )}
             </div>
+            )}
           </div>
         </div>
       </header>
@@ -137,30 +160,55 @@ export default function Home() {
           <h1 className="text-4xl font-extrabold text-white leading-[1.08] tracking-tight drop-shadow-lg">
             {t('sloganLine1')}<br />{t('sloganLine2')}<br />{t('sloganLine3')}
           </h1>
-          <p className="text-sm text-white/85 mt-4 max-w-[240px] drop-shadow">
-            {t('hiUser', { name: user?.name ?? '' })} — {t('homeTagline')}.
+          <p className="text-sm text-white/85 mt-4 max-w-[260px] drop-shadow">
+            {user ? `${t('hiUser', { name: user.name })} — ${t('homeTagline')}.` : t('tagline')}
           </p>
         </div>
 
         {/* Abstand */}
         <div className="flex-1" />
 
-        {/* Buttons unten */}
-        <div className="flex flex-col gap-3">
-          <button
-            onClick={() => setSheet('create')}
-            className="w-full h-14 rounded-2xl bg-primary/90 hover:bg-primary text-white text-base font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-lg shadow-black/20"
-          >
-            {t('createNewTrip')}
-            <ArrowRight size={18} />
-          </button>
-          <button
-            onClick={() => setSheet('join')}
-            className="w-full h-12 rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/40 text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-          >
-            {t('join')}
-          </button>
-        </div>
+        {user ? (
+          /* Eingeloggt: Aktionen */
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setSheet('create')}
+              className="w-full h-14 rounded-2xl bg-primary/90 hover:bg-primary text-white text-base font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-lg shadow-black/20"
+            >
+              {t('createNewTrip')}
+              <ArrowRight size={18} />
+            </button>
+            <button
+              onClick={() => setSheet('join')}
+              className="w-full h-12 rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/40 text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            >
+              {t('join')}
+            </button>
+          </div>
+        ) : (
+          /* Nicht eingeloggt: Username-Anmeldung auf DEMSELBEN Screen */
+          <div className="flex flex-col gap-2.5 rounded-2xl bg-white/12 backdrop-blur-md ring-1 ring-white/25 p-4">
+            <label htmlFor="login-username" className="text-xs font-semibold text-white/85">{t('usernameLabel')}</label>
+            <input
+              id="login-username"
+              value={loginName}
+              onChange={e => setLoginName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleLogin() }}
+              placeholder={t('namePlaceholder')}
+              autoFocus
+              className="w-full h-12 px-4 rounded-xl bg-white/92 text-gray-900 text-base placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+            <button
+              onClick={handleLogin}
+              disabled={!loginName.trim() || busy}
+              className="w-full h-12 rounded-xl bg-primary hover:bg-primary-hover text-white text-base font-bold flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98] transition-all shadow-lg shadow-black/20"
+            >
+              {busy ? '…' : t('signIn')}
+              {!busy && <ArrowRight size={18} />}
+            </button>
+            <p className="text-[11px] text-white/70 leading-snug">{t('usernameHint')}</p>
+          </div>
+        )}
       </main>
 
       {/* ── Pop-up: Neue Reise ── */}

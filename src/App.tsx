@@ -8,7 +8,6 @@ import { Toaster } from '@/components/shared/Toast'
 import type { ReactNode } from 'react'
 
 // Pages
-import Login from '@/pages/Login'
 import Home from '@/pages/Home'
 import CreateTrip from '@/pages/CreateTrip'
 import EditTrip from '@/pages/EditTrip'
@@ -42,12 +41,12 @@ function RequireAuth({ children }: { children: ReactNode }) {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public */}
-      <Route path="/" element={<Login />} />
+      {/* Public — EIN Startscreen: Willkommen + Login zugleich */}
+      <Route path="/" element={<Home />} />
+      <Route path="/home" element={<Home />} />
       <Route path="/join/:code" element={<JoinTrip />} />
 
       {/* Protected */}
-      <Route path="/home" element={<RequireAuth><Home /></RequireAuth>} />
       <Route path="/create" element={<RequireAuth><CreateTrip /></RequireAuth>} />
       <Route path="/trip/:id/edit" element={<RequireAuth><EditTrip /></RequireAuth>} />
       <Route path="/trip/:id/dashboard" element={<RequireAuth><TripDashboard /></RequireAuth>} />
