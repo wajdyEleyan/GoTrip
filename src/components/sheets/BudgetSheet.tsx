@@ -40,15 +40,11 @@ export function BudgetSheet({ trip, user, onNext }: Props) {
 
   return (
     <div className="px-4 py-4 flex flex-col gap-4 pb-6">
-      {/* Eigenes Budget — große Anzeige */}
-      <div className="bg-primary rounded-2xl p-4 text-white flex items-center gap-4">
-        <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-          <Wallet size={22} className="text-white" />
-        </div>
-        <div>
-          <p className="text-xs text-white/70">Mein Budget pro Person</p>
-          <p className="text-2xl font-bold">{budget.toLocaleString('de-DE')} €</p>
-        </div>
+      {/* Eigenes Budget — kompakte Anzeige */}
+      <div className="bg-primary rounded-xl px-3.5 py-2.5 text-white flex items-center gap-2.5">
+        <Wallet size={16} className="text-white/90 shrink-0" />
+        <p className="text-xs text-white/80 flex-1">Pro Person</p>
+        <p className="text-lg font-bold">{budget.toLocaleString('de-DE')} €</p>
       </div>
 
       <p className="text-sm text-gray-600">

@@ -2,10 +2,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Sparkles } from 'lucide-react'
 import { DestinationCard } from '@/components/recommendations/DestinationCard'
+import { VotingCard } from '@/components/voting/VotingCard'
 import { AddDestinationForm } from '@/components/recommendations/AddDestinationForm'
 import {
   getTripDestinations, saveDestination, getTripVotes,
-  getMemberVote, getTripPreferences,
+  getMemberVote, getTripPreferences, saveVote,
 } from '@/utils/storage'
 import { analyzeDestination } from '@/services/llmService'
 import { calcHybridScore } from '@/utils/scoring'
@@ -34,15 +35,24 @@ export function RecommendationSheet({ trip, user, onNext }: Props) {
     .map(d => {
       const votes = getTripVotes(trip.id).filter(v => v.destinationId === d.id)
       const starsAvg = votes.length > 0 ? votes.reduce((s, v) => s + v.stars, 0) / votes.length : 0
+      const mine = getMemberVote(d.id, user.id)
       return {
         ...d,
         starsAvg,
         voteCount: votes.length,
         hybridScore: calcHybridScore(d.llmAnalysis?.score ?? 50, starsAvg),
-        myVote: getMemberVote(d.id, user.id)?.stars,
+        myVote: mine?.stars ?? 0,
+        myComment: mine?.comment ?? '',
+        allVotes: votes,
       }
     })
     .sort((a, b) => b.hybridScore - a.hybridScore)
+
+  // Bewerten passiert jetzt direkt hier (die „Abstimmen"-Kachel ist entfallen).
+  function handleVote(destId: string, stars: number, comment = '') {
+    saveVote({ destinationId: destId, memberId: user.id, memberName: user.name, stars, comment, votedAt: new Date().toISOString() })
+    load()
+  }
 
   async function handleAddDestination(name: string, country: string) {
     setIsAdding(true)
@@ -94,7 +104,7 @@ export function RecommendationSheet({ trip, user, onNext }: Props) {
   return (
     <div className="px-4 py-4 flex flex-col gap-4 pb-6">
       <p className="text-xs text-gray-500 text-center">
-        <strong className="text-gray-700">Daten-Score</strong> aus echten Messdaten (Klima · Natur · Lage · Interessen). Sterne kommen durchs Abstimmen dazu.
+        <strong className="text-gray-700">Daten-Score</strong> aus echten Messdaten (Klima · Natur · Lage · Interessen). Bewerte jedes Ziel mit Sternen — daraus entsteht der gemeinsame Hybrid-Score.
       </p>
 
       {ranked.length === 0 ? (
@@ -105,7 +115,17 @@ export function RecommendationSheet({ trip, user, onNext }: Props) {
       ) : (
         <div className="flex flex-col gap-3">
           {ranked.map((d, i) => (
-            <DestinationCard key={d.id} dest={d} rank={i + 1} showVoteButton={false} />
+            <div key={d.id} className="flex flex-col gap-2">
+              <DestinationCard dest={d} rank={i + 1} showVoteButton={false} />
+              {!d.isLoading && !d.dataError && (
+                <VotingCard
+                  dest={d}
+                  myVote={d.myVote ?? 0}
+                  myComment={d.myComment}
+                  onVote={(stars, comment) => handleVote(d.id, stars, comment)}
+                />
+              )}
+            </div>
           ))}
         </div>
       )}

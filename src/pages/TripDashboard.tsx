@@ -45,12 +45,18 @@ const STEPS = [
   { key: 'members' as TileKey, labelKey: 'stepMembers' as const, icon: Users, descKey: 'stepMembersDesc' as const },
   { key: 'availability' as TileKey, labelKey: 'stepAvailability' as const, icon: Calendar, descKey: 'stepAvailabilityDesc' as const },
   { key: 'preferences' as TileKey, labelKey: 'stepPreferences' as const, icon: Heart, descKey: 'stepPreferencesDesc' as const },
-  { key: 'recommendation' as TileKey, labelKey: 'stepRecommendation' as const, icon: Sparkles, descKey: 'stepRecommendationDesc' as const, highlight: true },
+  { key: 'recommendation' as TileKey, labelKey: 'stepRecommendation' as const, icon: Sparkles, descKey: 'stepRecommendationDesc' as const },
   { key: 'vote' as TileKey, labelKey: 'stepVote' as const, icon: Star, descKey: 'stepVoteDesc' as const },
   { key: 'activities' as TileKey, labelKey: 'stepActivities' as const, icon: Zap, descKey: 'stepActivitiesDesc' as const },
   { key: 'final' as TileKey, labelKey: 'stepFinal' as const, icon: Trophy, descKey: 'stepFinalDesc' as const },
   { key: 'budget' as TileKey, labelKey: 'stepBudget' as const, icon: Wallet, descKey: 'stepBudgetDesc' as const },
 ]
+
+// Auf dem Dashboard sichtbare Kacheln (Abstimmen & Aktivitäten sind keine eigenen Kacheln mehr:
+// Bewerten passiert in der KI-Empfehlung, Aktivitäten in den Präferenzen).
+// 'vote'/'activities'/'final' bleiben im Switch erreichbar (Smart-Next).
+const TILE_KEYS: TileKey[] = ['dates', 'members', 'availability', 'preferences', 'recommendation', 'budget']
+const DASHBOARD_TILES = TILE_KEYS.map(k => STEPS.find(s => s.key === k)!)
 
 export default function TripDashboard() {
   const { id } = useParams<{ id: string }>()
@@ -135,40 +141,40 @@ export default function TripDashboard() {
 
   return (
     <div className="app-shell relative flex flex-col min-h-svh overflow-hidden">
-      {/* Dunkler Foto-Hintergrund (wie „Explore"-Home) */}
+      {/* Heller Foto-Hintergrund: Bild bleibt sichtbar, liegt aber unter einem hellen Schleier */}
       <div className="absolute inset-0 z-0">
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: ambientImage(trip.name), filter: 'blur(3px) brightness(0.6)', transform: 'scale(1.08)' }}
+          style={{ backgroundImage: ambientImage(trip.name), filter: 'blur(3px)', transform: 'scale(1.08)' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0E2E33]/85 via-[#0E2E33]/72 to-[#0E2E33]/92" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/72 via-white/90 to-white/96" />
       </div>
 
       <div className="relative z-10 flex flex-col min-h-svh">
-        <PageHeader title={trip.name} backTo="/home" transparent />
+        <PageHeader title={trip.name} backTo="/home" transparent onLight />
 
         <main className="flex-1 px-4 py-5 pb-28 overflow-y-auto flex flex-col gap-3">
-          {/* Zusammenfassung — Glas auf dunklem Grund */}
-          <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 p-4 flex flex-col gap-3.5">
+          {/* Zusammenfassung — weiße Frost-Karte */}
+          <div className="rounded-2xl bg-white/80 backdrop-blur-md border border-white/90 shadow-sm p-4 flex flex-col gap-3.5">
             <div className="grid grid-cols-2 gap-3">
               <SummaryItem icon={CalendarRange} label={t('travelPeriod').replace(' *', '')} value={dateRange} muted={!datesSet} />
               <SummaryItem icon={Users} label={t('memberCount')} value={`${trip.members.length}`} />
             </div>
 
             {myBudget != null && (
-              <div className="border-t border-white/15 pt-3">
+              <div className="border-t border-gray-100 pt-3">
                 <SummaryItem icon={WalletIcon} label={t('stepBudget')} value={`${myBudget.toLocaleString('de-DE')} €`} />
               </div>
             )}
 
             {myInterests.length > 0 && (
-              <div className="border-t border-white/15 pt-3 flex flex-col gap-2">
-                <span className="text-[11px] font-bold text-white/60 uppercase tracking-wider">{t('interests')}</span>
+              <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
+                <span className="text-[11px] font-bold text-ink/50 uppercase tracking-wider">{t('interests')}</span>
                 <div className="flex flex-wrap gap-1.5">
                   {myInterests.map(i => {
                     const Icon = INTEREST_ICON[i]
                     return (
-                      <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 text-white text-xs font-semibold capitalize">
+                      <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold capitalize">
                         <Icon size={13} aria-hidden="true" />{i}
                       </span>
                     )
@@ -178,16 +184,16 @@ export default function TripDashboard() {
             )}
 
             {destCount > 0 && (
-              <div className="border-t border-white/15 pt-3">
+              <div className="border-t border-gray-100 pt-3">
                 <SummaryItem icon={MapPin} label="Vorgeschlagene Ziele" value={`${destCount}`} />
               </div>
             )}
           </div>
 
-          {/* Smart Next — nächster offener Schritt */}
+          {/* Smart Next — nächster offener Schritt (einziger kräftiger Petrol-Block) */}
           <button
             onClick={() => setOpenTile(nextStep)}
-            className="w-full rounded-2xl bg-primary text-white p-4 flex items-center gap-3 shadow-lg shadow-black/30 active:scale-[0.98] transition-transform"
+            className="w-full rounded-2xl bg-primary text-white p-4 flex items-center gap-3 shadow-lg shadow-primary/30 active:scale-[0.98] transition-transform"
           >
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
               <ArrowRight size={20} className="text-white" />
@@ -200,29 +206,20 @@ export default function TripDashboard() {
           </button>
 
           {/* Section label */}
-          <p className="text-xs font-bold text-white/60 uppercase tracking-wider px-1 mt-1">{t('whatToDo')}</p>
+          <p className="text-xs font-bold text-ink/50 uppercase tracking-wider px-1 mt-1">{t('whatToDo')}</p>
 
-          {/* Kacheln — zwei Spalten, Glas auf dunklem Grund */}
+          {/* Kacheln — zwei Spalten, kompakt, neutral; Petrol nur bei Hover */}
           <div className="grid grid-cols-2 gap-3">
-            {STEPS.map(({ key, labelKey, icon: Icon, descKey, highlight }) => (
+            {DASHBOARD_TILES.map(({ key, labelKey, icon: Icon }) => (
               <button
                 key={key}
                 onClick={() => setOpenTile(key)}
-                className={`text-left rounded-2xl border p-4 flex flex-col gap-3 min-h-[124px] transition-all active:scale-[0.97] ${
-                  highlight
-                    ? 'bg-primary text-white border-primary shadow-lg shadow-black/30'
-                    : 'bg-white/10 backdrop-blur-md border-white/15 text-white hover:bg-white/15'
-                }`}
+                className="group text-left rounded-2xl border border-gray-200/80 bg-white/85 backdrop-blur-md shadow-sm p-4 flex items-center gap-3 transition-all active:scale-[0.97] hover:bg-primary hover:border-primary hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
               >
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-                  highlight ? 'bg-white/20' : 'bg-white/15'
-                }`}>
-                  <Icon size={22} className="text-white" />
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 transition-colors group-hover:bg-white/20">
+                  <Icon size={18} className="text-primary transition-colors group-hover:text-white" />
                 </div>
-                <div className="flex-1 min-w-0 flex flex-col justify-end">
-                  <p className="font-semibold text-sm leading-tight text-white">{t(labelKey)}</p>
-                  <p className={`text-xs mt-0.5 leading-snug ${highlight ? 'text-white/80' : 'text-white/65'}`}>{t(descKey)}</p>
-                </div>
+                <p className="font-semibold text-sm leading-tight text-ink transition-colors group-hover:text-white">{t(labelKey)}</p>
               </button>
             ))}
           </div>
@@ -254,12 +251,12 @@ function SummaryItem({
 }) {
   return (
     <div className="flex items-center gap-2.5 min-w-0">
-      <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
-        <Icon size={16} className="text-white" />
+      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+        <Icon size={16} className="text-primary" />
       </div>
       <div className="flex flex-col min-w-0">
-        <span className="text-[10px] font-bold text-white/55 uppercase tracking-wider leading-none">{label}</span>
-        <span className={`text-sm font-semibold truncate leading-tight mt-0.5 ${muted ? 'text-white/55 italic font-normal' : 'text-white'}`}>
+        <span className="text-[10px] font-bold text-ink/45 uppercase tracking-wider leading-none">{label}</span>
+        <span className={`text-sm font-semibold truncate leading-tight mt-0.5 ${muted ? 'text-ink/45 italic font-normal' : 'text-ink'}`}>
           {value}
         </span>
       </div>

@@ -11,9 +11,11 @@ interface PageHeaderProps {
   rightSlot?: ReactNode
   /** Transparenter Header mit weißem Text — für dunkle Foto-Screens. */
   transparent?: boolean
+  /** Transparenter Header mit DUNKLEM Text — für helle Foto-Screens (heller Schleier). */
+  onLight?: boolean
 }
 
-export function PageHeader({ title, showBack = true, backTo, rightSlot, transparent = false }: PageHeaderProps) {
+export function PageHeader({ title, showBack = true, backTo, rightSlot, transparent = false, onLight = false }: PageHeaderProps) {
   const navigate = useNavigate()
   const { t } = useLanguage()
 
@@ -22,12 +24,20 @@ export function PageHeader({ title, showBack = true, backTo, rightSlot, transpar
     else navigate(-1)
   }
 
+  // onLight: transparent (Foto scheint durch), aber dunkler Text für Lesbarkeit auf hellem Schleier.
+  const lightOnPhoto = transparent && onLight
   const headerCls = transparent
     ? 'flex items-center justify-between h-14 px-4 sticky top-0 z-10'
     : 'flex items-center justify-between h-14 px-4 glass-bar border-b sticky top-0 z-10'
   const backCls = transparent
-    ? 'flex items-center gap-1.5 -ml-1 px-2 py-2 rounded-xl text-white/90 hover:bg-white/15 transition-colors'
+    ? (lightOnPhoto
+        ? 'flex items-center gap-1.5 -ml-1 px-2 py-2 rounded-xl text-ink hover:bg-black/5 transition-colors'
+        : 'flex items-center gap-1.5 -ml-1 px-2 py-2 rounded-xl text-white/90 hover:bg-white/15 transition-colors')
     : 'flex items-center gap-1.5 -ml-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors'
+
+  const titleCls = transparent
+    ? (lightOnPhoto ? 'text-ink' : 'text-white drop-shadow')
+    : 'text-gray-900'
 
   return (
     <header className={headerCls}>
@@ -40,7 +50,7 @@ export function PageHeader({ title, showBack = true, backTo, rightSlot, transpar
         <div className="w-20" />
       )}
 
-      <h1 className={`text-base font-bold flex-1 text-center truncate px-2 ${transparent ? 'text-white drop-shadow' : 'text-gray-900'}`}>{title}</h1>
+      <h1 className={`text-base font-bold flex-1 text-center truncate px-2 ${titleCls}`}>{title}</h1>
 
       {rightSlot ? (
         <div className="flex justify-end min-w-[80px]">{rightSlot}</div>

@@ -42,7 +42,7 @@ export function CalendarDay({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'relative flex items-center justify-center w-full aspect-square rounded-xl border text-sm font-medium transition-all active:scale-90',
+        'relative flex items-center justify-center w-full aspect-square rounded-lg border text-xs font-medium transition-all active:scale-90',
         statusStyle,
         !isInRange && 'opacity-30 cursor-not-allowed',
         isToday && !status && 'border-primary text-primary',

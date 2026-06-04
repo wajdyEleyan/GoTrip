@@ -8,6 +8,7 @@ import { DestinationCard } from '@/components/recommendations/DestinationCard'
 import { AddDestinationForm } from '@/components/recommendations/AddDestinationForm'
 import { useTripContext } from '@/context/TripContext'
 import { useAuth } from '@/context/AuthContext'
+import { useLanguage } from '@/context/LanguageContext'
 import { getTripDestinations, saveDestination, getTripVotes, getMemberVote } from '@/utils/storage'
 import { getTripPreferences } from '@/utils/storage'
 import { analyzeDestination } from '@/services/llmService'
@@ -22,6 +23,7 @@ export default function AIRecommendation() {
   const navigate = useNavigate()
   const { getTripById } = useTripContext()
   const { user } = useAuth()
+  const { t } = useLanguage()
 
   const trip = id ? getTripById(id) : undefined
 
@@ -121,7 +123,7 @@ export default function AIRecommendation() {
       style={{ ['--ambient' as any]: topDest ? ambientImage(topDest.name) : undefined }}
     >
       <PageHeader
-        title="AI Recommendation"
+        title={t('stepRecommendation')}
         rightSlot={<Sparkles size={20} className="text-primary" />}
       />
 

@@ -39,7 +39,7 @@ export function AddDestinationForm({ onAdd, isLoading }: AddDestinationFormProps
     try {
       const match = await findCityInCountry(c, countryCode)
       if (!match) {
-        setError(`„${c}" liegt nicht in ${country.name}. Bitte Stadt & Land prüfen.`)
+        setError(`„${c}" wurde in ${country.name} nicht gefunden. Bitte die Stadt korrekt schreiben.`)
         return
       }
       // Validierter, sauber benannter Ort (z. B. „Barcelona") + Land.
@@ -47,9 +47,8 @@ export function AddDestinationForm({ onAdd, isLoading }: AddDestinationFormProps
       reset()
     } catch (err) {
       if (err instanceof GeoNetworkError) {
-        // Dienst nicht erreichbar → Eingabe trotzdem zulassen (Fallback).
-        await onAdd(c, country.name)
-        reset()
+        // Dienst nicht erreichbar → KEINE ungeprüfte Eingabe zulassen (Stadt muss validiert sein).
+        setError('Stadt konnte nicht geprüft werden (offline?). Bitte erneut versuchen.')
       } else {
         setError('Validierung fehlgeschlagen. Bitte erneut versuchen.')
       }

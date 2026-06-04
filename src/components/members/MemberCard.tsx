@@ -12,11 +12,11 @@ export function MemberCard({ member }: MemberCardProps) {
   const isAdmin = member.role === 'admin'
 
   return (
-    <div className="flex items-center gap-3 py-3 min-h-[56px]" role="listitem">
+    <div className="flex items-center gap-2.5 py-2 min-h-[44px]" role="listitem">
       {/* Avatar */}
       <div
         className={cn(
-          'flex items-center justify-center w-10 h-10 rounded-full text-white text-sm font-semibold shrink-0',
+          'flex items-center justify-center w-8 h-8 rounded-full text-white text-xs font-semibold shrink-0',
           member.avatarColor ?? 'bg-gray-400'
         )}
         aria-hidden="true"
@@ -30,7 +30,7 @@ export function MemberCard({ member }: MemberCardProps) {
       {/* Badge */}
       <span
         className={cn(
-          'shrink-0 text-xs font-medium px-2.5 py-1 rounded-full',
+          'shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full',
           isAdmin
             ? 'bg-admin/10 text-admin'
             : 'bg-success/10 text-success'
