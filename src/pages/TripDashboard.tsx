@@ -134,98 +134,102 @@ export default function TripDashboard() {
   }
 
   return (
-    <div
-      className="app-shell flex flex-col min-h-svh"
-      style={{ ['--ambient' as any]: ambientImage(trip.name) }}
-    >
-      <PageHeader title={trip.name} backTo="/home" />
+    <div className="app-shell relative flex flex-col min-h-svh overflow-hidden">
+      {/* Dunkler Foto-Hintergrund (wie „Explore"-Home) */}
+      <div className="absolute inset-0 z-0">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: ambientImage(trip.name), filter: 'blur(3px) brightness(0.6)', transform: 'scale(1.08)' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0E2E33]/85 via-[#0E2E33]/72 to-[#0E2E33]/92" />
+      </div>
 
-      <main className="flex-1 px-4 py-5 pb-28 overflow-y-auto flex flex-col gap-3">
-        {/* Zusammenfassung — alle bisher eingegebenen Daten */}
-        <div className="glass-card p-4 flex flex-col gap-3.5">
-          {/* Zeitraum + Gruppe */}
+      <div className="relative z-10 flex flex-col min-h-svh">
+        <PageHeader title={trip.name} backTo="/home" transparent />
+
+        <main className="flex-1 px-4 py-5 pb-28 overflow-y-auto flex flex-col gap-3">
+          {/* Zusammenfassung — Glas auf dunklem Grund */}
+          <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 p-4 flex flex-col gap-3.5">
+            <div className="grid grid-cols-2 gap-3">
+              <SummaryItem icon={CalendarRange} label={t('travelPeriod').replace(' *', '')} value={dateRange} muted={!datesSet} />
+              <SummaryItem icon={Users} label={t('memberCount')} value={`${trip.members.length}`} />
+            </div>
+
+            {myBudget != null && (
+              <div className="border-t border-white/15 pt-3">
+                <SummaryItem icon={WalletIcon} label={t('stepBudget')} value={`${myBudget.toLocaleString('de-DE')} €`} />
+              </div>
+            )}
+
+            {myInterests.length > 0 && (
+              <div className="border-t border-white/15 pt-3 flex flex-col gap-2">
+                <span className="text-[11px] font-bold text-white/60 uppercase tracking-wider">{t('interests')}</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {myInterests.map(i => {
+                    const Icon = INTEREST_ICON[i]
+                    return (
+                      <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 text-white text-xs font-semibold capitalize">
+                        <Icon size={13} aria-hidden="true" />{i}
+                      </span>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {destCount > 0 && (
+              <div className="border-t border-white/15 pt-3">
+                <SummaryItem icon={MapPin} label="Vorgeschlagene Ziele" value={`${destCount}`} />
+              </div>
+            )}
+          </div>
+
+          {/* Smart Next — nächster offener Schritt */}
+          <button
+            onClick={() => setOpenTile(nextStep)}
+            className="w-full rounded-2xl bg-primary text-white p-4 flex items-center gap-3 shadow-lg shadow-black/30 active:scale-[0.98] transition-transform"
+          >
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <ArrowRight size={20} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-[11px] font-semibold text-white/80 uppercase tracking-wide">Vorschlag</p>
+              <p className="font-bold text-sm truncate">{t(stepLabelKey(nextStep) as any)}</p>
+            </div>
+            <ChevronRight size={18} className="text-white/70" />
+          </button>
+
+          {/* Section label */}
+          <p className="text-xs font-bold text-white/60 uppercase tracking-wider px-1 mt-1">{t('whatToDo')}</p>
+
+          {/* Kacheln — zwei Spalten, Glas auf dunklem Grund */}
           <div className="grid grid-cols-2 gap-3">
-            <SummaryItem icon={CalendarRange} label={t('travelPeriod').replace(' *', '')} value={dateRange} muted={!datesSet} />
-            <SummaryItem icon={Users} label={t('memberCount')} value={`${trip.members.length}`} />
+            {STEPS.map(({ key, labelKey, icon: Icon, descKey, highlight }) => (
+              <button
+                key={key}
+                onClick={() => setOpenTile(key)}
+                className={`text-left rounded-2xl border p-4 flex flex-col gap-3 min-h-[124px] transition-all active:scale-[0.97] ${
+                  highlight
+                    ? 'bg-primary text-white border-primary shadow-lg shadow-black/30'
+                    : 'bg-white/10 backdrop-blur-md border-white/15 text-white hover:bg-white/15'
+                }`}
+              >
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
+                  highlight ? 'bg-white/20' : 'bg-white/15'
+                }`}>
+                  <Icon size={22} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0 flex flex-col justify-end">
+                  <p className="font-semibold text-sm leading-tight text-white">{t(labelKey)}</p>
+                  <p className={`text-xs mt-0.5 leading-snug ${highlight ? 'text-white/80' : 'text-white/65'}`}>{t(descKey)}</p>
+                </div>
+              </button>
+            ))}
           </div>
+        </main>
 
-          {/* Mein Budget */}
-          {myBudget != null && (
-            <div className="border-t border-gray-100 pt-3">
-              <SummaryItem icon={WalletIcon} label={t('stepBudget')} value={`${myBudget.toLocaleString('de-DE')} €`} />
-            </div>
-          )}
-
-          {/* Meine Interessen */}
-          {myInterests.length > 0 && (
-            <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
-              <span className="text-[11px] font-bold text-primary uppercase tracking-wider">{t('interests')}</span>
-              <div className="flex flex-wrap gap-1.5">
-                {myInterests.map(i => {
-                  const Icon = INTEREST_ICON[i]
-                  return (
-                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold capitalize">
-                      <Icon size={13} aria-hidden="true" />{i}
-                    </span>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Vorgeschlagene Ziele */}
-          {destCount > 0 && (
-            <div className="border-t border-gray-100 pt-3">
-              <SummaryItem icon={MapPin} label="Vorgeschlagene Ziele" value={`${destCount}`} />
-            </div>
-          )}
-        </div>
-
-        {/* Smart Next — 1 Tap zum nächsten offenen Schritt */}
-        <button
-          onClick={() => setOpenTile(nextStep)}
-          className="w-full rounded-2xl bg-primary text-white p-4 flex items-center gap-3 shadow-md shadow-primary/30 active:scale-[0.98] transition-transform"
-        >
-          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            <ArrowRight size={20} className="text-white" />
-          </div>
-          <div className="flex-1 min-w-0 text-left">
-            <p className="text-[11px] font-semibold text-white/80 uppercase tracking-wide">Vorschlag</p>
-            <p className="font-bold text-sm truncate">{t(stepLabelKey(nextStep) as any)}</p>
-          </div>
-          <ChevronRight size={18} className="text-white/70" />
-        </button>
-
-        {/* Section label */}
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider px-1 mt-1">{t('whatToDo')}</p>
-
-        {/* Kacheln — zwei Spalten, öffnen ein Glas-Pop-up */}
-        <div className="grid grid-cols-2 gap-3">
-          {STEPS.map(({ key, labelKey, icon: Icon, descKey, highlight }) => (
-            <button
-              key={key}
-              onClick={() => setOpenTile(key)}
-              className={`text-left rounded-2xl border p-4 flex flex-col gap-3 min-h-[124px] transition-all active:scale-[0.97] hover:shadow-md ${
-                highlight
-                  ? 'bg-primary text-white border-primary shadow-md shadow-primary/30'
-                  : 'glass-card border-gray-200 text-gray-900'
-              }`}
-            >
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-                highlight ? 'bg-white/20' : 'bg-primary/15'
-              }`}>
-                <Icon size={22} className={highlight ? 'text-white' : 'text-primary'} />
-              </div>
-              <div className="flex-1 min-w-0 flex flex-col justify-end">
-                <p className={`font-semibold text-sm leading-tight ${highlight ? 'text-white' : 'text-gray-800'}`}>{t(labelKey)}</p>
-                <p className={`text-xs mt-0.5 leading-snug ${highlight ? 'text-white/80' : 'text-gray-500'}`}>{t(descKey)}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      </main>
-
-      <BottomNav />
+        <BottomNav />
+      </div>
 
       {/* Glas-Pop-up mit dem Inhalt der angetippten Kachel */}
       <GlassPopup
@@ -250,12 +254,12 @@ function SummaryItem({
 }) {
   return (
     <div className="flex items-center gap-2.5 min-w-0">
-      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-        <Icon size={16} className="text-primary" />
+      <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+        <Icon size={16} className="text-white" />
       </div>
       <div className="flex flex-col min-w-0">
-        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-none">{label}</span>
-        <span className={`text-sm font-semibold truncate leading-tight mt-0.5 ${muted ? 'text-gray-400 italic font-normal' : 'text-gray-900'}`}>
+        <span className="text-[10px] font-bold text-white/55 uppercase tracking-wider leading-none">{label}</span>
+        <span className={`text-sm font-semibold truncate leading-tight mt-0.5 ${muted ? 'text-white/55 italic font-normal' : 'text-white'}`}>
           {value}
         </span>
       </div>

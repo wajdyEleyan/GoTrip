@@ -25,6 +25,13 @@ export function BottomNav({ onCreateClick, onTripsClick, onJoinClick }: BottomNa
       active ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
     )
 
+  // dunkle Variante für den Trip-Kontext („Explore"-Look)
+  const darkItemCls = (active: boolean) =>
+    cn(
+      'flex flex-col items-center justify-center gap-0.5 h-full min-h-[44px] flex-1 text-[11px] font-medium transition-colors',
+      active ? 'text-white' : 'text-white/50 hover:text-white/80'
+    )
+
   // ── Trip-Kontext: 1-Tap-Sprünge ──
   if (tripId) {
     const base = `/trip/${tripId}`
@@ -36,16 +43,17 @@ export function BottomNav({ onCreateClick, onTripsClick, onJoinClick }: BottomNa
     ]
     return (
       <nav
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-bar border-t z-30"
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] border-t border-white/10 z-30"
+        style={{ background: 'rgba(14,46,51,0.92)', backdropFilter: 'blur(12px)' }}
         aria-label="Trip-Navigation"
       >
         <ul className="flex items-center justify-around h-16 px-3 list-none m-0 p-0">
           {items.map(({ to, icon: Icon, label }) => (
             <li key={to} className="flex-1">
-              <NavLink to={to} end className={({ isActive }) => itemCls(isActive)} aria-label={label}>
+              <NavLink to={to} end className={({ isActive }) => darkItemCls(isActive)} aria-label={label}>
                 {({ isActive }) => (
                   <>
-                    <Icon size={21} className={isActive ? 'text-primary' : 'text-gray-400'} />
+                    <Icon size={21} className={isActive ? 'text-white' : 'text-white/50'} />
                     <span>{label}</span>
                   </>
                 )}
