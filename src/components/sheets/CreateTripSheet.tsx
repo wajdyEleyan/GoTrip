@@ -32,7 +32,7 @@ export function CreateTripSheet({ onCreated }: Props) {
     <div className="px-4 pt-2 pb-6 flex flex-col gap-4">
       {/* ── Name ── */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">
+        <label className="text-xs font-bold text-gray-600 uppercase tracking-wider px-1">
           Reisename
         </label>
         <input
@@ -44,7 +44,7 @@ export function CreateTripSheet({ onCreated }: Props) {
           autoFocus
           className="w-full h-13 px-4 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-gray-900 text-base placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-colors"
         />
-        <p className="text-xs text-gray-400 italic px-1">
+        <p className="text-xs text-gray-600 italic px-1">
           Datum & Details legst du gleich auf dem Planungs-Screen fest.
         </p>
       </div>

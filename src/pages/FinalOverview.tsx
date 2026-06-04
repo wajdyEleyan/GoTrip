@@ -94,7 +94,7 @@ export default function FinalOverview() {
   const scorePercent = winner ? Math.round(winner.hybridScore * 100) : 0
 
   return (
-    <TripScreen title={t('stepFinal')} backTo={`/trip/${id}/dashboard`} ambientName={winner?.name ?? trip.name}>
+    <TripScreen title={t('stepFinal')} backTo={`/trip/${id}/dashboard`}>
       <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-28">
 
         {/* Destination HERO photo-card */}

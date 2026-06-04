@@ -23,7 +23,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useLanguage } from '@/context/LanguageContext'
 import { getMemberPreferences, getTripDestinations } from '@/utils/storage'
 import { setActiveTrip, pullTrip, startPolling, stopPolling } from '@/services/tripSync'
-import { ambientImage } from '@/utils/destinationImage'
+import { TRIP_BG } from '@/utils/destinationImage'
 import { firstIncompleteStep, stepLabelKey, type PlanStep } from '@/utils/flow'
 import type { InterestType } from '@/types/preferences'
 import {
@@ -145,7 +145,7 @@ export default function TripDashboard() {
       <div className="absolute inset-0 z-0">
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: ambientImage(trip.name), filter: 'blur(3px)', transform: 'scale(1.08)' }}
+          style={{ backgroundImage: TRIP_BG, filter: 'blur(2px)', transform: 'scale(1.08)' }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-white/72 via-white/90 to-white/96" />
       </div>

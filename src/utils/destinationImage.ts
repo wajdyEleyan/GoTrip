@@ -2,6 +2,10 @@
 // Liefert ein stabiles Reiseziel-Foto (Unsplash) zu einem Namen.
 // Bekannte Ziele werden gezielt gemappt, sonst deterministischer Fallback-Pool.
 
+// Einheitlicher App-Hintergrund: Standbild aus dem Willkommens-Video (Dschungel/Fluss).
+// Wird auf allen Trip-Screens (Dashboard, Management, Planungs-Schritte) genutzt.
+export const TRIP_BG = "url('/welcome-bg.jpg')"
+
 const KNOWN: Record<string, string> = {
   barcelona: 'photo-1583422409516-2895a77efded',
   lisbon: 'photo-1555881400-74d7acaacd8b',

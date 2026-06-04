@@ -38,7 +38,7 @@ export default function Preferences() {
   }
 
   return (
-    <TripScreen title={t('yourPreferences')} backTo={`/trip/${id}/dashboard`} ambientName={trip.name}>
+    <TripScreen title={t('yourPreferences')} backTo={`/trip/${id}/dashboard`}>
       <main className="flex-1 px-4 py-5 overflow-y-auto pb-28">
         {/* Trip title header */}
         <div className="glass-card rounded-2xl px-4 py-3 mb-5">

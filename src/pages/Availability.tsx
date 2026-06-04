@@ -81,7 +81,7 @@ export default function Availability() {
 
 
   return (
-    <TripScreen title={t('setAvailabilityTitle')} backTo={`/trip/${id}/dashboard`} ambientName={trip.name}>
+    <TripScreen title={t('setAvailabilityTitle')} backTo={`/trip/${id}/dashboard`}>
       <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-5 pb-28">
         {/* Group overlap banner */}
         {overlapStart && overlapEnd ? (

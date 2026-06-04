@@ -44,7 +44,7 @@ export function GlassPopup({ open, title, onClose, children }: GlassPopupProps) 
       <div
         className="relative w-full max-w-[400px] max-h-[86svh] flex flex-col rounded-3xl border border-white/50 shadow-2xl overflow-hidden animate-[popIn_0.25s_cubic-bezier(0.16,1,0.3,1)]"
         style={{
-          background: 'rgba(255, 255, 255, 0.68)',
+          background: 'rgba(255, 255, 255, 0.94)',
           backdropFilter: 'blur(26px) saturate(160%)',
           WebkitBackdropFilter: 'blur(26px) saturate(160%)',
         }}

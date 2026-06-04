@@ -81,7 +81,7 @@ export default function ActivitiesVoting() {
   }
 
   return (
-    <TripScreen title="Aktivitäten" backTo={`/trip/${id}/dashboard`} ambientName={trip.name}>
+    <TripScreen title="Aktivitäten" backTo={`/trip/${id}/dashboard`}>
       <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-28">
         <p className="text-sm text-gray-700 font-medium">
           Was wollt ihr in <strong className="text-gray-900">{trip.name}</strong> unternehmen?

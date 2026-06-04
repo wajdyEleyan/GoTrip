@@ -76,7 +76,7 @@ export default function BudgetTracker() {
   }
 
   return (
-    <TripScreen title="Budget-Tracker" backTo={`/trip/${id}/dashboard`} ambientName={trip.name}>
+    <TripScreen title="Budget-Tracker" backTo={`/trip/${id}/dashboard`}>
       <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-28">
 
         {/* Total spending card */}

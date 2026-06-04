@@ -87,7 +87,7 @@ export default function VoteDecide() {
   const hasVoted = Object.values(myVotes).some((v) => v > 0)
 
   return (
-    <TripScreen title="Abstimmen" backTo={`/trip/${id}/dashboard`} ambientName={trip.name}>
+    <TripScreen title="Abstimmen" backTo={`/trip/${id}/dashboard`}>
       <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-5 pb-28">
         <p className="text-sm text-gray-600 text-center">
           Bewerte jedes Reiseziel mit 0,5–5 Sternen

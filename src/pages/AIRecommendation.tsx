@@ -121,7 +121,6 @@ export default function AIRecommendation() {
     <TripScreen
       title={t('stepRecommendation')}
       backTo={`/trip/${id}/dashboard`}
-      ambientName={topDest?.name ?? trip.name}
       rightSlot={<Sparkles size={20} className="text-primary" />}
     >
       <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-28">

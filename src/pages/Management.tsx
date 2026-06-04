@@ -20,7 +20,7 @@ import {
 } from '@/utils/storage'
 import { calcHybridScore } from '@/utils/scoring'
 import { setActiveTrip, pullTrip, startPolling, stopPolling } from '@/services/tripSync'
-import { ambientImage } from '@/utils/destinationImage'
+import { TRIP_BG } from '@/utils/destinationImage'
 import type { InterestType } from '@/types/preferences'
 
 const INTEREST_ICON: Record<InterestType, LucideIcon> = {
@@ -86,7 +86,7 @@ export default function Management() {
       <div className="absolute inset-0 z-0">
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: ambientImage(trip.name), filter: 'blur(3px)', transform: 'scale(1.08)' }}
+          style={{ backgroundImage: TRIP_BG, filter: 'blur(2px)', transform: 'scale(1.08)' }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-white/72 via-white/90 to-white/96" />
       </div>

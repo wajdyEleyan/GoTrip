@@ -31,7 +31,7 @@ export default function GroupMembers() {
   const memberCount = trip.members.length
 
   return (
-    <TripScreen title={trip.name} backTo={`/trip/${id}/dashboard`} ambientName={trip.name}>
+    <TripScreen title={trip.name} backTo={`/trip/${id}/dashboard`}>
       <main className="flex-1 px-4 py-4 overflow-y-auto flex flex-col gap-4 pb-28">
         {/* Counter + Invite Toggle */}
         <div className="flex items-center justify-between px-1">

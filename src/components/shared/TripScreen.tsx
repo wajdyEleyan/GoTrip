@@ -5,26 +5,24 @@
 import type { ReactNode } from 'react'
 import { PageHeader } from './PageHeader'
 import { BottomNav } from './BottomNav'
-import { ambientImage } from '@/utils/destinationImage'
+import { TRIP_BG } from '@/utils/destinationImage'
 
 interface TripScreenProps {
   title: string
   /** Ziel des Zurück-Buttons (Default: Browser-zurück). */
   backTo?: string
   rightSlot?: ReactNode
-  /** Name für das Ambient-Hintergrundbild (i. d. R. trip.name). */
-  ambientName: string
   children: ReactNode
 }
 
-export function TripScreen({ title, backTo, rightSlot, ambientName, children }: TripScreenProps) {
+export function TripScreen({ title, backTo, rightSlot, children }: TripScreenProps) {
   return (
     <div className="app-shell relative flex flex-col min-h-svh overflow-hidden">
-      {/* Heller Foto-Hintergrund: Bild bleibt sichtbar, liegt unter hellem Schleier */}
+      {/* Heller Foto-Hintergrund: Standbild aus dem Willkommens-Video, unter hellem Schleier */}
       <div className="absolute inset-0 z-0">
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: ambientImage(ambientName), filter: 'blur(3px)', transform: 'scale(1.08)' }}
+          style={{ backgroundImage: TRIP_BG, filter: 'blur(2px)', transform: 'scale(1.08)' }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-white/72 via-white/90 to-white/96" />
       </div>
