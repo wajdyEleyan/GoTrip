@@ -2,7 +2,7 @@
 // src/pages/AIRecommendation.tsx — Screen 8: KI-Reiseziel-Empfehlung
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { PageHeader } from '@/components/shared/PageHeader'
+import { TripScreen } from '@/components/shared/TripScreen'
 import { Button } from '@/components/ui/button'
 import { DestinationCard } from '@/components/recommendations/DestinationCard'
 import { AddDestinationForm } from '@/components/recommendations/AddDestinationForm'
@@ -15,7 +15,7 @@ import { analyzeDestination } from '@/services/llmService'
 import { calcHybridScore } from '@/utils/scoring'
 import type { Destination, RankedDestination } from '@/types/destination'
 import { Sparkles, Thermometer, Sun, Star } from 'lucide-react'
-import { destinationImage, ambientImage } from '@/utils/destinationImage'
+import { destinationImage } from '@/utils/destinationImage'
 import { StepNav } from '@/components/shared/StepNav'
 
 export default function AIRecommendation() {
@@ -118,16 +118,13 @@ export default function AIRecommendation() {
   const restDests = ranked.slice(1)
 
   return (
-    <div
-      className="app-shell flex flex-col min-h-svh"
-      style={{ ['--ambient' as any]: topDest ? ambientImage(topDest.name) : undefined }}
+    <TripScreen
+      title={t('stepRecommendation')}
+      backTo={`/trip/${id}/dashboard`}
+      ambientName={topDest?.name ?? trip.name}
+      rightSlot={<Sparkles size={20} className="text-primary" />}
     >
-      <PageHeader
-        title={t('stepRecommendation')}
-        rightSlot={<Sparkles size={20} className="text-primary" />}
-      />
-
-      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-8">
+      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-28">
         {/* Subtitle */}
         <div className="text-center">
           <p className="text-sm text-gray-600">
@@ -265,6 +262,6 @@ export default function AIRecommendation() {
 
         <StepNav tripId={id ?? ''} current="recommendation" />
       </main>
-    </div>
+    </TripScreen>
   )
 }

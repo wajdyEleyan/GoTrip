@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
-import { PageHeader } from '@/components/shared/PageHeader'
+import { TripScreen } from '@/components/shared/TripScreen'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ActivityCard } from '@/components/activities/ActivityCard'
@@ -12,7 +12,6 @@ import { useAuth } from '@/context/AuthContext'
 import { getTripActivities, saveActivity } from '@/utils/storage'
 import { toast } from '@/components/shared/Toast'
 import type { Activity } from '@/types/activity'
-import { ambientImage } from '@/utils/destinationImage'
 import { StepNav } from '@/components/shared/StepNav'
 
 export default function ActivitiesVoting() {
@@ -82,13 +81,8 @@ export default function ActivitiesVoting() {
   }
 
   return (
-    <div
-      className="app-shell flex flex-col min-h-svh"
-      style={{ ['--ambient' as any]: ambientImage(trip?.name ?? '') }}
-    >
-      <PageHeader title="Activities Voting" />
-
-      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-8">
+    <TripScreen title="Aktivitäten" backTo={`/trip/${id}/dashboard`} ambientName={trip.name}>
+      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-28">
         <p className="text-sm text-gray-700 font-medium">
           Was wollt ihr in <strong className="text-gray-900">{trip.name}</strong> unternehmen?
         </p>
@@ -140,6 +134,6 @@ export default function ActivitiesVoting() {
 
         <StepNav tripId={id ?? ''} current="activities" />
       </main>
-    </div>
+    </TripScreen>
   )
 }

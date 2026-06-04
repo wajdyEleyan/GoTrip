@@ -2,7 +2,7 @@
 // src/pages/VoteDecide.tsx — Screen 9: Abstimmen & Entscheiden
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { PageHeader } from '@/components/shared/PageHeader'
+import { TripScreen } from '@/components/shared/TripScreen'
 import { Button } from '@/components/ui/button'
 import { StepNav } from '@/components/shared/StepNav'
 import { VotingCard } from '@/components/voting/VotingCard'
@@ -17,7 +17,7 @@ import {
 import { calcHybridScore } from '@/utils/scoring'
 import type { RankedDestination } from '@/types/destination'
 import { toast } from '@/components/shared/Toast'
-import { destinationImage, ambientImage } from '@/utils/destinationImage'
+import { destinationImage } from '@/utils/destinationImage'
 
 export default function VoteDecide() {
   const { id } = useParams<{ id: string }>()
@@ -87,13 +87,8 @@ export default function VoteDecide() {
   const hasVoted = Object.values(myVotes).some((v) => v > 0)
 
   return (
-    <div
-      className="app-shell flex flex-col min-h-svh"
-      style={{ ['--ambient' as any]: ambientImage(trip?.name ?? '') }}
-    >
-      <PageHeader title="Vote & Decide" />
-
-      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-5 pb-24">
+    <TripScreen title="Abstimmen" backTo={`/trip/${id}/dashboard`} ambientName={trip.name}>
+      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-5 pb-28">
         <p className="text-sm text-gray-600 text-center">
           Bewerte jedes Reiseziel mit 0,5–5 Sternen
         </p>
@@ -148,6 +143,6 @@ export default function VoteDecide() {
 
         <StepNav tripId={id ?? ''} current="vote" disabled={!hasVoted} />
       </main>
-    </div>
+    </TripScreen>
   )
 }

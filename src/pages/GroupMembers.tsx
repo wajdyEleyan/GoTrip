@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { UserPlus, ChevronDown, ChevronUp } from 'lucide-react'
-import { PageHeader } from '@/components/shared/PageHeader'
+import { TripScreen } from '@/components/shared/TripScreen'
 import { MemberList } from '@/components/members/MemberList'
 import { InviteLink } from '@/components/members/InviteLink'
 import { Button } from '@/components/ui/button'
@@ -31,10 +31,8 @@ export default function GroupMembers() {
   const memberCount = trip.members.length
 
   return (
-    <div className="app-shell flex flex-col min-h-svh">
-      <PageHeader title={trip.name} />
-
-      <main className="flex-1 px-4 py-4 overflow-y-auto flex flex-col gap-4 pb-8">
+    <TripScreen title={trip.name} backTo={`/trip/${id}/dashboard`} ambientName={trip.name}>
+      <main className="flex-1 px-4 py-4 overflow-y-auto flex flex-col gap-4 pb-28">
         {/* Counter + Invite Toggle */}
         <div className="flex items-center justify-between px-1">
           <h2 className="text-sm font-bold text-gray-800">
@@ -67,6 +65,6 @@ export default function GroupMembers() {
 
         <StepNav tripId={id ?? ''} current="members" />
       </main>
-    </div>
+    </TripScreen>
   )
 }

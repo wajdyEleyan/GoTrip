@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { CalendarRange } from 'lucide-react'
-import { PageHeader } from '@/components/shared/PageHeader'
+import { TripScreen } from '@/components/shared/TripScreen'
 import { Button } from '@/components/ui/button'
 import { AvailabilityCalendar } from '@/components/calendar/AvailabilityCalendar'
 import { GroupHeatmap } from '@/components/calendar/GroupHeatmap'
@@ -19,7 +19,6 @@ import {
 import { toast } from '@/components/shared/Toast'
 import { StepNav } from '@/components/shared/StepNav'
 import type { AvailabilityStatus } from '@/types/availability'
-import { ambientImage } from '@/utils/destinationImage'
 
 export default function Availability() {
   const { id } = useParams<{ id: string }>()
@@ -82,13 +81,8 @@ export default function Availability() {
 
 
   return (
-    <div
-      className="app-shell flex flex-col min-h-svh"
-      style={{ ['--ambient' as any]: ambientImage(trip?.name ?? '') }}
-    >
-      <PageHeader title={t('setAvailabilityTitle')} />
-
-      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-5 pb-8">
+    <TripScreen title={t('setAvailabilityTitle')} backTo={`/trip/${id}/dashboard`} ambientName={trip.name}>
+      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-5 pb-28">
         {/* Group overlap banner */}
         {overlapStart && overlapEnd ? (
           <div className="glass-card rounded-2xl px-4 py-3 flex items-center gap-3 border-l-4 border-[#3FBF6A]">
@@ -140,6 +134,6 @@ export default function Availability() {
           label={`${t('save')} & ${t('continue')}`}
         />
       </main>
-    </div>
+    </TripScreen>
   )
 }

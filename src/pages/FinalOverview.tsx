@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { MapPin, Users, Wallet, Thermometer, Star, Trophy, PartyPopper, Sun, ThumbsUp } from 'lucide-react'
-import { PageHeader } from '@/components/shared/PageHeader'
+import { TripScreen } from '@/components/shared/TripScreen'
 import { Button } from '@/components/ui/button'
 import { ScoreRing } from '@/components/recommendations/ScoreRing'
 import { WeatherWidget } from '@/components/shared/WeatherWidget'
@@ -15,7 +15,7 @@ import {
   getTripActivities,
 } from '@/utils/storage'
 import { calcHybridScore } from '@/utils/scoring'
-import { destinationImage, ambientImage } from '@/utils/destinationImage'
+import { destinationImage } from '@/utils/destinationImage'
 import type { Destination } from '@/types/destination'
 import type { Activity } from '@/types/activity'
 
@@ -94,13 +94,8 @@ export default function FinalOverview() {
   const scorePercent = winner ? Math.round(winner.hybridScore * 100) : 0
 
   return (
-    <div
-      className="app-shell flex flex-col min-h-svh"
-      style={{ ['--ambient' as any]: ambientImage(winner?.name ?? trip.name ?? '') }}
-    >
-      <PageHeader title={t('stepFinal')} />
-
-      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-8">
+    <TripScreen title={t('stepFinal')} backTo={`/trip/${id}/dashboard`} ambientName={winner?.name ?? trip.name}>
+      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-28">
 
         {/* Destination HERO photo-card */}
         {winner ? (
@@ -286,6 +281,6 @@ export default function FinalOverview() {
           </Button>
         </div>
       </main>
-    </div>
+    </TripScreen>
   )
 }

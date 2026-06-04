@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Wallet } from 'lucide-react'
-import { PageHeader } from '@/components/shared/PageHeader'
+import { TripScreen } from '@/components/shared/TripScreen'
 import { Button } from '@/components/ui/button'
 import { ExpenseCard } from '@/components/budget/ExpenseCard'
 import { BalanceSummary } from '@/components/budget/BalanceSummary'
@@ -76,10 +76,8 @@ export default function BudgetTracker() {
   }
 
   return (
-    <div className="app-shell flex flex-col min-h-svh">
-      <PageHeader title="Budget-Tracker" />
-
-      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-8">
+    <TripScreen title="Budget-Tracker" backTo={`/trip/${id}/dashboard`} ambientName={trip.name}>
+      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-28">
 
         {/* Total spending card */}
         <div className="bg-primary rounded-2xl p-4 text-white flex items-center gap-4 shadow-lg">
@@ -126,10 +124,10 @@ export default function BudgetTracker() {
           />
         )}
 
-        <Button variant="outline" onClick={() => navigate(`/trip/${id}/final`)} className="w-full border-white/40 text-white hover:bg-white/10">
+        <Button variant="outline" onClick={() => navigate(`/trip/${id}/final`)} className="w-full border-primary/30 text-primary hover:bg-primary-soft">
           Zurück zur Übersicht
         </Button>
       </main>
-    </div>
+    </TripScreen>
   )
 }
