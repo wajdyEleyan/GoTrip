@@ -160,13 +160,6 @@ export default function Home() {
           >
             {t('join')}
           </button>
-          {/* Meine Reisen — dezenter Zugang (ersetzt die untere Leiste) */}
-          <button
-            onClick={() => setSheet('trips')}
-            className="mt-1 text-sm text-white/80 hover:text-white underline underline-offset-4 transition-colors"
-          >
-            {t('myTrips')}{trips.length > 0 ? ` (${trips.length})` : ''}
-          </button>
         </div>
       </main>
 
