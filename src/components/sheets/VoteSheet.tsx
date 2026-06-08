@@ -1,7 +1,7 @@
 // src/components/sheets/VoteSheet.tsx
 import { useState, useEffect, useCallback } from 'react'
 import { VotingCard } from '@/components/voting/VotingCard'
-import { destinationImage } from '@/utils/destinationImage'
+import { DestinationImage } from '@/components/shared/DestinationImage'
 import { getTripDestinations, getTripVotes, saveVote, getMemberVote } from '@/utils/storage'
 import { calcHybridScore } from '@/utils/scoring'
 import { toast } from '@/components/shared/Toast'
@@ -68,12 +68,7 @@ export function VoteSheet({ trip, user, onNext }: Props) {
       {ranked.map(d => (
         <div key={d.id} className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
           <div className="relative h-24 bg-gray-100">
-            <img
-              src={destinationImage(d.name, 600)}
-              alt={d.name}
-              className="w-full h-full object-cover"
-              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-            />
+            <DestinationImage name={d.name} width={600} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             <p className="absolute bottom-2 left-3 text-sm font-bold text-white truncate right-3">{d.name}</p>
           </div>

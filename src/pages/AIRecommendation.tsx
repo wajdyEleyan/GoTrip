@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { TripScreen } from '@/components/shared/TripScreen'
 import { Button } from '@/components/ui/button'
 import { DestinationCard } from '@/components/recommendations/DestinationCard'
+import { DestinationImage } from '@/components/shared/DestinationImage'
 import { AddDestinationForm } from '@/components/recommendations/AddDestinationForm'
 import { useTripContext } from '@/context/TripContext'
 import { useAuth } from '@/context/AuthContext'
@@ -15,7 +16,6 @@ import { analyzeDestination } from '@/services/llmService'
 import { calcHybridScore } from '@/utils/scoring'
 import type { Destination, RankedDestination } from '@/types/destination'
 import { Sparkles, Thermometer, Sun, Star } from 'lucide-react'
-import { destinationImage } from '@/utils/destinationImage'
 import { StepNav } from '@/components/shared/StepNav'
 
 export default function AIRecommendation() {
@@ -150,11 +150,7 @@ export default function AIRecommendation() {
               <div className="flex flex-col gap-3">
                 {/* Photo hero card */}
                 <div className="photo-card h-52">
-                  <img
-                    src={destinationImage(topDest.name, 1000)}
-                    alt={topDest.name}
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-                  />
+                  <DestinationImage name={topDest.name} width={1000} />
                   <div className="photo-scrim" />
 
                   {/* Best Match badge */}

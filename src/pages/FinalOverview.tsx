@@ -15,7 +15,7 @@ import {
   getTripActivities,
 } from '@/utils/storage'
 import { calcHybridScore } from '@/utils/scoring'
-import { destinationImage } from '@/utils/destinationImage'
+import { DestinationImage } from '@/components/shared/DestinationImage'
 import type { Destination } from '@/types/destination'
 import type { Activity } from '@/types/activity'
 
@@ -100,11 +100,7 @@ export default function FinalOverview() {
         {/* Destination HERO photo-card */}
         {winner ? (
           <div className="photo-card" style={{ height: '220px' }}>
-            <img
-              src={destinationImage(winner.name, 800)}
-              alt={winner.name}
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-            />
+            <DestinationImage name={winner.name} width={800} />
             <div className="photo-scrim" />
             {/* Trophy badge */}
             <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
