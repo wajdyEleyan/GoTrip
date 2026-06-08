@@ -1,6 +1,6 @@
 // Autor: Mohamad Haj Ahmad
 // src/pages/AIRecommendation.tsx — Screen 8: KI-Reiseziel-Empfehlung
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { TripScreen } from '@/components/shared/TripScreen'
 import { Button } from '@/components/ui/button'
@@ -29,6 +29,8 @@ export default function AIRecommendation() {
 
   const [destinations, setDestinations] = useState<Destination[]>([])
   const [isAdding, setIsAdding] = useState(false)
+  const [selectedId, setSelectedId] = useState<string | null>(null) // angetipptes Ziel oben
+  const heroRef = useRef<HTMLDivElement>(null)
 
   const loadDestinations = useCallback(() => {
     if (!id) return
@@ -114,8 +116,15 @@ export default function AIRecommendation() {
     )
   }
 
-  const topDest = ranked[0]
-  const restDests = ranked.slice(1)
+  // Angetipptes Ziel landet oben als Hero; sonst das bestbewertete.
+  const topDest = ranked.find(d => d.id === selectedId) ?? ranked[0]
+  const restDests = ranked.filter(d => d.id !== topDest?.id)
+  const heroRank = topDest ? ranked.findIndex(d => d.id === topDest.id) + 1 : 1
+
+  function pick(destId: string) {
+    setSelectedId(destId)
+    heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   return (
     <TripScreen
@@ -145,21 +154,21 @@ export default function AIRecommendation() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {/* ── Hero: top ranked destination ── */}
+            {/* ── Hero: ausgewähltes (oder bestbewertetes) Ziel ── */}
             {topDest && !topDest.isLoading && (
-              <div className="flex flex-col gap-3">
+              <div ref={heroRef} className="flex flex-col gap-3 scroll-mt-2">
                 {/* Photo hero card */}
                 <div className="photo-card h-52">
                   <DestinationImage name={topDest.name} width={1000} />
                   <div className="photo-scrim" />
 
-                  {/* Best Match badge */}
+                  {/* Badge */}
                   <div className="absolute top-3 left-3 z-10">
                     <span
                       className="text-xs font-bold px-2.5 py-1 rounded-full"
                       style={{ backgroundColor: '#5BE59B', color: '#0a4025' }}
                     >
-                      Best Match
+                      {heroRank === 1 ? 'Best Match' : 'Ausgewählt'}
                     </span>
                   </div>
 
@@ -167,7 +176,7 @@ export default function AIRecommendation() {
                   <div className="photo-title absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
                     <div>
                       <p className="text-xs font-medium opacity-80 mb-0.5">
-                        #{1} Empfehlung
+                        #{heroRank} Empfehlung
                       </p>
                       <h2 className="text-lg font-bold leading-tight">{topDest.name}</h2>
                     </div>
@@ -215,7 +224,7 @@ export default function AIRecommendation() {
                 <div className="glass-card rounded-2xl overflow-hidden">
                   <DestinationCard
                     dest={topDest}
-                    rank={1}
+                    rank={heroRank}
                     onVoteClick={() => navigate(`/trip/${id}/vote`)}
                   />
                 </div>
@@ -233,17 +242,24 @@ export default function AIRecommendation() {
               </div>
             )}
 
-            {/* Rest of ranked destinations */}
+            {/* Weitere Ziele — antippen holt sie nach oben */}
             {restDests.length > 0 && (
               <div className="flex flex-col gap-3">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-1">
-                  Weitere Optionen
+                  Weitere Optionen <span className="font-normal normal-case text-gray-400">· antippen für Details oben</span>
                 </p>
-                {restDests.map((d, i) => (
-                  <div key={d.id} className="glass-card rounded-2xl overflow-hidden">
+                {restDests.map((d) => (
+                  <div
+                    key={d.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => pick(d.id)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(d.id) } }}
+                    className="glass-card rounded-2xl overflow-hidden cursor-pointer transition hover:ring-2 hover:ring-primary/40 active:scale-[0.99]"
+                  >
                     <DestinationCard
                       dest={d}
-                      rank={i + 2}
+                      rank={ranked.findIndex(x => x.id === d.id) + 1}
                       onVoteClick={() => navigate(`/trip/${id}/vote`)}
                     />
                   </div>
