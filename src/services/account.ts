@@ -1,21 +1,35 @@
 // src/services/account.ts
 // Account-API: Anmelden (signin) und Registrieren (register) per eindeutigem
-// Username, passwortlos. Ohne Server/DB → error 'offline' (Aufrufer lässt dann
-// lokal rein, App läuft weiter).
+// Username, passwortlos.
+//
+// Eindeutigkeit:
+//  • Server mit DB (z. B. Render) erzwingt GLOBALE Eindeutigkeit (username PK → 409).
+//  • Zusätzlich ein lokales Konten-Register (localStorage) als Fallback, damit
+//    auch ohne erreichbare DB derselbe Name nicht doppelt registriert werden kann
+//    und Anmelden nur für bekannte Namen klappt.
 
 export interface Account {
   username: string
   codes: string[]
 }
 
-export type AuthError = 'taken' | 'badcode' | 'notfound' | 'offline' | 'server'
+export type AuthError = 'taken' | 'badcode' | 'notfound'
 export type AuthResult =
   | { ok: true; account: Account }
   | { ok: false; error: AuthError }
 
 const TIMEOUT = 10000
+const ACCT_KEY = 'gotrip_accounts'
 
-/** Meldet ein bestehendes Konto an. 404 → 'notfound'. */
+function localAccounts(): string[] {
+  try { return JSON.parse(localStorage.getItem(ACCT_KEY) || '[]') as string[] } catch { return [] }
+}
+function rememberLocalAccount(username: string): void {
+  const a = localAccounts()
+  if (!a.includes(username)) { a.push(username); localStorage.setItem(ACCT_KEY, JSON.stringify(a)) }
+}
+
+/** Meldet ein bestehendes Konto an. Unbekannt → 'notfound'. */
 export async function signinAccount(username: string): Promise<AuthResult> {
   try {
     const resp = await fetch('/api/signin', {
@@ -24,16 +38,21 @@ export async function signinAccount(username: string): Promise<AuthResult> {
       body: JSON.stringify({ username }),
       signal: AbortSignal.timeout(TIMEOUT),
     })
-    if (resp.ok) return { ok: true, account: (await resp.json()) as Account }
+    if (resp.ok) {
+      rememberLocalAccount(username)
+      return { ok: true, account: (await resp.json()) as Account }
+    }
     if (resp.status === 404) return { ok: false, error: 'notfound' }
-    if (resp.status === 503) return { ok: false, error: 'offline' }
-    return { ok: false, error: 'server' }
+    // 503/sonstiges → keine DB → lokaler Fallback unten
   } catch {
-    return { ok: false, error: 'offline' }
+    // Server nicht erreichbar → lokaler Fallback unten
   }
+  // Lokaler Fallback: nur bekannte Namen dürfen rein.
+  if (localAccounts().includes(username)) return { ok: true, account: { username, codes: [] } }
+  return { ok: false, error: 'notfound' }
 }
 
-/** Legt ein neues Konto an (optional mit Einladungscode). 409 → 'taken', 404 → 'badcode'. */
+/** Legt ein neues Konto an (optional + Code). Vergeben → 'taken', Code ungültig → 'badcode'. */
 export async function registerAccount(username: string, code?: string): Promise<AuthResult> {
   try {
     const resp = await fetch('/api/register', {
@@ -42,14 +61,20 @@ export async function registerAccount(username: string, code?: string): Promise<
       body: JSON.stringify({ username, code: code?.trim() || undefined }),
       signal: AbortSignal.timeout(TIMEOUT),
     })
-    if (resp.ok) return { ok: true, account: (await resp.json()) as Account }
+    if (resp.ok) {
+      rememberLocalAccount(username)
+      return { ok: true, account: (await resp.json()) as Account }
+    }
     if (resp.status === 409) return { ok: false, error: 'taken' }
     if (resp.status === 404) return { ok: false, error: 'badcode' }
-    if (resp.status === 503) return { ok: false, error: 'offline' }
-    return { ok: false, error: 'server' }
+    // 503/sonstiges → keine DB → lokaler Fallback unten
   } catch {
-    return { ok: false, error: 'offline' }
+    // Server nicht erreichbar → lokaler Fallback unten
   }
+  // Lokaler Fallback (keine DB): Eindeutigkeit pro Gerät erzwingen.
+  if (localAccounts().includes(username)) return { ok: false, error: 'taken' }
+  rememberLocalAccount(username)
+  return { ok: true, account: { username, codes: code?.trim() ? [code.trim()] : [] } }
 }
 
 /** Ordnet eine Reise (inviteCode) dem Konto zu, damit sie überall sichtbar ist. */
