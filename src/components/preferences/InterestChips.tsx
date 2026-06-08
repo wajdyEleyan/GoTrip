@@ -6,7 +6,23 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { InterestType } from '@/types/preferences'
-import { destinationImage } from '@/utils/destinationImage'
+
+// Passendes, festes Unsplash-Foto pro Interesse (per HTTP geprüft, 200 image/jpeg).
+const INTEREST_PHOTO: Record<InterestType, string> = {
+  beach: 'photo-1507525428034-b723cf961d3e',      // Türkis-Strand
+  city: 'photo-1480714378408-67cf0d13bc1b',       // City-Skyline (NYC)
+  nature: 'photo-1441974231531-c6227db76b6e',     // Wald
+  adventure: 'photo-1551632811-561732d1e306',     // Wanderer in den Bergen
+  culture: 'photo-1524231757912-21f4fe3a7200',    // Historische Stadt (Istanbul)
+  nightlife: 'photo-1540959733332-eab4deabeeaf',  // Neon-Nachtleben
+  relaxation: 'photo-1537953773345-d172ccf13cf1', // Ruhe (Bali-Tempel)
+  food: 'photo-1504674900247-0877df9cc836',       // Essen
+  shopping: 'photo-1483985988355-763728e1935b',   // Shopping
+}
+
+function interestImage(key: InterestType, width = 200): string {
+  return `https://images.unsplash.com/${INTEREST_PHOTO[key]}?w=${width}&q=70&auto=format&fit=crop`
+}
 
 const INTERESTS: { key: InterestType; label: string; icon: LucideIcon }[] = [
   { key: 'beach', label: 'Beach', icon: Umbrella },
@@ -56,7 +72,7 @@ export function InterestChips({ selected, onChange }: InterestChipsProps) {
             )}
           >
             <img
-              src={destinationImage(label, 200)}
+              src={interestImage(key, 200)}
               alt=""
               aria-hidden="true"
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
