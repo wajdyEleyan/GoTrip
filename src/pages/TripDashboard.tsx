@@ -146,7 +146,7 @@ export default function TripDashboard() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: TRIP_BG, filter: 'blur(2px)', transform: 'scale(1.08)' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/70 to-white/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/45 via-white/80 to-white" />
       </div>
 
       <div className="relative z-10 flex flex-col min-h-svh">

@@ -24,7 +24,7 @@ export function TripScreen({ title, backTo, rightSlot, children }: TripScreenPro
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: TRIP_BG, filter: 'blur(2px)', transform: 'scale(1.08)' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/72 via-white/90 to-white/96" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/65 via-white/92 to-white" />
       </div>
 
       <div className="relative z-10 flex flex-col min-h-svh">

@@ -7,7 +7,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import {
   Users, Star, MapPin, CalendarCheck, Heart, Wallet,
   Umbrella, Building2, Trees, Mountain, Landmark, Music, Flower2, Utensils, ShoppingBag, Zap, ThumbsUp,
-  Sparkles, ChevronDown, ChevronUp,
+  Sparkles, ChevronDown, ChevronUp, Check, Crown, ListChecks,
   type LucideIcon,
 } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -83,6 +83,15 @@ export default function Management() {
 
   const destName = (destId: string) => destinations.find(d => d.id === destId)?.name ?? '—'
 
+  // Fortschritt der Gruppe: wie viele Mitglieder haben je Kategorie etwas eingegeben?
+  const memberCount = trip.members.length
+  const progress = [
+    { key: 'av', label: 'Verfügbarkeit', icon: CalendarCheck, done: allAvail.filter(a => Object.keys(a.dates || {}).length > 0).length },
+    { key: 'pr', label: 'Präferenzen', icon: Heart, done: allPrefs.filter(p => (p.interests?.length ?? 0) > 0 || (p.customInterests?.length ?? 0) > 0).length },
+    { key: 'bu', label: 'Budget', icon: Wallet, done: allPrefs.filter(p => p.budgetPerPerson != null).length },
+    { key: 'vo', label: 'Bewertung', icon: Star, done: new Set(allVotes.map(v => v.memberId)).size },
+  ]
+
   return (
     <div className="app-shell relative flex flex-col min-h-svh overflow-hidden">
       {/* Heller Foto-Hintergrund (Bild bleibt unter hellem Schleier) */}
@@ -91,7 +100,7 @@ export default function Management() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: TRIP_BG, filter: 'blur(2px)', transform: 'scale(1.08)' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/72 via-white/90 to-white/96" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/65 via-white/92 to-white" />
       </div>
 
       <div className="relative z-10 flex flex-col min-h-svh">
@@ -101,6 +110,29 @@ export default function Management() {
           <p className="text-xs text-ink/55 px-1">
             Alles, was die Gruppe eingegeben hat — für alle sichtbar.
           </p>
+
+          {/* Status / Fortschritt der Gruppe */}
+          <section className="flex flex-col gap-2">
+            <h2 className="text-[11px] font-bold text-ink/50 uppercase tracking-wider px-1 flex items-center gap-1.5">
+              <ListChecks size={13} /> Status der Gruppe
+            </h2>
+            <div className="rounded-2xl bg-white/85 backdrop-blur-md border border-white/90 shadow-sm p-3.5 grid grid-cols-2 gap-3.5">
+              {progress.map(({ key, label, icon: Icon, done }) => {
+                const complete = memberCount > 0 && done >= memberCount
+                return (
+                  <div key={key} className="flex items-center gap-2.5">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${complete ? 'bg-success/15' : 'bg-primary/10'}`}>
+                      {complete ? <Check size={15} className="text-success" /> : <Icon size={15} className="text-primary" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold text-ink/45 uppercase tracking-wide leading-none">{label}</p>
+                      <p className={`text-sm font-bold leading-tight mt-0.5 ${complete ? 'text-success' : 'text-ink'}`}>{done}/{memberCount}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
 
           {/* Reiseziele & Bewertung */}
           <section className="flex flex-col gap-2">
@@ -115,11 +147,19 @@ export default function Management() {
               const open = openData === d.id
               const dest = d.dest
               const an = dest.llmAnalysis
+              const isLeader = rankedDest.length > 1 && rankedDest[0].id === d.id
               return (
                 <div key={d.id} className="rounded-2xl bg-white/85 backdrop-blur-md border border-white/90 shadow-sm overflow-hidden">
                   <div className="p-3.5 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-ink truncate">{d.name}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-bold text-ink truncate">{d.name}</p>
+                        {isLeader && (
+                          <span className="shrink-0 inline-flex items-center gap-0.5 text-[9px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full">
+                            <Crown size={9} /> Spitzenreiter
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] text-ink/50 mt-0.5">{d.voteCount} {d.voteCount === 1 ? 'Stimme' : 'Stimmen'}</p>
                     </div>
                     {d.dataScore > 0 && (
