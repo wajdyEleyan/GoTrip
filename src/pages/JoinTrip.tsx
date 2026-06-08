@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { useTripContext } from '@/context/TripContext'
 import { getTripByInviteCode } from '@/utils/storage'
 import { pullTrip, setActiveTrip } from '@/services/tripSync'
-import { attachCodeToAccount } from '@/services/account'
+import { joinTripByCode } from '@/services/joinTrip'
 import { useAuth } from '@/context/AuthContext'
 import type { Trip, Member } from '@/types/trip'
 import { Users, Plane, CheckCircle2, XCircle, Loader2, Calendar } from 'lucide-react'
@@ -110,23 +110,30 @@ export default function JoinTrip() {
     )
   }
 
-  function handleJoin() {
+  async function handleJoin() {
     const trimmed = memberName.trim()
     if (!trimmed) {
       setNameError('Bitte gib deinen Namen ein')
       return
     }
 
+    if (user && code) {
+      // Eingeloggt → gemeinsame Beitritts-Logik (Mitglied + Konto-Zuordnung).
+      const res = await joinTripByCode(code, user)
+      if (!res.ok) { setNameError('Einladungscode ungültig.'); return }
+      refreshTrips()
+      setJoined(true)
+      return
+    }
+
+    // Nicht eingeloggt → lokal beitreten (kein Konto).
     const newMember: Member = {
-      id: user?.id ?? crypto.randomUUID(),
+      id: crypto.randomUUID(),
       name: trimmed,
       role: 'member',
       joinedAt: new Date().toISOString(),
     }
-
     addMember(trip!.id, newMember)
-    // Reise dem (eingeloggten) Konto zuordnen → erscheint nach Login auf jedem Gerät.
-    if (user && code) void attachCodeToAccount(user.name, code)
     setJoined(true)
   }
 

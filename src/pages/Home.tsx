@@ -1,47 +1,48 @@
 // src/pages/Home.tsx
+// EIN Startscreen (Willkommen = Login). Nicht eingeloggt: Umschalter
+// Anmelden/Registrieren. Eingeloggt: Neue Reise / Meine Reisen / Code eingeben.
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Globe, LogOut, ArrowRight, Plane } from 'lucide-react'
+import { Globe, LogOut, ArrowRight, Plane, Plus, FolderHeart, Ticket } from 'lucide-react'
 import { BottomSheet } from '@/components/shared/BottomSheet'
 import { GlassPopup } from '@/components/shared/GlassPopup'
 import { TripCard } from '@/components/trips/TripCard'
 import { CreateTripSheet } from '@/components/sheets/CreateTripSheet'
 import { useTripContext } from '@/context/TripContext'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth, type AuthOutcome } from '@/context/AuthContext'
 import { useLanguage } from '@/context/LanguageContext'
+import { joinTripByCode } from '@/services/joinTrip'
 import type { Lang } from '@/i18n/translations'
 
 const LANGS: { code: Lang }[] = [{ code: 'de' }, { code: 'en' }, { code: 'es' }]
-
-// Vestrahorn / Stokksnes, Island — Unsplash-Lizenz (frei, kommerziell, ohne Attribution).
 const HERO_IMG = 'https://images.unsplash.com/photo-1764276266750-4d6316e972e0?q=80&w=1400&auto=format&fit=crop'
 
 type ActiveSheet = 'create' | 'trips' | 'join' | null
+type Mode = 'signin' | 'register'
 
 export default function Home() {
   const navigate = useNavigate()
   const { trips, refreshTrips } = useTripContext()
-  const { user, login, logout, isLoading } = useAuth()
+  const { user, signIn, register, logout, isLoading } = useAuth()
   const { t, lang, setLang } = useLanguage()
 
   const [sheet, setSheet] = useState<ActiveSheet>(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
-  const [joinCode, setJoinCode] = useState('')
-  const [loginName, setLoginName] = useState('')
-  const [busy, setBusy] = useState(false)
-
-  // Anmeldung passiert auf DEMSELBEN Startscreen — kein Wechsel der Seite.
-  async function handleLogin() {
-    const username = loginName.trim()
-    if (!username || busy) return
-    setBusy(true)
-    await login(username)
-    setBusy(false)
-    // user ist jetzt gesetzt → derselbe Screen zeigt nun „Neue Reise / Beitreten".
-  }
   const profileRef = useRef<HTMLDivElement>(null)
   const langRef = useRef<HTMLDivElement>(null)
+
+  // Auth-Formular (nicht eingeloggt)
+  const [mode, setMode] = useState<Mode>('signin')
+  const [name, setName] = useState('')
+  const [regCode, setRegCode] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [authError, setAuthError] = useState('')
+
+  // „Code eingeben" (eingeloggt)
+  const [joinCode, setJoinCode] = useState('')
+  const [joinBusy, setJoinBusy] = useState(false)
+  const [joinError, setJoinError] = useState('')
 
   useEffect(() => { refreshTrips() }, [])
 
@@ -58,12 +59,43 @@ export default function Home() {
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : '?'
 
-  function goJoin() {
-    const code = joinCode.trim()
-    if (code) navigate(`/join/${code}`)
+  function errorText(error?: string): string {
+    switch (error) {
+      case 'notfound': return t('errNotRegistered')
+      case 'taken': return t('errNameTaken')
+      case 'badcode': return t('errBadCode')
+      default: return t('genericError')
+    }
   }
 
-  // Kurzer Ladezustand, bis die gespeicherte Sitzung gelesen ist (kein Login-Flackern).
+  async function handleAuth() {
+    const username = name.trim()
+    if (!username || busy) return
+    setBusy(true)
+    setAuthError('')
+    const res: AuthOutcome = mode === 'signin'
+      ? await signIn(username)
+      : await register(username, regCode.trim() || undefined)
+    setBusy(false)
+    if (!res.ok) setAuthError(errorText(res.error))
+    // bei Erfolg: user gesetzt → derselbe Screen zeigt den eingeloggten Zustand
+  }
+
+  async function handleJoinInApp() {
+    if (!user) return
+    const code = joinCode.trim()
+    if (!code || joinBusy) return
+    setJoinBusy(true)
+    setJoinError('')
+    const res = await joinTripByCode(code, user)
+    setJoinBusy(false)
+    if (!res.ok) { setJoinError(t('errBadCode')); return }
+    refreshTrips()
+    setJoinCode('')
+    setSheet('trips') // direkt „Meine Reisen" zeigen
+  }
+
+  // Kurzer Ladezustand, bis die gespeicherte Sitzung gelesen ist.
   if (isLoading) {
     return (
       <div className="app-shell flex items-center justify-center min-h-svh">
@@ -74,25 +106,19 @@ export default function Home() {
 
   return (
     <div className="app-shell relative flex flex-col min-h-svh overflow-hidden">
-
-      {/* ── Hintergrund: Video, leicht geblurt + Dunkel-Overlay (Foto als Fallback) ── */}
+      {/* Hintergrund: Video, leicht geblurt + Dunkel-Overlay */}
       <div className="absolute inset-0 z-0">
         <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster={HERO_IMG}
+          autoPlay muted loop playsInline poster={HERO_IMG}
           className="w-full h-full object-cover scale-105"
           style={{ filter: 'blur(2px) brightness(0.92)' }}
         >
           <source src="/welcome.mp4" type="video/mp4" />
         </video>
-        {/* Overlay für Lesbarkeit (oben + unten dunkler) */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/75" />
       </div>
 
-      {/* ── Header (über dem Bild, heller Text) ── */}
+      {/* Header */}
       <header className="relative z-20">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
@@ -124,7 +150,7 @@ export default function Home() {
               )}
             </div>
 
-            {/* Profile — nur wenn eingeloggt */}
+            {/* Profil — nur wenn eingeloggt */}
             {user && (
             <div className="relative" ref={profileRef}>
               <button onClick={() => { setProfileOpen(v => !v); setLangOpen(false) }}
@@ -136,7 +162,7 @@ export default function Home() {
                   <div className="px-4 py-3 border-b border-gray-50 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">{initials}</div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
                       <p className="text-xs text-gray-400">{t('profile')}</p>
                     </div>
                   </div>
@@ -153,9 +179,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Main: „Explore. Travel. Inspire." — Hero oben, Buttons unten ── */}
+      {/* Main */}
       <main className="relative z-10 flex-1 flex flex-col px-6 pb-10">
-        {/* Hero-Slogan oben links */}
         <div className="mt-6">
           <h1 className="text-4xl font-extrabold text-white leading-[1.08] tracking-tight drop-shadow-lg">
             {t('sloganLine1')}<br />{t('sloganLine2')}<br />{t('sloganLine3')}
@@ -165,7 +190,6 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Abstand */}
         <div className="flex-1" />
 
         {user ? (
@@ -178,32 +202,67 @@ export default function Home() {
               {t('createNewTrip')}
               <ArrowRight size={18} />
             </button>
-            <button
-              onClick={() => setSheet('join')}
-              className="w-full h-12 rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/40 text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-            >
-              {t('join')}
-            </button>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => { refreshTrips(); setSheet('trips') }}
+                className="h-12 rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/40 text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              >
+                <FolderHeart size={16} />{t('myTrips')}
+              </button>
+              <button
+                onClick={() => { setJoinError(''); setSheet('join') }}
+                className="h-12 rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/40 text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              >
+                <Ticket size={16} />{t('enterCodeTitle')}
+              </button>
+            </div>
           </div>
         ) : (
-          /* Nicht eingeloggt: Username-Anmeldung auf DEMSELBEN Screen */
-          <div className="flex flex-col gap-2.5 rounded-2xl bg-white/12 backdrop-blur-md ring-1 ring-white/25 p-4">
-            <label htmlFor="login-username" className="text-xs font-semibold text-white/85">{t('usernameLabel')}</label>
+          /* Nicht eingeloggt: Anmelden / Registrieren auf DEMSELBEN Screen */
+          <div className="flex flex-col gap-3 rounded-2xl bg-white/12 backdrop-blur-md ring-1 ring-white/25 p-4">
+            {/* Umschalter */}
+            <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-black/20">
+              {(['signin', 'register'] as Mode[]).map(m => (
+                <button
+                  key={m}
+                  onClick={() => { setMode(m); setAuthError('') }}
+                  className={`h-9 rounded-lg text-sm font-bold transition-colors ${
+                    mode === m ? 'bg-white text-primary' : 'text-white/80 hover:text-white'
+                  }`}
+                >
+                  {m === 'signin' ? t('signInTab') : t('registerTab')}
+                </button>
+              ))}
+            </div>
+
             <input
-              id="login-username"
-              value={loginName}
-              onChange={e => setLoginName(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleLogin() }}
-              placeholder={t('namePlaceholder')}
+              id="auth-username"
+              value={name}
+              onChange={e => { setName(e.target.value); setAuthError('') }}
+              onKeyDown={e => { if (e.key === 'Enter') handleAuth() }}
+              placeholder={t('usernameLabel')}
               autoFocus
               className="w-full h-12 px-4 rounded-xl bg-white/92 text-gray-900 text-base placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
+
+            {mode === 'register' && (
+              <input
+                value={regCode}
+                onChange={e => { setRegCode(e.target.value.toUpperCase()); setAuthError('') }}
+                onKeyDown={e => { if (e.key === 'Enter') handleAuth() }}
+                placeholder={t('inviteCodeOptional')}
+                className="w-full h-12 px-4 rounded-xl bg-white/92 text-gray-900 text-base font-mono tracking-widest placeholder:tracking-normal placeholder:font-sans placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            )}
+
+            {authError && <p className="text-xs text-red-200 font-medium" role="alert">{authError}</p>}
+
             <button
-              onClick={handleLogin}
-              disabled={!loginName.trim() || busy}
+              onClick={handleAuth}
+              disabled={!name.trim() || busy}
               className="w-full h-12 rounded-xl bg-primary hover:bg-primary-hover text-white text-base font-bold flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98] transition-all shadow-lg shadow-black/20"
             >
-              {busy ? '…' : t('signIn')}
+              {busy ? '…' : (mode === 'signin' ? t('signIn') : t('registerTab'))}
               {!busy && <ArrowRight size={18} />}
             </button>
             <p className="text-[11px] text-white/70 leading-snug">{t('usernameHint')}</p>
@@ -211,41 +270,42 @@ export default function Home() {
         )}
       </main>
 
-      {/* ── Pop-up: Neue Reise ── */}
+      {/* Pop-up: Neue Reise */}
       <GlassPopup open={sheet === 'create'} title={t('createNewTrip')} onClose={() => setSheet(null)}>
         <CreateTripSheet onCreated={() => setSheet(null)} />
       </GlassPopup>
 
-      {/* ── Pop-up: Beitreten (Code) ── */}
-      <GlassPopup open={sheet === 'join'} title="Reise beitreten" onClose={() => setSheet(null)}>
+      {/* Pop-up: Code eingeben (in der App beitreten) */}
+      <GlassPopup open={sheet === 'join'} title={t('enterCodeTitle')} onClose={() => setSheet(null)}>
         <div className="px-4 py-5 flex flex-col gap-4">
-          <p className="text-sm text-gray-500">Gib den Einladungscode ein, den du bekommen hast.</p>
+          <p className="text-sm text-gray-600">{t('enterCodeHint')}</p>
           <input
             type="text"
             value={joinCode}
-            onChange={e => setJoinCode(e.target.value.toUpperCase())}
-            onKeyDown={e => e.key === 'Enter' && goJoin()}
+            onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinError('') }}
+            onKeyDown={e => e.key === 'Enter' && handleJoinInApp()}
             placeholder="z.B. AB12CD"
             autoFocus
-            className="w-full h-13 px-4 rounded-2xl border border-gray-200 bg-gray-50 text-gray-900 text-base font-mono tracking-widest text-center placeholder:tracking-normal placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-colors"
+            className="w-full h-13 px-4 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-gray-900 text-base font-mono tracking-widest text-center placeholder:tracking-normal placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-colors"
           />
+          {joinError && <p className="text-sm text-red-500" role="alert">{joinError}</p>}
           <button
-            onClick={goJoin}
-            disabled={!joinCode.trim()}
+            onClick={handleJoinInApp}
+            disabled={!joinCode.trim() || joinBusy}
             className="w-full h-13 rounded-2xl bg-black text-white text-base font-bold flex items-center justify-center gap-2 disabled:opacity-25 active:scale-[0.98] transition-all"
           >
-            Beitreten
-            <ArrowRight size={18} />
+            {joinBusy ? '…' : t('join')}
+            {!joinBusy && <ArrowRight size={18} />}
           </button>
         </div>
       </GlassPopup>
 
-      {/* ── Sheet: Meine Reisen ── */}
+      {/* Sheet: Meine Reisen */}
       <BottomSheet open={sheet === 'trips'} title={t('myTrips')} onClose={() => setSheet(null)}>
         <div className="px-4 py-4 pb-6 flex flex-col gap-3">
           {trips.length === 0 ? (
             <div className="text-center py-10 text-gray-400 text-sm">
-              Noch keine Reisen erstellt.
+              {t('noTripsTitle')}
             </div>
           ) : (
             [...trips]
@@ -256,6 +316,12 @@ export default function Home() {
                 </div>
               ))
           )}
+          <button
+            onClick={() => { setJoinError(''); setSheet('join') }}
+            className="mt-1 flex items-center justify-center gap-2 w-full h-12 rounded-2xl border-2 border-dashed border-gray-200 text-sm font-semibold text-gray-500 hover:border-primary hover:text-primary transition-colors"
+          >
+            <Plus size={16} />{t('enterCodeTitle')}
+          </button>
         </div>
       </BottomSheet>
     </div>

@@ -1,15 +1,24 @@
 // Autor: Mohamad Haj Ahmad
 // src/context/AuthContext.tsx
-// Mock-Auth: stores name + UUID in localStorage — no real OAuth in Sprint 1
+// Passwortlose Konten: Identität = eindeutiger Username (auth.id == name).
+// signIn meldet ein bestehendes Konto an, register legt eines an (optional + Code).
+// Ohne Server (error 'offline') kommt der Nutzer lokal rein → App läuft weiter.
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { getAuth, saveAuth, clearAuth, type StoredAuth } from '@/utils/storage'
-import { loginAccount } from '@/services/account'
+import { signinAccount, registerAccount, type AuthError } from '@/services/account'
 import { pullTrip } from '@/services/tripSync'
+
+export interface AuthOutcome {
+  ok: boolean
+  error?: AuthError
+}
 
 interface AuthContextType {
   user: StoredAuth | null
-  /** Meldet per Username an. Existiert das Konto, werden seine Reisen geladen. */
-  login: (name: string) => Promise<{ isNew: boolean }>
+  /** Bestehendes Konto anmelden. Unbekannt → { ok:false, error:'notfound' }. */
+  signIn: (name: string) => Promise<AuthOutcome>
+  /** Neues Konto anlegen (optional + Einladungscode). Vergeben → 'taken', Code ungültig → 'badcode'. */
+  register: (name: string, code?: string) => Promise<AuthOutcome>
   logout: () => void
   isLoading: boolean
 }
@@ -26,22 +35,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  // Identität = (eindeutiger) Username. id == name, damit dieselbe Person
-  // auf jedem Gerät dasselbe Mitglied ist. Existiert das Konto serverseitig,
-  // laden wir seine Reisen; ohne Server bleibt es lokal (App läuft trotzdem).
-  async function login(name: string): Promise<{ isNew: boolean }> {
-    const username = name.trim()
+  function enter(username: string): StoredAuth {
     const auth: StoredAuth = { id: username, name: username }
     saveAuth(auth)
     setUser(auth)
+    return auth
+  }
 
-    const account = await loginAccount(username)
-    if (account?.codes?.length) {
-      for (const code of account.codes) {
-        await pullTrip(code) // Reisen des Kontos in den lokalen Cache holen
-      }
+  async function loadTrips(codes: string[]) {
+    for (const code of codes) await pullTrip(code)
+  }
+
+  async function signIn(name: string): Promise<AuthOutcome> {
+    const username = name.trim()
+    if (!username) return { ok: false, error: 'server' }
+    const r = await signinAccount(username)
+    if (r.ok) {
+      enter(username)
+      await loadTrips(r.account.codes)
+      return { ok: true }
     }
-    return { isNew: account?.isNew ?? true }
+    if (r.error === 'notfound') return { ok: false, error: 'notfound' }
+    // kein nutzbarer Server (offline/500/…) → lokal rein, App läuft weiter
+    enter(username)
+    return { ok: true }
+  }
+
+  async function register(name: string, code?: string): Promise<AuthOutcome> {
+    const username = name.trim()
+    if (!username) return { ok: false, error: 'server' }
+    const r = await registerAccount(username, code)
+    if (r.ok) {
+      enter(username)
+      await loadTrips(r.account.codes)
+      return { ok: true }
+    }
+    if (r.error === 'taken' || r.error === 'badcode') return { ok: false, error: r.error }
+    // kein nutzbarer Server → lokal rein
+    enter(username)
+    return { ok: true }
   }
 
   function logout() {
@@ -50,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, signIn, register, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   )

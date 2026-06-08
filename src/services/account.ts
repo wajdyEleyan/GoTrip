@@ -1,27 +1,54 @@
 // src/services/account.ts
-// Schlanke Account-API: Anmelden per (eindeutigem) Username und Reisen dem
-// Konto zuordnen. Ist kein Server/DB erreichbar, geben die Funktionen null
-// zurück → die App läuft dann rein lokal pro Browser (wie zuvor).
+// Account-API: Anmelden (signin) und Registrieren (register) per eindeutigem
+// Username, passwortlos. Ohne Server/DB → error 'offline' (Aufrufer lässt dann
+// lokal rein, App läuft weiter).
 
 export interface Account {
   username: string
   codes: string[]
-  isNew: boolean
 }
 
-/** Meldet einen Username an (legt das Konto bei Bedarf an) und liefert dessen Reise-Codes. */
-export async function loginAccount(username: string): Promise<Account | null> {
+export type AuthError = 'taken' | 'badcode' | 'notfound' | 'offline' | 'server'
+export type AuthResult =
+  | { ok: true; account: Account }
+  | { ok: false; error: AuthError }
+
+const TIMEOUT = 10000
+
+/** Meldet ein bestehendes Konto an. 404 → 'notfound'. */
+export async function signinAccount(username: string): Promise<AuthResult> {
   try {
-    const resp = await fetch('/api/login', {
+    const resp = await fetch('/api/signin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username }),
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(TIMEOUT),
     })
-    if (!resp.ok) return null
-    return (await resp.json()) as Account
+    if (resp.ok) return { ok: true, account: (await resp.json()) as Account }
+    if (resp.status === 404) return { ok: false, error: 'notfound' }
+    if (resp.status === 503) return { ok: false, error: 'offline' }
+    return { ok: false, error: 'server' }
   } catch {
-    return null // Server nicht erreichbar → lokal weiterarbeiten
+    return { ok: false, error: 'offline' }
+  }
+}
+
+/** Legt ein neues Konto an (optional mit Einladungscode). 409 → 'taken', 404 → 'badcode'. */
+export async function registerAccount(username: string, code?: string): Promise<AuthResult> {
+  try {
+    const resp = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, code: code?.trim() || undefined }),
+      signal: AbortSignal.timeout(TIMEOUT),
+    })
+    if (resp.ok) return { ok: true, account: (await resp.json()) as Account }
+    if (resp.status === 409) return { ok: false, error: 'taken' }
+    if (resp.status === 404) return { ok: false, error: 'badcode' }
+    if (resp.status === 503) return { ok: false, error: 'offline' }
+    return { ok: false, error: 'server' }
+  } catch {
+    return { ok: false, error: 'offline' }
   }
 }
 
@@ -32,7 +59,7 @@ export async function attachCodeToAccount(username: string, code: string): Promi
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code }),
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(TIMEOUT),
     })
   } catch {
     /* offline → bleibt lokal */

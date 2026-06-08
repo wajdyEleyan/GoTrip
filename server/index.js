@@ -113,22 +113,54 @@ app.put('/api/trips/:code', async (req, res) => {
 })
 
 // ─── Benutzerkonten ─────────────────────────────────────────────────────────
-// POST /api/login {username} → Konto holen oder neu anlegen.
-// Eindeutiger Username (PRIMARY KEY) verhindert doppelte Namen. Gibt die
-// Einladungscodes der Reisen des Kontos zurück (für „sieht seine Daten überall").
-app.post('/api/login', async (req, res) => {
+// Eindeutiger Username (PRIMARY KEY) = Identität, passwortlos. `codes` = die
+// Einladungscodes der Reisen des Kontos (für „sieht seine Daten überall").
+
+// POST /api/signin {username} → nur anmelden, wenn das Konto existiert.
+app.post('/api/signin', async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
   const username = String(req.body?.username || '').trim()
   if (!username) return res.status(400).json({ error: 'Username erforderlich' })
   try {
+    const { rows } = await pool.query('SELECT codes FROM users WHERE username = $1', [username])
+    if (!rows.length) return res.status(404).json({ error: 'notfound' })
+    res.json({ username, codes: rows[0].codes ?? [] })
+  } catch (e) {
+    console.error('DB signin-Fehler:', e.message)
+    res.status(500).json({ error: 'DB-Fehler' })
+  }
+})
+
+// POST /api/register {username, code?} → neues Konto anlegen (eindeutig),
+// optional direkt einer Reise beitreten. Reihenfolge: erst Code prüfen (keine
+// Karteileiche), dann anlegen (409 bei vergebenem Namen), dann Code anhängen.
+app.post('/api/register', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  const username = String(req.body?.username || '').trim()
+  const code = String(req.body?.code || '').trim()
+  if (!username) return res.status(400).json({ error: 'Username erforderlich' })
+  try {
+    if (code) {
+      const t = await pool.query('SELECT 1 FROM trips WHERE invite_code = $1', [code])
+      if (!t.rows.length) return res.status(404).json({ error: 'badcode' })
+    }
     const ins = await pool.query(
       'INSERT INTO users (username) VALUES ($1) ON CONFLICT (username) DO NOTHING',
       [username],
     )
+    if (ins.rowCount === 0) return res.status(409).json({ error: 'taken' })
+    if (code) {
+      await pool.query(
+        `UPDATE users SET codes = (
+           SELECT jsonb_agg(DISTINCT e) FROM jsonb_array_elements_text(codes || to_jsonb($2::text)) e
+         ) WHERE username = $1`,
+        [username, code],
+      )
+    }
     const { rows } = await pool.query('SELECT codes FROM users WHERE username = $1', [username])
-    res.json({ username, codes: rows[0]?.codes ?? [], isNew: ins.rowCount === 1 })
+    res.json({ username, codes: rows[0]?.codes ?? [] })
   } catch (e) {
-    console.error('DB login-Fehler:', e.message)
+    console.error('DB register-Fehler:', e.message)
     res.status(500).json({ error: 'DB-Fehler' })
   }
 })
