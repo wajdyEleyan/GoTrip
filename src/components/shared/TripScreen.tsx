@@ -18,8 +18,9 @@ interface TripScreenProps {
 export function TripScreen({ title, backTo, rightSlot, children }: TripScreenProps) {
   return (
     <div className="app-shell relative flex flex-col min-h-svh overflow-hidden">
-      {/* Heller Foto-Hintergrund: Standbild aus dem Willkommens-Video, unter hellem Schleier */}
-      <div className="absolute inset-0 z-0">
+      {/* Heller Foto-Hintergrund: am Viewport fixiert (wächst NICHT mit der Seite),
+          Schleier unten deckend → unterer Rand bleibt immer weiß, egal wie weit gescrollt. */}
+      <div className="fixed inset-y-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-0 pointer-events-none">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: TRIP_BG, filter: 'blur(2px)', transform: 'scale(1.08)' }}
