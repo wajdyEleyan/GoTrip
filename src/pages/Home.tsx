@@ -35,6 +35,7 @@ export default function Home() {
   // Auth-Formular (nicht eingeloggt)
   const [mode, setMode] = useState<Mode>('signin')
   const [name, setName] = useState('')
+  const [password, setPassword] = useState('')
   const [regCode, setRegCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [authError, setAuthError] = useState('')
@@ -64,18 +65,19 @@ export default function Home() {
       case 'notfound': return t('errNotRegistered')
       case 'taken': return t('errNameTaken')
       case 'badcode': return t('errBadCode')
+      case 'wrongpass': return t('errWrongPass')
       default: return t('genericError')
     }
   }
 
   async function handleAuth() {
     const username = name.trim()
-    if (!username || busy) return
+    if (!username || !password || busy) return
     setBusy(true)
     setAuthError('')
     const res: AuthOutcome = mode === 'signin'
-      ? await signIn(username)
-      : await register(username, regCode.trim() || undefined)
+      ? await signIn(username, password)
+      : await register(username, password, regCode.trim() || undefined)
     setBusy(false)
     if (!res.ok) setAuthError(errorText(res.error))
     // bei Erfolg: user gesetzt → derselbe Screen zeigt den eingeloggten Zustand
@@ -242,6 +244,18 @@ export default function Home() {
               onKeyDown={e => { if (e.key === 'Enter') handleAuth() }}
               placeholder={t('usernameLabel')}
               autoFocus
+              autoComplete="username"
+              className="w-full h-12 px-4 rounded-xl bg-white/92 text-gray-900 text-base placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+
+            <input
+              id="auth-password"
+              type="password"
+              value={password}
+              onChange={e => { setPassword(e.target.value); setAuthError('') }}
+              onKeyDown={e => { if (e.key === 'Enter') handleAuth() }}
+              placeholder={t('passwordLabel')}
+              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
               className="w-full h-12 px-4 rounded-xl bg-white/92 text-gray-900 text-base placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
 
@@ -259,7 +273,7 @@ export default function Home() {
 
             <button
               onClick={handleAuth}
-              disabled={!name.trim() || busy}
+              disabled={!name.trim() || !password || busy}
               className="w-full h-12 rounded-xl bg-primary hover:bg-primary-hover text-white text-base font-bold flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98] transition-all shadow-lg shadow-black/20"
             >
               {busy ? '…' : (mode === 'signin' ? t('signIn') : t('registerTab'))}

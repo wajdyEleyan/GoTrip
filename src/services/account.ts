@@ -1,19 +1,20 @@
 // src/services/account.ts
-// Account-API: Anmelden (signin) und Registrieren (register) per eindeutigem
-// Username, passwortlos.
+// Account-API: Anmelden (signin) und Registrieren (register) per Username +
+// Passwort. Das Passwort wird serverseitig gehasht gespeichert (salted scrypt)
+// und beim Anmelden verglichen — nie im Klartext abgelegt.
 //
-// Eindeutigkeit:
-//  • Server mit DB (z. B. Render) erzwingt GLOBALE Eindeutigkeit (username PK → 409).
-//  • Zusätzlich ein lokales Konten-Register (localStorage) als Fallback, damit
-//    auch ohne erreichbare DB derselbe Name nicht doppelt registriert werden kann
-//    und Anmelden nur für bekannte Namen klappt.
+// Eindeutigkeit & Vergleich:
+//  • Server mit DB (z. B. Render) ist die Wahrheit: username PK (409 = vergeben),
+//    Passwortvergleich serverseitig (401 = falsch).
+//  • Ohne erreichbare DB greift ein lokaler Fallback (localStorage), damit die
+//    App auch offline nutzbar bleibt; dort wird ein SHA-256-Hash verglichen.
 
 export interface Account {
   username: string
   codes: string[]
 }
 
-export type AuthError = 'taken' | 'badcode' | 'notfound'
+export type AuthError = 'taken' | 'badcode' | 'notfound' | 'wrongpass'
 export type AuthResult =
   | { ok: true; account: Account }
   | { ok: false; error: AuthError }
@@ -21,49 +22,71 @@ export type AuthResult =
 const TIMEOUT = 10000
 const ACCT_KEY = 'gotrip_accounts'
 
-function localAccounts(): string[] {
-  try { return JSON.parse(localStorage.getItem(ACCT_KEY) || '[]') as string[] } catch { return [] }
+// ── Lokaler Konten-Speicher (Fallback ohne Server) ───────────────────────────
+// Struktur: { [username]: sha256Hash }. Alt-Format (string[]) wird migriert.
+function readLocal(): Record<string, string> {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(ACCT_KEY) || '{}')
+    if (Array.isArray(parsed)) {
+      // Migration: frühere Liste von Namen → ohne Passwort ('').
+      return Object.fromEntries(parsed.map((u) => [u, '']))
+    }
+    return parsed as Record<string, string>
+  } catch {
+    return {}
+  }
 }
-function rememberLocalAccount(username: string): void {
-  const a = localAccounts()
-  if (!a.includes(username)) { a.push(username); localStorage.setItem(ACCT_KEY, JSON.stringify(a)) }
+function writeLocal(map: Record<string, string>): void {
+  localStorage.setItem(ACCT_KEY, JSON.stringify(map))
+}
+async function sha256(text: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-/** Meldet ein bestehendes Konto an. Unbekannt → 'notfound'. */
-export async function signinAccount(username: string): Promise<AuthResult> {
+/** Meldet ein bestehendes Konto an. Unbekannt → 'notfound', Passwort falsch → 'wrongpass'. */
+export async function signinAccount(username: string, password: string): Promise<AuthResult> {
   try {
     const resp = await fetch('/api/signin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username }),
+      body: JSON.stringify({ username, password }),
       signal: AbortSignal.timeout(TIMEOUT),
     })
     if (resp.ok) {
-      rememberLocalAccount(username)
-      return { ok: true, account: (await resp.json()) as Account }
+      const account = (await resp.json()) as Account
+      writeLocal({ ...readLocal(), [username]: await sha256(password) })
+      return { ok: true, account }
     }
     if (resp.status === 404) return { ok: false, error: 'notfound' }
+    if (resp.status === 401) return { ok: false, error: 'wrongpass' }
     // 503/sonstiges → keine DB → lokaler Fallback unten
   } catch {
     // Server nicht erreichbar → lokaler Fallback unten
   }
-  // Lokaler Fallback: nur bekannte Namen dürfen rein.
-  if (localAccounts().includes(username)) return { ok: true, account: { username, codes: [] } }
-  return { ok: false, error: 'notfound' }
+  // Lokaler Fallback: nur bekannte Namen, Passwort vergleichen.
+  const map = readLocal()
+  if (!(username in map)) return { ok: false, error: 'notfound' }
+  const stored = map[username]
+  const hash = await sha256(password)
+  if (stored && stored !== hash) return { ok: false, error: 'wrongpass' }
+  if (!stored) { map[username] = hash; writeLocal(map) } // Alt-Konto: Passwort setzen
+  return { ok: true, account: { username, codes: [] } }
 }
 
-/** Legt ein neues Konto an (optional + Code). Vergeben → 'taken', Code ungültig → 'badcode'. */
-export async function registerAccount(username: string, code?: string): Promise<AuthResult> {
+/** Legt ein neues Konto an (Username + Passwort, optional + Code). Vergeben → 'taken'. */
+export async function registerAccount(username: string, password: string, code?: string): Promise<AuthResult> {
   try {
     const resp = await fetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, code: code?.trim() || undefined }),
+      body: JSON.stringify({ username, password, code: code?.trim() || undefined }),
       signal: AbortSignal.timeout(TIMEOUT),
     })
     if (resp.ok) {
-      rememberLocalAccount(username)
-      return { ok: true, account: (await resp.json()) as Account }
+      const account = (await resp.json()) as Account
+      writeLocal({ ...readLocal(), [username]: await sha256(password) })
+      return { ok: true, account }
     }
     if (resp.status === 409) return { ok: false, error: 'taken' }
     if (resp.status === 404) return { ok: false, error: 'badcode' }
@@ -72,8 +95,10 @@ export async function registerAccount(username: string, code?: string): Promise<
     // Server nicht erreichbar → lokaler Fallback unten
   }
   // Lokaler Fallback (keine DB): Eindeutigkeit pro Gerät erzwingen.
-  if (localAccounts().includes(username)) return { ok: false, error: 'taken' }
-  rememberLocalAccount(username)
+  const map = readLocal()
+  if (username in map) return { ok: false, error: 'taken' }
+  map[username] = await sha256(password)
+  writeLocal(map)
   return { ok: true, account: { username, codes: code?.trim() ? [code.trim()] : [] } }
 }
 

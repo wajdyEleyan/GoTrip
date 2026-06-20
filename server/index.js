@@ -10,6 +10,25 @@
 // ohne die optionalen Earthdata-Satellitendaten.
 const path = require('path')
 const fs = require('fs')
+const crypto = require('crypto')
+
+// ─── Passwort-Hashing (salted scrypt, ohne Zusatz-Abhängigkeit) ─────────────
+// Passwörter werden NIE im Klartext gespeichert: pro Konto ein zufälliges Salt
+// + scrypt-Hash, abgelegt als "salt:hash". Beim Login wird neu gehasht und
+// zeitkonstant verglichen.
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex')
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex')
+  return `${salt}:${hash}`
+}
+function verifyPassword(password, stored) {
+  if (!stored || !stored.includes(':')) return false
+  const [salt, hash] = stored.split(':')
+  const test = crypto.scryptSync(password, salt, 64).toString('hex')
+  const a = Buffer.from(hash, 'hex')
+  const b = Buffer.from(test, 'hex')
+  return a.length === b.length && crypto.timingSafeEqual(a, b)
+}
 // .env immer aus dem server-Ordner laden — egal, von wo gestartet wird.
 // (Auf Render kommt der Token als echte Env-Var; dotenv überschreibt die nicht.)
 require('dotenv').config({ path: path.join(__dirname, '.env') })
@@ -46,11 +65,13 @@ if (DATABASE_URL) {
   // ein Nutzer seine Reisen auf JEDEM Gerät, sobald er sich mit dem Namen anmeldet.
   pool.query(`
     CREATE TABLE IF NOT EXISTS users (
-      username    TEXT PRIMARY KEY,
-      codes       JSONB NOT NULL DEFAULT '[]'::jsonb,
-      created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+      username      TEXT PRIMARY KEY,
+      password_hash TEXT,
+      codes         JSONB NOT NULL DEFAULT '[]'::jsonb,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
     )
-  `).then(() => console.log('DB: Tabelle "users" bereit'))
+  `).then(() => pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT'))
+    .then(() => console.log('DB: Tabelle "users" bereit'))
     .catch((e) => console.error('DB-Init-Fehler (users):', e.message))
 }
 
@@ -116,14 +137,24 @@ app.put('/api/trips/:code', async (req, res) => {
 // Eindeutiger Username (PRIMARY KEY) = Identität, passwortlos. `codes` = die
 // Einladungscodes der Reisen des Kontos (für „sieht seine Daten überall").
 
-// POST /api/signin {username} → nur anmelden, wenn das Konto existiert.
+// POST /api/signin {username, password} → anmelden, Passwort wird verglichen.
+// 404 'notfound' (Konto unbekannt) · 401 'wrongpass' (Passwort falsch).
 app.post('/api/signin', async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
   const username = String(req.body?.username || '').trim()
-  if (!username) return res.status(400).json({ error: 'Username erforderlich' })
+  const password = String(req.body?.password || '')
+  if (!username || !password) return res.status(400).json({ error: 'Username & Passwort erforderlich' })
   try {
-    const { rows } = await pool.query('SELECT codes FROM users WHERE username = $1', [username])
+    const { rows } = await pool.query('SELECT password_hash, codes FROM users WHERE username = $1', [username])
     if (!rows.length) return res.status(404).json({ error: 'notfound' })
+
+    const stored = rows[0].password_hash
+    if (!stored) {
+      // Alt-Konto ohne Passwort (vor dieser Funktion angelegt) → jetzt Passwort setzen.
+      await pool.query('UPDATE users SET password_hash = $2 WHERE username = $1', [username, hashPassword(password)])
+    } else if (!verifyPassword(password, stored)) {
+      return res.status(401).json({ error: 'wrongpass' })
+    }
     res.json({ username, codes: rows[0].codes ?? [] })
   } catch (e) {
     console.error('DB signin-Fehler:', e.message)
@@ -131,22 +162,24 @@ app.post('/api/signin', async (req, res) => {
   }
 })
 
-// POST /api/register {username, code?} → neues Konto anlegen (eindeutig),
-// optional direkt einer Reise beitreten. Reihenfolge: erst Code prüfen (keine
-// Karteileiche), dann anlegen (409 bei vergebenem Namen), dann Code anhängen.
+// POST /api/register {username, password, code?} → neues Konto anlegen (eindeutig),
+// Passwort gehasht speichern, optional direkt einer Reise beitreten. Reihenfolge:
+// erst Code prüfen (keine Karteileiche), dann anlegen (409 bei vergebenem Namen),
+// dann Code anhängen.
 app.post('/api/register', async (req, res) => {
   if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
   const username = String(req.body?.username || '').trim()
+  const password = String(req.body?.password || '')
   const code = String(req.body?.code || '').trim()
-  if (!username) return res.status(400).json({ error: 'Username erforderlich' })
+  if (!username || !password) return res.status(400).json({ error: 'Username & Passwort erforderlich' })
   try {
     if (code) {
       const t = await pool.query('SELECT 1 FROM trips WHERE invite_code = $1', [code])
       if (!t.rows.length) return res.status(404).json({ error: 'badcode' })
     }
     const ins = await pool.query(
-      'INSERT INTO users (username) VALUES ($1) ON CONFLICT (username) DO NOTHING',
-      [username],
+      'INSERT INTO users (username, password_hash) VALUES ($1, $2) ON CONFLICT (username) DO NOTHING',
+      [username, hashPassword(password)],
     )
     if (ins.rowCount === 0) return res.status(409).json({ error: 'taken' })
     if (code) {

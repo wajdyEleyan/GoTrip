@@ -16,10 +16,10 @@ export interface AuthOutcome {
 
 interface AuthContextType {
   user: StoredAuth | null
-  /** Bestehendes Konto anmelden. Unbekannt → { ok:false, error:'notfound' }. */
-  signIn: (name: string) => Promise<AuthOutcome>
-  /** Neues Konto anlegen (optional + Einladungscode). Vergeben → 'taken', Code ungültig → 'badcode'. */
-  register: (name: string, code?: string) => Promise<AuthOutcome>
+  /** Anmelden mit Username + Passwort. Unbekannt → 'notfound', Passwort falsch → 'wrongpass'. */
+  signIn: (name: string, password: string) => Promise<AuthOutcome>
+  /** Konto anlegen (Username + Passwort, optional + Einladungscode). Vergeben → 'taken', Code ungültig → 'badcode'. */
+  register: (name: string, password: string, code?: string) => Promise<AuthOutcome>
   logout: () => void
   isLoading: boolean
 }
@@ -47,20 +47,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     for (const code of codes) await pullTrip(code)
   }
 
-  async function signIn(name: string): Promise<AuthOutcome> {
+  async function signIn(name: string, password: string): Promise<AuthOutcome> {
     const username = name.trim()
-    if (!username) return { ok: false, error: 'notfound' }
-    const r = await signinAccount(username)
-    if (!r.ok) return { ok: false, error: r.error } // 'notfound'
+    if (!username || !password) return { ok: false, error: 'notfound' }
+    const r = await signinAccount(username, password)
+    if (!r.ok) return { ok: false, error: r.error } // 'notfound' | 'wrongpass'
     enter(username)
     await loadTrips(r.account.codes)
     return { ok: true }
   }
 
-  async function register(name: string, code?: string): Promise<AuthOutcome> {
+  async function register(name: string, password: string, code?: string): Promise<AuthOutcome> {
     const username = name.trim()
-    if (!username) return { ok: false, error: 'taken' }
-    const r = await registerAccount(username, code)
+    if (!username || !password) return { ok: false, error: 'taken' }
+    const r = await registerAccount(username, password, code)
     if (!r.ok) return { ok: false, error: r.error } // 'taken' | 'badcode'
     const auth = enter(username)
     await loadTrips(r.account.codes)
