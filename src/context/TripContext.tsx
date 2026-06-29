@@ -9,6 +9,7 @@ import {
   getTripById as storageFindById,
 } from '@/utils/storage'
 import { generateInviteCode } from '@/utils/linkGenerator'
+import { generateUUID } from '@/utils/uuid'
 import { pushNow } from '@/services/tripSync'
 import { attachCodeToAccount } from '@/services/account'
 import { useAuth } from './AuthContext'
@@ -48,7 +49,7 @@ export function TripProvider({ children }: { children: React.ReactNode }) {
 
   function createTrip(data: CreateTripFormData): Trip {
     const adminMember: Member = {
-      id: user?.id ?? crypto.randomUUID(),
+      id: user?.id ?? generateUUID(),
       name: user?.name ?? 'Admin',
       role: 'admin',
       joinedAt: new Date().toISOString(),
@@ -56,7 +57,7 @@ export function TripProvider({ children }: { children: React.ReactNode }) {
     }
 
     const trip: Trip = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       ...data,
       inviteCode: generateInviteCode(),
       createdAt: new Date().toISOString(),
