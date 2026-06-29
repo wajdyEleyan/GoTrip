@@ -40,8 +40,17 @@ function writeLocal(map: Record<string, string>): void {
   localStorage.setItem(ACCT_KEY, JSON.stringify(map))
 }
 async function sha256(text: string): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('')
+  // crypto.subtle nur auf localhost/HTTPS verfügbar — einfacher Fallback für LAN-IP
+  if (typeof crypto !== 'undefined' && crypto.subtle) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+    return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('')
+  }
+  // Einfacher deterministischer Hash als Fallback (ausreichend für Demo)
+  let hash = 0
+  for (let i = 0; i < text.length; i++) {
+    hash = (Math.imul(31, hash) + text.charCodeAt(i)) | 0
+  }
+  return Math.abs(hash).toString(36).padStart(8, '0')
 }
 
 /** Meldet ein bestehendes Konto an. Unbekannt → 'notfound', Passwort falsch → 'wrongpass'. */
