@@ -46,6 +46,11 @@ app.use(express.json({ limit: '2mb' }))
 // Speichert pro Reise EIN Dokument (alle Daten) unter ihrem inviteCode, damit
 // alle Gruppenmitglieder dieselbe Reise sehen. Ohne DATABASE_URL ist die
 // Sync-API inaktiv → die App läuft dann rein lokal pro Browser (wie zuvor).
+// ─── In-Memory-Fallback (wenn keine DATABASE_URL gesetzt) ───────────────────
+// Daten leben im RAM des Servers — kein Neustart, kein Verlust. Reicht für
+// Demo / HCI-Projekt vollständig aus.
+const mem = { trips: new Map(), users: new Map() }
+
 let pool = null
 const DATABASE_URL = process.env.DATABASE_URL
 if (DATABASE_URL) {
@@ -102,7 +107,11 @@ function mergeTrip(existing, incoming) {
 
 // GET /api/trips/:code → ganzes Reise-Bündel
 app.get('/api/trips/:code', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  if (!pool) {
+    const data = mem.trips.get(req.params.code)
+    if (!data) return res.status(404).json({ error: 'Reise nicht gefunden' })
+    return res.json(data)
+  }
   try {
     const { rows } = await pool.query('SELECT data FROM trips WHERE invite_code = $1', [req.params.code])
     if (!rows.length) return res.status(404).json({ error: 'Reise nicht gefunden' })
@@ -115,9 +124,14 @@ app.get('/api/trips/:code', async (req, res) => {
 
 // PUT /api/trips/:code → Bündel mit dem gespeicherten Stand mergen & speichern
 app.put('/api/trips/:code', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
   const incoming = req.body
   if (!incoming || typeof incoming !== 'object') return res.status(400).json({ error: 'Ungültige Daten' })
+  if (!pool) {
+    const existing = mem.trips.get(req.params.code)
+    const merged = mergeTrip(existing, incoming)
+    mem.trips.set(req.params.code, merged)
+    return res.json(merged)
+  }
   try {
     const { rows } = await pool.query('SELECT data FROM trips WHERE invite_code = $1', [req.params.code])
     const merged = mergeTrip(rows[0]?.data, incoming)
@@ -140,7 +154,17 @@ app.put('/api/trips/:code', async (req, res) => {
 // POST /api/signin {username, password} → anmelden, Passwort wird verglichen.
 // 404 'notfound' (Konto unbekannt) · 401 'wrongpass' (Passwort falsch).
 app.post('/api/signin', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  if (!pool) {
+    const username = String(req.body?.username || '').trim()
+    const password = String(req.body?.password || '')
+    if (!username || !password) return res.status(400).json({ error: 'Username & Passwort erforderlich' })
+    const user = mem.users.get(username)
+    if (!user) return res.status(404).json({ error: 'notfound' })
+    if (user.password_hash && !verifyPassword(password, user.password_hash))
+      return res.status(401).json({ error: 'wrongpass' })
+    if (!user.password_hash) { user.password_hash = hashPassword(password) }
+    return res.json({ username, codes: user.codes ?? [] })
+  }
   const username = String(req.body?.username || '').trim()
   const password = String(req.body?.password || '')
   if (!username || !password) return res.status(400).json({ error: 'Username & Passwort erforderlich' })
@@ -167,7 +191,17 @@ app.post('/api/signin', async (req, res) => {
 // erst Code prüfen (keine Karteileiche), dann anlegen (409 bei vergebenem Namen),
 // dann Code anhängen.
 app.post('/api/register', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  if (!pool) {
+    const username = String(req.body?.username || '').trim()
+    const password = String(req.body?.password || '')
+    const code = String(req.body?.code || '').trim()
+    if (!username || !password) return res.status(400).json({ error: 'Username & Passwort erforderlich' })
+    if (code && !mem.trips.has(code)) return res.status(404).json({ error: 'badcode' })
+    if (mem.users.has(username)) return res.status(409).json({ error: 'taken' })
+    const codes = code ? [code] : []
+    mem.users.set(username, { password_hash: hashPassword(password), codes })
+    return res.json({ username, codes })
+  }
   const username = String(req.body?.username || '').trim()
   const password = String(req.body?.password || '')
   const code = String(req.body?.code || '').trim()
@@ -200,7 +234,15 @@ app.post('/api/register', async (req, res) => {
 
 // POST /api/users/:username/codes {code} → Reise (inviteCode) dem Konto zuordnen.
 app.post('/api/users/:username/codes', async (req, res) => {
-  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  if (!pool) {
+    const username = String(req.params.username || '').trim()
+    const code = String(req.body?.code || '').trim()
+    if (!username || !code) return res.status(400).json({ error: 'username & code erforderlich' })
+    const user = mem.users.get(username) ?? { codes: [] }
+    if (!user.codes.includes(code)) user.codes.push(code)
+    mem.users.set(username, user)
+    return res.json({ ok: true })
+  }
   const username = String(req.params.username || '').trim()
   const code = String(req.body?.code || '').trim()
   if (!username || !code) return res.status(400).json({ error: 'username & code erforderlich' })
@@ -290,7 +332,8 @@ app.get('/api/earthdata', async (req, res) => {
 app.get('/health', (_req, res) => res.json({
   status: 'ok',
   earthdata: !!EARTHDATA_TOKEN,
-  database: !!pool,
+  database: pool ? 'postgres' : 'memory',
+  trips: mem.trips.size,
 }))
 
 // ─── Produktion (z. B. Render): Frontend-Build mit ausliefern ───────────────
