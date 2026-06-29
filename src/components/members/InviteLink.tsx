@@ -16,14 +16,16 @@ function InstagramIcon({ size = 28 }: { size?: number }) {
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/shared/Toast'
 import { buildInviteLink } from '@/utils/linkGenerator'
+import type { Trip } from '@/types/trip'
 
 interface InviteLinkProps {
   inviteCode: string
+  trip?: Trip
 }
 
-export function InviteLink({ inviteCode }: InviteLinkProps) {
+export function InviteLink({ inviteCode, trip }: InviteLinkProps) {
   const [copied, setCopied] = useState(false)
-  const inviteLink = buildInviteLink(inviteCode)
+  const inviteLink = buildInviteLink(inviteCode, trip)
 
   async function handleCopy() {
     try {

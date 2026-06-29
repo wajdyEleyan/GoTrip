@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext'
 import type { Trip, Member } from '@/types/trip'
 import { Users, Plane, CheckCircle2, XCircle, Loader2, Calendar } from 'lucide-react'
 import { ambientImage } from '@/utils/destinationImage'
+import { generateUUID } from '@/utils/uuid'
 
 export default function JoinTrip() {
   const { code } = useParams<{ code: string }>()
@@ -32,6 +33,19 @@ export default function JoinTrip() {
     let active = true
     async function load() {
       if (!code) { setLoading(false); return }
+      // Reisedaten aus URL-Parameter dekodieren (kein Server nötig)
+      try {
+        const params = new URLSearchParams(window.location.search)
+        const encoded = params.get('d')
+        if (encoded) {
+          const trip = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(decodeURIComponent(encoded)), c => c.charCodeAt(0)))) as Trip
+          const stored = JSON.parse(localStorage.getItem('gotrip_trips') || '[]') as Trip[]
+          if (!stored.some((t) => t.inviteCode === code)) {
+            stored.push(trip)
+            localStorage.setItem('gotrip_trips', JSON.stringify(stored))
+          }
+        }
+      } catch { /* ungültige Kodierung → ignorieren */ }
       await pullTrip(code)
       if (!active) return
       const found = getTripByInviteCode(code)
@@ -128,7 +142,7 @@ export default function JoinTrip() {
 
     // Nicht eingeloggt → lokal beitreten (kein Konto).
     const newMember: Member = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name: trimmed,
       role: 'member',
       joinedAt: new Date().toISOString(),

@@ -49,7 +49,7 @@ export default function InviteFriends() {
 
         {/* Search + Copy Link wrapped in glass-card */}
         <div className="glass-card rounded-2xl p-4 flex flex-col gap-4">
-          <InviteLink inviteCode={trip.inviteCode} />
+          <InviteLink inviteCode={trip.inviteCode} trip={trip} />
         </div>
 
         <Button
