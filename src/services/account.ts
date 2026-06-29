@@ -19,7 +19,7 @@ export type AuthResult =
   | { ok: true; account: Account }
   | { ok: false; error: AuthError }
 
-const TIMEOUT = 10000
+const TIMEOUT = 2000
 const ACCT_KEY = 'gotrip_accounts'
 
 // ── Lokaler Konten-Speicher (Fallback ohne Server) ───────────────────────────
