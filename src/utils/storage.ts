@@ -40,6 +40,7 @@ export function updateTrip(updated: Trip): void {
 export function deleteTrip(id: string): void {
   const trips = getTrips().filter((t) => t.id !== id)
   localStorage.setItem(TRIPS_KEY, JSON.stringify(trips))
+  scheduleSync()
 }
 
 // Auth helpers
@@ -198,4 +199,5 @@ export function deleteExpense(expId: string): void {
   const raw = localStorage.getItem(EXP_KEY)
   const all: Expense[] = raw ? JSON.parse(raw) : []
   localStorage.setItem(EXP_KEY, JSON.stringify(all.filter((e) => e.id !== expId)))
+  scheduleSync()
 }

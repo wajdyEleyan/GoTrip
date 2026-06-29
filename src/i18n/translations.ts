@@ -146,6 +146,7 @@ const de = {
   deleteConfirmText: 'Möchtest du "{{name}}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
   // Toasts
   tripDeleted: 'Reise wurde gelöscht',
+  notSetYet: 'Noch festlegen',
   availabilitySaved: 'Verfügbarkeit gespeichert!',
   tripUpdated: 'Reise aktualisiert!',
   // FinalOverview
@@ -305,6 +306,7 @@ const en: typeof de = {
   deleteConfirmTitle: 'Delete Trip?',
   deleteConfirmText: 'Do you really want to delete "{{name}}"? This cannot be undone.',
   tripDeleted: 'Trip deleted',
+  notSetYet: 'Set later',
   availabilitySaved: 'Availability saved!',
   tripUpdated: 'Trip updated!',
   tripFinished: 'Your Trip is Ready!',
@@ -460,6 +462,7 @@ const es: typeof de = {
   deleteConfirmTitle: '¿Eliminar viaje?',
   deleteConfirmText: '¿Realmente deseas eliminar "{{name}}"? Esto no se puede deshacer.',
   tripDeleted: 'Viaje eliminado',
+  notSetYet: 'Por definir',
   availabilitySaved: '¡Disponibilidad guardada!',
   tripUpdated: '¡Viaje actualizado!',
   tripFinished: '¡Tu viaje está listo!',

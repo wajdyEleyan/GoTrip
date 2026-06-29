@@ -113,7 +113,7 @@ export default function TripDashboard() {
   const fmtDate = (iso: string) => {
     try { return format(parseISO(iso), 'd. MMM', { locale: de }) } catch { return iso }
   }
-  const dateRange = datesSet ? `${fmtDate(trip.startDate)} – ${fmtDate(trip.endDate)}` : 'Noch festlegen'
+  const dateRange = datesSet ? `${fmtDate(trip.startDate)} – ${fmtDate(trip.endDate)}` : t('notSetYet')
 
   function renderTileContent(key: TileKey) {
     switch (key) {
