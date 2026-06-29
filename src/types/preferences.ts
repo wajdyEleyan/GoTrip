@@ -17,6 +17,8 @@ export interface MemberPreferences {
   tripId: string
   budgetPerPerson: number
   interests: InterestType[]
+  /** Frei eingegebene „Sonstiges"-Interessen (z. B. „Tauchen"). Rein informativ, fließt nicht in den Score. */
+  customInterests?: string[]
   preferredStartDate?: string
   preferredEndDate?: string
 }

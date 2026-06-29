@@ -1,7 +1,7 @@
 // Autor: Amal Najah
 // src/components/voting/VotingCard.tsx
 import { useState } from 'react'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, Thermometer, Sun, Star } from 'lucide-react'
 import { StarRating } from './StarRating'
 import { ScoreRing } from '@/components/recommendations/ScoreRing'
 import type { RankedDestination } from '@/types/destination'
@@ -31,12 +31,13 @@ export function VotingCard({ dest, myVote, myComment = '', onVote }: VotingCardP
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-semibold text-gray-900 truncate">{dest.name}</h3>
           {dest.climate && (
-            <p className="text-xs text-gray-500 mt-0.5">
-              🌡️ {dest.climate.temp_avg}°C · ☀️ {dest.climate.sunshine_hours}h Sonne
+            <p className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+              <span className="flex items-center gap-1"><Thermometer size={12} className="text-orange-400" /> {dest.climate.temp_avg}°C</span>
+              <span className="flex items-center gap-1"><Sun size={12} className="text-amber-400" /> {dest.climate.sunshine_hours}h</span>
             </p>
           )}
           <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-            <span>Gruppe: ⭐ {dest.starsAvg > 0 ? dest.starsAvg.toFixed(1) : '–'}</span>
+            <span className="flex items-center gap-1">Gruppe: <Star size={12} className="text-amber-400 fill-amber-400" /> {dest.starsAvg > 0 ? dest.starsAvg.toFixed(1) : '–'}</span>
             <span>·</span>
             <span>{dest.voteCount} Stimmen</span>
           </div>

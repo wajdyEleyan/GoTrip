@@ -9,6 +9,8 @@ import {
   getTripById as storageFindById,
 } from '@/utils/storage'
 import { generateInviteCode } from '@/utils/linkGenerator'
+import { pushNow } from '@/services/tripSync'
+import { attachCodeToAccount } from '@/services/account'
 import { useAuth } from './AuthContext'
 
 const AVATAR_COLORS = [
@@ -63,6 +65,10 @@ export function TripProvider({ children }: { children: React.ReactNode }) {
 
     saveTrip(trip)
     setTrips((prev) => [...prev, trip])
+    // Reise sofort in die geteilte DB schieben, damit Freunde beitreten können.
+    void pushNow(trip.id, trip.inviteCode)
+    // Reise dem Konto zuordnen → erscheint nach Login auf jedem Gerät.
+    if (user) void attachCodeToAccount(user.name, trip.inviteCode)
     return trip
   }
 
@@ -90,6 +96,8 @@ export function TripProvider({ children }: { children: React.ReactNode }) {
 
     persistUpdateTrip(updated)
     setTrips((prev) => prev.map((t) => (t.id === tripId ? updated : t)))
+    // Neues Mitglied sofort in die geteilte DB schieben.
+    void pushNow(updated.id, updated.inviteCode)
   }
 
   return (

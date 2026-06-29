@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { DatePicker } from '@/components/ui/DatePicker'
 import { createTripSchema, type CreateTripSchema } from '@/utils/tripSchema'
 import { useTripContext } from '@/context/TripContext'
 import { useLanguage } from '@/context/LanguageContext'
@@ -25,6 +26,8 @@ export function TripForm({ editTrip }: TripFormProps) {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting, isValid },
   } = useForm<CreateTripSchema>({
     resolver: zodResolver(createTripSchema),
@@ -81,13 +84,14 @@ export function TripForm({ editTrip }: TripFormProps) {
         <div className="flex gap-3">
           <div className="flex-1 flex flex-col gap-1">
             <Label htmlFor="startDate" className="text-xs text-gray-500">{t('from')}</Label>
-            <Input
+            <DatePicker
               id="startDate"
-              type="date"
               min={today}
-              className="h-12 rounded-xl border-gray-200 focus:border-primary"
-              aria-invalid={!!errors.startDate}
-              {...register('startDate')}
+              value={watch('startDate')}
+              onChange={(v) => setValue('startDate', v, { shouldValidate: true, shouldDirty: true })}
+              placeholder={t('from')}
+              invalid={!!errors.startDate}
+              aria-label={t('from')}
             />
             {errors.startDate && (
               <p className="text-xs text-red-500" role="alert">{errors.startDate.message}</p>
@@ -95,13 +99,14 @@ export function TripForm({ editTrip }: TripFormProps) {
           </div>
           <div className="flex-1 flex flex-col gap-1">
             <Label htmlFor="endDate" className="text-xs text-gray-500">{t('to')}</Label>
-            <Input
+            <DatePicker
               id="endDate"
-              type="date"
-              min={today}
-              className="h-12 rounded-xl border-gray-200 focus:border-primary"
-              aria-invalid={!!errors.endDate}
-              {...register('endDate')}
+              min={watch('startDate') || today}
+              value={watch('endDate')}
+              onChange={(v) => setValue('endDate', v, { shouldValidate: true, shouldDirty: true })}
+              placeholder={t('to')}
+              invalid={!!errors.endDate}
+              aria-label={t('to')}
             />
             {errors.endDate && (
               <p className="text-xs text-red-500" role="alert">{errors.endDate.message}</p>

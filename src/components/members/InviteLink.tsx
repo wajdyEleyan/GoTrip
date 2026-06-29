@@ -72,18 +72,18 @@ export function InviteLink({ inviteCode }: InviteLinkProps) {
   return (
     <div className="flex flex-col gap-4">
       {/* Link Box */}
-      <div className="flex items-center gap-2 bg-muted rounded-xl p-3 border border-gray-100">
+      <div className="glass-field flex items-center gap-2 rounded-xl p-3">
         <input
           type="text"
           value={inviteLink}
           readOnly
-          className="flex-1 bg-transparent text-sm text-gray-600 truncate outline-none select-all"
+          className="flex-1 bg-transparent text-sm text-gray-700 truncate outline-none select-all"
           aria-label="Einladungslink"
           onClick={(e) => (e.target as HTMLInputElement).select()}
         />
         <button
           onClick={handleCopy}
-          className="shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+          className="shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-white/70 border border-white/80 text-gray-600 hover:bg-white/90 transition-colors"
           aria-label={copied ? 'Kopiert' : 'Link kopieren'}
         >
           {copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
@@ -100,7 +100,7 @@ export function InviteLink({ inviteCode }: InviteLinkProps) {
       <div className="grid grid-cols-3 gap-3">
         <button
           onClick={handleWhatsApp}
-          className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow active:scale-95"
+          className="flex flex-col items-center gap-2 p-4 glass-field rounded-2xl hover:bg-white/70 transition-colors active:scale-95"
           aria-label="Via WhatsApp teilen"
         >
           <MessageCircle size={28} className="text-[#25D366]" />
@@ -109,7 +109,7 @@ export function InviteLink({ inviteCode }: InviteLinkProps) {
 
         <button
           onClick={handleInstagram}
-          className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow active:scale-95"
+          className="flex flex-col items-center gap-2 p-4 glass-field rounded-2xl hover:bg-white/70 transition-colors active:scale-95"
           aria-label="Via Instagram teilen"
         >
           <span className="text-[#E1306C]"><InstagramIcon size={28} /></span>
@@ -118,16 +118,20 @@ export function InviteLink({ inviteCode }: InviteLinkProps) {
 
         <button
           onClick={handleMore}
-          className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow active:scale-95"
+          className="flex flex-col items-center gap-2 p-4 glass-field rounded-2xl hover:bg-white/70 transition-colors active:scale-95"
           aria-label="Weitere Optionen"
         >
-          <Share2 size={28} className="text-gray-500" />
+          <Share2 size={28} className="text-primary" />
           <span className="text-xs font-medium text-gray-700">Mehr</span>
         </button>
       </div>
 
-      <Button variant="outline" onClick={handleCopy} className="w-full">
-        {copied ? <Check size={16} className="mr-2 text-success" /> : <Copy size={16} className="mr-2" />}
+      <Button
+        variant="outline"
+        onClick={handleCopy}
+        className="w-full bg-primary hover:bg-primary/90 text-white border-0"
+      >
+        {copied ? <Check size={16} className="mr-2" /> : <Copy size={16} className="mr-2" />}
         Link kopieren
       </Button>
     </div>

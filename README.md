@@ -40,7 +40,7 @@ GoTrip ist eine mobile Web-App, mit der Gruppen gemeinsam Reisen planen können.
 | State | React Context API (AuthContext, TripContext) |
 | Persistenz | localStorage (Mock-Backend) |
 | Backend-Proxy | Express.js auf Port 3001 |
-| LLM | Anthropic Claude (claude-haiku-4-5) via Backend-Proxy |
+| LLM | regelbasierte Engine (engine) via Backend-Proxy |
 | Klimadaten | Copernicus ERA5 (Priorität 1) · Mock-Fallback |
 | Biodiversität | GBIF API (Priorität 2) · Mock-Fallback |
 
@@ -79,7 +79,7 @@ npm install
 
 # API-Key konfigurieren
 cp .env.example .env
-# Dann ANTHROPIC_API_KEY in server/.env eintragen
+# Dann EARTHDATA_TOKEN in server/.env eintragen
 
 # Server starten
 node index.js
@@ -122,7 +122,7 @@ gotrip/
 │   ├── types/              # TypeScript-Interfaces (trip, destination, activity, …)
 │   └── utils/              # storage, scoring, linkGenerator, tripSchema
 ├── server/
-│   ├── index.js            # Express-Proxy für Anthropic API
+│   ├── index.js            # Express-Proxy für vendor API
 │   ├── .env.example        # API-Key-Template
 │   └── package.json
 ├── vite.config.ts
@@ -137,7 +137,7 @@ gotrip/
 hybridScore = (llmScore / 100) × 0.4 + (starsAvg / 5) × 0.6
 ```
 
-- **LLM-Score (0–100):** Anthropic Claude bewertet das Reiseziel basierend auf Klimadaten, Präferenzen und Reisezeitraum
+- **LLM-Score (0–100):** regelbasierte Engine bewertet das Reiseziel basierend auf Klimadaten, Präferenzen und Reisezeitraum
 - **Sterne-Durchschnitt (0–5):** Gruppenabstimmung in 0,5-Schritten (WCAG-konform)
 - **Score-Ring-Farben:** Grün ≥80% · Violett ≥60% · Amber ≥40% · Rot <40%
 
@@ -188,7 +188,7 @@ Jede Datei enthält einen `// Autor:` Tag gemäß MS3-Anforderung:
 - Präferenzen: Budget-Slider + 9 Interessen-Chips
 
 #### Sprint 3 – KI-Empfehlung
-- Anthropic Claude API via Backend-Proxy (Port 3001)
+- Daten-Proxy via Backend-Proxy (Port 3001)
 - Copernicus ERA5 Echtdaten via Open-Meteo Historical API (Temperatur, Niederschlag, Sonnenstunden)
 - GBIF Biodiversitäts-Echtdaten (Artenvorkommen per Land)
 - Automatischer Mock-Fallback wenn Backend nicht erreichbar
@@ -217,7 +217,7 @@ Jede Datei enthält einen `// Autor:` Tag gemäß MS3-Anforderung:
 | [Copernicus ERA5](https://www.copernicus.eu/en/access-data) | 1 | Klimadaten (Temp, Regen, Sonne) | mockCopernicus.ts |
 | [GBIF](https://www.gbif.org/) | 2 | Biodiversitäts-Score | mockGBIF.ts |
 | [NASA Earthdata](https://www.earthdata.nasa.gov/) | 3 | Satellitendaten (Backlog) | – |
-| [Anthropic Claude](https://www.anthropic.com/) | – | LLM-Reiseziel-Analyse | mockLLM.ts |
+| [regelbasierte Engine](https://www.vendor.com/) | – | LLM-Reiseziel-Analyse | mockLLM.ts |
 
 ---
 

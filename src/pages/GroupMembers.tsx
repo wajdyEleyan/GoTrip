@@ -1,8 +1,10 @@
 // src/pages/GroupMembers.tsx
-import { useParams, useNavigate, Link } from 'react-router-dom'
-import { UserPlus, ChevronRight } from 'lucide-react'
-import { PageHeader } from '@/components/shared/PageHeader'
+// „Gruppe"-Tab: Mitglieder sehen + einladen. Kein Onboarding-Flow („Weiter").
+import { useParams, useNavigate } from 'react-router-dom'
+import { UserPlus } from 'lucide-react'
+import { TripScreen } from '@/components/shared/TripScreen'
 import { MemberList } from '@/components/members/MemberList'
+import { InviteLink } from '@/components/members/InviteLink'
 import { Button } from '@/components/ui/button'
 import { useTripContext } from '@/context/TripContext'
 import { useLanguage } from '@/context/LanguageContext'
@@ -24,41 +26,28 @@ export default function GroupMembers() {
     )
   }
 
-  const memberCount = trip.members.length
-
   return (
-    <div className="app-shell flex flex-col min-h-svh bg-white">
-      <PageHeader title={trip.name} />
+    <TripScreen title={trip.name} backTo={`/trip/${id}/dashboard`}>
+      <main className="flex-1 px-4 py-4 overflow-y-auto flex flex-col gap-4 pb-28">
+        {/* Mitgliederzahl */}
+        <h2 className="text-sm font-bold text-gray-800 px-1">
+          {t('membersCount', { count: String(trip.members.length) })}
+        </h2>
 
-      <main className="flex-1 px-4 py-4 overflow-y-auto flex flex-col gap-4 pb-8">
-        {/* Counter + Invite Link */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-gray-900">
-            {t('membersCount', { count: String(memberCount) })}
-          </h2>
-          <Link
-            to={`/trip/${trip.id}/invite`}
-            className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
-          >
-            <UserPlus size={14} />
-            {t('inviteMore')}
-          </Link>
-        </div>
-
-        {/* Member List */}
-        <div className="flex-1">
+        {/* Mitgliederliste */}
+        <div className="glass-card rounded-2xl overflow-hidden">
           <MemberList members={trip.members} />
         </div>
 
-        {/* Next Button */}
-        <Button
-          onClick={() => navigate(`/trip/${trip.id}/availability`)}
-          className="w-full h-12 rounded-xl"
-        >
-          {t('nextAvailability')}
-          <ChevronRight size={16} className="ml-1" />
-        </Button>
+        {/* Einladen — direkt sichtbar (Hauptzweck dieses Tabs) */}
+        <div className="glass-card rounded-2xl p-4">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            <UserPlus size={14} className="text-primary" />
+            {t('inviteFriends')}
+          </p>
+          <InviteLink inviteCode={trip.inviteCode} />
+        </div>
       </main>
-    </div>
+    </TripScreen>
   )
 }

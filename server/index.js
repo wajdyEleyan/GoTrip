@@ -1,178 +1,314 @@
 // Autor: Mohamad Haj Ahmad
-// server/index.js — Backend-Proxy für Anthropic Claude API + Copernicus ERA5 + GBIF
-// API-Key wird NIEMALS im Frontend gespeichert
-require('dotenv').config()
+// server/index.js — Schlanker Backend-Proxy NUR für NASA Earthdata (CMR).
+//
+// Alle anderen Datenquellen (Copernicus/ERA5, GBIF, NASA POWER) ruft das
+// Frontend direkt auf (CORS-fähig). Die Bewertung erfolgt regelbasiert im
+// Frontend — KEIN LLM, KEINE Mock-Daten.
+//
+// Dieser Server existiert nur, weil der Earthdata-Token NICHT ins Frontend
+// gehört. Läuft der Server nicht, funktioniert die App trotzdem — dann eben
+// ohne die optionalen Earthdata-Satellitendaten.
+const path = require('path')
+const fs = require('fs')
+const crypto = require('crypto')
+
+// ─── Passwort-Hashing (salted scrypt, ohne Zusatz-Abhängigkeit) ─────────────
+// Passwörter werden NIE im Klartext gespeichert: pro Konto ein zufälliges Salt
+// + scrypt-Hash, abgelegt als "salt:hash". Beim Login wird neu gehasht und
+// zeitkonstant verglichen.
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex')
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex')
+  return `${salt}:${hash}`
+}
+function verifyPassword(password, stored) {
+  if (!stored || !stored.includes(':')) return false
+  const [salt, hash] = stored.split(':')
+  const test = crypto.scryptSync(password, salt, 64).toString('hex')
+  const a = Buffer.from(hash, 'hex')
+  const b = Buffer.from(test, 'hex')
+  return a.length === b.length && crypto.timingSafeEqual(a, b)
+}
+// .env immer aus dem server-Ordner laden — egal, von wo gestartet wird.
+// (Auf Render kommt der Token als echte Env-Var; dotenv überschreibt die nicht.)
+require('dotenv').config({ path: path.join(__dirname, '.env') })
 const express = require('express')
 const cors = require('cors')
-const Anthropic = require('@anthropic-ai/sdk')
 
 const app = express()
 const PORT = process.env.PORT || 3001
+const EARTHDATA_TOKEN = process.env.EARTHDATA_TOKEN
 
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:4173'] }))
-app.use(express.json())
+app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:4173'] }))
+app.use(express.json({ limit: '2mb' }))
 
-const client = new Anthropic.default({ apiKey: process.env.ANTHROPIC_API_KEY })
+// ─── Geteilte Reise-Datenbank (Postgres / Neon) ─────────────────────────────
+// Speichert pro Reise EIN Dokument (alle Daten) unter ihrem inviteCode, damit
+// alle Gruppenmitglieder dieselbe Reise sehen. Ohne DATABASE_URL ist die
+// Sync-API inaktiv → die App läuft dann rein lokal pro Browser (wie zuvor).
+let pool = null
+const DATABASE_URL = process.env.DATABASE_URL
+if (DATABASE_URL) {
+  const { Pool } = require('pg')
+  pool = new Pool({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } })
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS trips (
+      invite_code TEXT PRIMARY KEY,
+      data        JSONB NOT NULL,
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `).then(() => console.log('DB: Tabelle "trips" bereit'))
+    .catch((e) => console.error('DB-Init-Fehler:', e.message))
 
-// ─── Geocoding (Open-Meteo) ─────────────────────────────────────────────────
-// Converts city name → { lat, lon, country_code }
-async function geocodeCity(cityName) {
-  const query = encodeURIComponent(cityName.split(',')[0].trim())
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=1&language=de&format=json`
-  const resp = await fetch(url, { signal: AbortSignal.timeout(5000) })
-  const data = await resp.json()
-  if (!data.results?.length) return null
-  const r = data.results[0]
-  return { lat: r.latitude, lon: r.longitude, countryCode: r.country_code ?? 'DE' }
+  // Benutzerkonten: Username ist die (eindeutige) Identität. Pro Konto merken
+  // wir die Einladungscodes der Reisen, an denen es beteiligt ist — so sieht
+  // ein Nutzer seine Reisen auf JEDEM Gerät, sobald er sich mit dem Namen anmeldet.
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      username      TEXT PRIMARY KEY,
+      password_hash TEXT,
+      codes         JSONB NOT NULL DEFAULT '[]'::jsonb,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `).then(() => pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT'))
+    .then(() => console.log('DB: Tabelle "users" bereit'))
+    .catch((e) => console.error('DB-Init-Fehler (users):', e.message))
 }
 
-// ─── Copernicus ERA5 via Open-Meteo Historical API ──────────────────────────
-// Uses ERA5 reanalysis data (Copernicus Climate Data Store)
-// Returns climate averages for the travel month
-async function fetchClimateData(lat, lon, startDate) {
-  // Use same month from 2 years ago as climate baseline (archive has ~5 month delay)
-  const tripDate = new Date(startDate)
-  const baseYear = tripDate.getFullYear() - 2
-  const month = tripDate.getMonth()
-  const baseStart = new Date(baseYear, month, 1)
-  const baseEnd = new Date(baseYear, month + 1, 0)
+// Arrays nach Schlüssel mergen: vorhandene bleiben, eingehende gewinnen bei
+// Konflikt. So gehen Beiträge anderer Mitglieder nicht verloren.
+function mergeArray(existing = [], incoming = [], keyFn) {
+  const map = new Map()
+  for (const it of existing) map.set(keyFn(it), it)
+  for (const it of incoming) map.set(keyFn(it), it)
+  return [...map.values()]
+}
 
-  const fmt = (d) => d.toISOString().split('T')[0]
+function mergeTrip(existing, incoming) {
+  if (!existing) return incoming
+  // Mitglieder leben in trip.members und müssen vereint werden (Beitreten!).
+  const baseTrip = incoming.trip ?? existing.trip
+  const members = mergeArray(existing.trip?.members, incoming.trip?.members, (m) => m.id)
+  return {
+    trip:           { ...baseTrip, members },
+    availabilities: mergeArray(existing.availabilities, incoming.availabilities, (a) => a.memberId),
+    preferences:    mergeArray(existing.preferences, incoming.preferences, (p) => p.memberId),
+    destinations:   mergeArray(existing.destinations, incoming.destinations, (d) => d.id),
+    votes:          mergeArray(existing.votes, incoming.votes, (v) => `${v.destinationId}|${v.memberId}`),
+    activities:     mergeArray(existing.activities, incoming.activities, (a) => a.id),
+    expenses:       mergeArray(existing.expenses, incoming.expenses, (e) => e.id),
+  }
+}
+
+// GET /api/trips/:code → ganzes Reise-Bündel
+app.get('/api/trips/:code', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  try {
+    const { rows } = await pool.query('SELECT data FROM trips WHERE invite_code = $1', [req.params.code])
+    if (!rows.length) return res.status(404).json({ error: 'Reise nicht gefunden' })
+    res.json(rows[0].data)
+  } catch (e) {
+    console.error('DB GET-Fehler:', e.message)
+    res.status(500).json({ error: 'DB-Fehler' })
+  }
+})
+
+// PUT /api/trips/:code → Bündel mit dem gespeicherten Stand mergen & speichern
+app.put('/api/trips/:code', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  const incoming = req.body
+  if (!incoming || typeof incoming !== 'object') return res.status(400).json({ error: 'Ungültige Daten' })
+  try {
+    const { rows } = await pool.query('SELECT data FROM trips WHERE invite_code = $1', [req.params.code])
+    const merged = mergeTrip(rows[0]?.data, incoming)
+    await pool.query(
+      `INSERT INTO trips (invite_code, data, updated_at) VALUES ($1, $2, now())
+       ON CONFLICT (invite_code) DO UPDATE SET data = $2, updated_at = now()`,
+      [req.params.code, merged],
+    )
+    res.json(merged)
+  } catch (e) {
+    console.error('DB PUT-Fehler:', e.message)
+    res.status(500).json({ error: 'DB-Fehler' })
+  }
+})
+
+// ─── Benutzerkonten ─────────────────────────────────────────────────────────
+// Eindeutiger Username (PRIMARY KEY) = Identität, passwortlos. `codes` = die
+// Einladungscodes der Reisen des Kontos (für „sieht seine Daten überall").
+
+// POST /api/signin {username, password} → anmelden, Passwort wird verglichen.
+// 404 'notfound' (Konto unbekannt) · 401 'wrongpass' (Passwort falsch).
+app.post('/api/signin', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  const username = String(req.body?.username || '').trim()
+  const password = String(req.body?.password || '')
+  if (!username || !password) return res.status(400).json({ error: 'Username & Passwort erforderlich' })
+  try {
+    const { rows } = await pool.query('SELECT password_hash, codes FROM users WHERE username = $1', [username])
+    if (!rows.length) return res.status(404).json({ error: 'notfound' })
+
+    const stored = rows[0].password_hash
+    if (!stored) {
+      // Alt-Konto ohne Passwort (vor dieser Funktion angelegt) → jetzt Passwort setzen.
+      await pool.query('UPDATE users SET password_hash = $2 WHERE username = $1', [username, hashPassword(password)])
+    } else if (!verifyPassword(password, stored)) {
+      return res.status(401).json({ error: 'wrongpass' })
+    }
+    res.json({ username, codes: rows[0].codes ?? [] })
+  } catch (e) {
+    console.error('DB signin-Fehler:', e.message)
+    res.status(500).json({ error: 'DB-Fehler' })
+  }
+})
+
+// POST /api/register {username, password, code?} → neues Konto anlegen (eindeutig),
+// Passwort gehasht speichern, optional direkt einer Reise beitreten. Reihenfolge:
+// erst Code prüfen (keine Karteileiche), dann anlegen (409 bei vergebenem Namen),
+// dann Code anhängen.
+app.post('/api/register', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  const username = String(req.body?.username || '').trim()
+  const password = String(req.body?.password || '')
+  const code = String(req.body?.code || '').trim()
+  if (!username || !password) return res.status(400).json({ error: 'Username & Passwort erforderlich' })
+  try {
+    if (code) {
+      const t = await pool.query('SELECT 1 FROM trips WHERE invite_code = $1', [code])
+      if (!t.rows.length) return res.status(404).json({ error: 'badcode' })
+    }
+    const ins = await pool.query(
+      'INSERT INTO users (username, password_hash) VALUES ($1, $2) ON CONFLICT (username) DO NOTHING',
+      [username, hashPassword(password)],
+    )
+    if (ins.rowCount === 0) return res.status(409).json({ error: 'taken' })
+    if (code) {
+      await pool.query(
+        `UPDATE users SET codes = (
+           SELECT jsonb_agg(DISTINCT e) FROM jsonb_array_elements_text(codes || to_jsonb($2::text)) e
+         ) WHERE username = $1`,
+        [username, code],
+      )
+    }
+    const { rows } = await pool.query('SELECT codes FROM users WHERE username = $1', [username])
+    res.json({ username, codes: rows[0]?.codes ?? [] })
+  } catch (e) {
+    console.error('DB register-Fehler:', e.message)
+    res.status(500).json({ error: 'DB-Fehler' })
+  }
+})
+
+// POST /api/users/:username/codes {code} → Reise (inviteCode) dem Konto zuordnen.
+app.post('/api/users/:username/codes', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Keine Datenbank konfiguriert' })
+  const username = String(req.params.username || '').trim()
+  const code = String(req.body?.code || '').trim()
+  if (!username || !code) return res.status(400).json({ error: 'username & code erforderlich' })
+  try {
+    await pool.query('INSERT INTO users (username) VALUES ($1) ON CONFLICT (username) DO NOTHING', [username])
+    await pool.query(
+      `UPDATE users SET codes = (
+         SELECT jsonb_agg(DISTINCT e) FROM jsonb_array_elements_text(codes || to_jsonb($2::text)) e
+       ) WHERE username = $1`,
+      [username, code],
+    )
+    res.json({ ok: true })
+  } catch (e) {
+    console.error('DB codes-Fehler:', e.message)
+    res.status(500).json({ error: 'DB-Fehler' })
+  }
+})
+
+// ─── NASA Earthdata (CMR) ───────────────────────────────────────────────────
+// Nutzt den Earthdata Login Token (Bearer/JWT) gegen das Common Metadata
+// Repository und ermittelt, wie viele MODIS-Aufnahmen (Land Surface
+// Temperature, MOD11A1) die Zielregion im Reisemonat abdecken.
+const NASA_MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
+
+async function fetchEarthdataCoverage(lat, lon, startDate) {
+  if (!EARTHDATA_TOKEN) return null
+
+  const d = new Date(startDate)
+  const year = d.getFullYear() - 1 // letztes abgeschlossenes Jahr
+  const month = d.getMonth()
+  const start = new Date(Date.UTC(year, month, 1)).toISOString()
+  const end = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59)).toISOString()
+
+  const bbox = `${lon - 1},${lat - 1},${lon + 1},${lat + 1}` // W,S,E,N
   const url = [
-    'https://archive-api.open-meteo.com/v1/archive',
-    `?latitude=${lat}&longitude=${lon}`,
-    `&start_date=${fmt(baseStart)}&end_date=${fmt(baseEnd)}`,
-    '&daily=temperature_2m_mean,temperature_2m_min,temperature_2m_max,precipitation_sum,sunshine_duration',
-    '&timezone=auto',
+    'https://cmr.earthdata.nasa.gov/search/granules.json',
+    '?short_name=MOD11A1',
+    `&bounding_box=${bbox}`,
+    `&temporal=${start},${end}`,
+    '&page_size=1',
   ].join('')
 
-  const resp = await fetch(url, { signal: AbortSignal.timeout(8000) })
-  const data = await resp.json()
-  if (!data.daily?.temperature_2m_mean?.length) return null
+  const resp = await fetch(url, {
+    headers: { Authorization: `Bearer ${EARTHDATA_TOKEN}` },
+    signal: AbortSignal.timeout(10000),
+  })
 
-  const d = data.daily
-  const validMean = d.temperature_2m_mean.filter((v) => v !== null)
-  const validMin  = d.temperature_2m_min.filter((v) => v !== null)
-  const validMax  = d.temperature_2m_max.filter((v) => v !== null)
-  const validPrec = d.precipitation_sum.filter((v) => v !== null)
-  const validSun  = d.sunshine_duration.filter((v) => v !== null) // seconds/day
+  if (resp.status === 401 || resp.status === 403) {
+    return { token_valid: false }
+  }
+  if (!resp.ok) return null
 
-  const avg = (arr) => arr.length ? arr.reduce((s, v) => s + v, 0) / arr.length : 0
-
+  const hits = Number(resp.headers.get('CMR-Hits') ?? 0)
   return {
-    temp_avg:          Math.round(avg(validMean) * 10) / 10,
-    temp_min:          Math.round(Math.min(...validMin) * 10) / 10,
-    temp_max:          Math.round(Math.max(...validMax) * 10) / 10,
-    precipitation_mm:  Math.round(validPrec.reduce((s, v) => s + v, 0) * 10) / 10, // monthly total
-    sunshine_hours:    Math.round(avg(validSun) / 3600 * 10) / 10, // seconds → hours per day
-    source: 'copernicus', // ERA5 data sourced from Copernicus
+    granule_count: hits,
+    dataset: 'MODIS Land Surface Temperature (MOD11A1)',
+    token_valid: true,
+    source: 'earthdata',
   }
 }
 
-// ─── GBIF Biodiversity API ──────────────────────────────────────────────────
-// https://www.gbif.org/developer/occurrence
-async function fetchBiodiversityData(countryCode, destination) {
-  const url = `https://api.gbif.org/v1/occurrence/search?country=${countryCode}&limit=0`
-  const resp = await fetch(url, { signal: AbortSignal.timeout(5000) })
-  const data = await resp.json()
-  const count = data.count ?? 0
+// ─── GET /api/earthdata?lat=&lon=&date= ─────────────────────────────────────
+app.get('/api/earthdata', async (req, res) => {
+  const lat = Number(req.query.lat)
+  const lon = Number(req.query.lon)
+  const date = String(req.query.date || new Date().toISOString())
 
-  // Get top species families for highlight text
-  let highlight = `Artenreiche Natur in ${destination}`
-  try {
-    const famUrl = `https://api.gbif.org/v1/occurrence/search?country=${countryCode}&limit=0&facet=family&facetLimit=3`
-    const famResp = await fetch(famUrl, { signal: AbortSignal.timeout(5000) })
-    const famData = await famResp.json()
-    const families = famData.facets?.[0]?.counts?.slice(0, 3).map((f) => f.name).join(', ')
-    if (families) highlight = `Häufige Familien: ${families}`
-  } catch { /* use default */ }
-
-  return {
-    species_count: Math.min(count, 9999999),
-    highlight,
-    source: 'gbif',
+  if (Number.isNaN(lat) || Number.isNaN(lon)) {
+    return res.status(400).json({ error: 'lat & lon erforderlich' })
   }
-}
-
-// ─── POST /api/analyze-destination ─────────────────────────────────────────
-app.post('/api/analyze-destination', async (req, res) => {
-  const {
-    destination,
-    startDate,
-    endDate,
-    interests = [],
-    budgetMin,
-    budgetMax,
-  } = req.body
-
-  if (!destination) {
-    return res.status(400).json({ error: 'destination is required' })
+  if (!EARTHDATA_TOKEN) {
+    return res.status(503).json({ error: 'Kein EARTHDATA_TOKEN konfiguriert' })
   }
-
-  // 1. Geocode the city
-  let geo = null
-  try { geo = await geocodeCity(destination) } catch { /* fall through */ }
-
-  // 2. Fetch real climate data (Copernicus ERA5 via Open-Meteo)
-  let climateData = null
-  if (geo) {
-    try {
-      climateData = await fetchClimateData(geo.lat, geo.lon, startDate ?? new Date().toISOString())
-    } catch (err) {
-      console.warn('Climate API error:', err.message)
-    }
-  }
-
-  // 3. Fetch biodiversity data (GBIF)
-  let biodiversityData = null
-  if (geo) {
-    try {
-      biodiversityData = await fetchBiodiversityData(geo.countryCode, destination)
-    } catch (err) {
-      console.warn('GBIF API error:', err.message)
-    }
-  }
-
-  console.log(`[analyze] ${destination} | geo:${geo ? '✓' : '✗'} | climate:${climateData ? '✓ (ERA5)' : '✗'} | gbif:${biodiversityData ? '✓' : '✗'}`)
-
-  // 4. LLM analysis with Claude
-  const systemPrompt = `Du bist ein Reise-Analyse-Assistent. Bewerte Reiseziele auf Basis von Klimadaten, Jahreszeit und Gruppeninteressen.
-Antworte NUR mit validem JSON ohne Markdown-Blöcke: { "score": number (0-100), "reasoning": string (max 200 Zeichen, Deutsch), "dataPoints": string[] (3-5 Punkte) }`
-
-  const userPrompt = `Analysiere folgendes Reiseziel:
-- Ort: ${destination}
-- Zeitraum: ${startDate} bis ${endDate}
-- Gruppeninteressen: ${interests.join(', ') || 'keine Angabe'}
-- Budget: €${budgetMin}–€${budgetMax} pro Person
-- Klimadaten (Copernicus ERA5): ${climateData ? JSON.stringify(climateData) : 'nicht verfügbar'}
-- Biodiversität (GBIF): ${biodiversityData ? JSON.stringify(biodiversityData) : 'nicht verfügbar'}`
 
   try {
-    const message = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 512,
-      messages: [{ role: 'user', content: userPrompt }],
-      system: systemPrompt,
-    })
-
-    const text = message.content[0].type === 'text' ? message.content[0].text : ''
-    const parsed = JSON.parse(text)
-    res.json({ ...parsed, climateData, biodiversityData })
+    const data = await fetchEarthdataCoverage(lat, lon, date)
+    if (!data) return res.status(502).json({ error: 'Earthdata nicht erreichbar' })
+    const ok = data.token_valid !== false
+    console.log(`[earthdata] ${lat.toFixed(2)},${lon.toFixed(2)} → ${ok ? data.granule_count + ' Granules' : 'Token ungültig'}`)
+    res.json(data)
   } catch (err) {
-    console.error('LLM error:', err.message)
-    // Return available data even if LLM fails
-    res.status(500).json({ error: 'LLM unavailable', climateData, biodiversityData })
+    console.error('Earthdata-Fehler:', err.message)
+    res.status(502).json({ error: 'Earthdata-Abruf fehlgeschlagen' })
   }
 })
 
 app.get('/health', (_req, res) => res.json({
   status: 'ok',
-  apis: { anthropic: !!process.env.ANTHROPIC_API_KEY, openMeteo: true, gbif: true }
+  earthdata: !!EARTHDATA_TOKEN,
+  database: !!pool,
 }))
 
+// ─── Produktion (z. B. Render): Frontend-Build mit ausliefern ───────────────
+// In Produktion liegen Frontend und API auf DERSELBEN Domain — dadurch
+// funktioniert der relative Pfad /api/earthdata ohne Cross-Domain-Proxy.
+// In der lokalen Entwicklung existiert /dist nicht → dieser Block ist inaktiv,
+// dort liefert Vite das Frontend aus und proxyt /api zum Server.
+const distDir = path.join(__dirname, '..', 'dist')
+if (fs.existsSync(distDir)) {
+  app.use(express.static(distDir))
+  // SPA-Fallback: alle Nicht-API-Routen liefern index.html (Client-Routing).
+  app.get('*', (_req, res) => res.sendFile(path.join(distDir, 'index.html')))
+}
+
 app.listen(PORT, () => {
-  console.log(`GoTrip Backend-Proxy läuft auf http://localhost:${PORT}`)
-  console.log(`ANTHROPIC_API_KEY: ${process.env.ANTHROPIC_API_KEY ? '✓ gesetzt' : '✗ fehlt — Mock-Modus aktiv'}`)
-  console.log(`Copernicus ERA5: via Open-Meteo Historical API (kein Key nötig)`)
-  console.log(`GBIF API: öffentlich (kein Key nötig)`)
+  console.log(`GoTrip-Server läuft auf Port ${PORT}`)
+  console.log(`Geteilte Reise-DB: ${pool ? '✓ verbunden (Mehrnutzer aktiv)' : '✗ keine DATABASE_URL (nur lokal pro Browser)'}`)
+  console.log(`NASA Earthdata (CMR): ${EARTHDATA_TOKEN ? '✓ Token gesetzt' : '✗ kein Token (EARTHDATA_TOKEN)'}`)
+  console.log(`Frontend-Build: ${fs.existsSync(distDir) ? '✓ wird aus /dist ausgeliefert' : '– (Dev: via Vite)'}`)
+  console.log(`Übrige Daten (Copernicus, GBIF, NASA POWER) holt das Frontend direkt.`)
 })

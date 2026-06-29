@@ -1,59 +1,104 @@
 // src/pages/TripDashboard.tsx
+// Ein Screen: alle Planungsdaten als Kacheln in einem 2-Spalten-Raster.
+// Antippen öffnet den Inhalt in einem Glas-Pop-up (Blur dahinter).
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { format, parseISO } from 'date-fns'
+import { de } from 'date-fns/locale'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { BottomNav } from '@/components/shared/BottomNav'
+import { GlassPopup } from '@/components/shared/GlassPopup'
 import { Button } from '@/components/ui/button'
+import { DatesSheet } from '@/components/sheets/DatesSheet'
+import { MembersSheet } from '@/components/sheets/MembersSheet'
+import { AvailabilitySheet } from '@/components/sheets/AvailabilitySheet'
+import { PreferencesSheet } from '@/components/sheets/PreferencesSheet'
+import { RecommendationSheet } from '@/components/sheets/RecommendationSheet'
+import { VoteSheet } from '@/components/sheets/VoteSheet'
+import { ActivitiesSheet } from '@/components/sheets/ActivitiesSheet'
+import { FinalSheet } from '@/components/sheets/FinalSheet'
+import { BudgetSheet } from '@/components/sheets/BudgetSheet'
 import { useTripContext } from '@/context/TripContext'
+import { useAuth } from '@/context/AuthContext'
 import { useLanguage } from '@/context/LanguageContext'
-import { getTripPreferences } from '@/utils/storage'
+import { getMemberPreferences, getTripDestinations } from '@/utils/storage'
+import { setActiveTrip, pullTrip, startPolling, stopPolling } from '@/services/tripSync'
+import { TRIP_BG } from '@/utils/destinationImage'
+import type { PlanStep } from '@/utils/flow'
+import type { InterestType } from '@/types/preferences'
 import {
-  Users, Calendar, Heart, Sparkles, Star, Zap, Trophy, Wallet, ChevronRight
+  Users, Calendar, Heart, MapPinned, Star, Zap, Trophy, Wallet, CalendarRange,
+  MapPin, Wallet as WalletIcon,
+  Umbrella, Building2, Trees, Mountain, Landmark, Music, Flower2, Utensils, ShoppingBag,
+  type LucideIcon,
 } from 'lucide-react'
+
+type TileKey = PlanStep | 'budget' | 'dates'
+
+const INTEREST_ICON: Record<InterestType, LucideIcon> = {
+  beach: Umbrella, city: Building2, nature: Trees, adventure: Mountain, culture: Landmark,
+  nightlife: Music, relaxation: Flower2, food: Utensils, shopping: ShoppingBag,
+}
+
+const STEPS = [
+  { key: 'dates' as TileKey, labelKey: 'stepDates' as const, icon: CalendarRange, descKey: 'stepDatesDesc' as const },
+  { key: 'members' as TileKey, labelKey: 'stepMembers' as const, icon: Users, descKey: 'stepMembersDesc' as const },
+  { key: 'availability' as TileKey, labelKey: 'stepAvailability' as const, icon: Calendar, descKey: 'stepAvailabilityDesc' as const },
+  { key: 'preferences' as TileKey, labelKey: 'stepPreferences' as const, icon: Heart, descKey: 'stepPreferencesDesc' as const },
+  { key: 'recommendation' as TileKey, labelKey: 'tileDestination' as const, icon: MapPinned, descKey: 'stepRecommendationDesc' as const },
+  { key: 'vote' as TileKey, labelKey: 'stepVote' as const, icon: Star, descKey: 'stepVoteDesc' as const },
+  { key: 'activities' as TileKey, labelKey: 'stepActivities' as const, icon: Zap, descKey: 'stepActivitiesDesc' as const },
+  { key: 'final' as TileKey, labelKey: 'stepFinal' as const, icon: Trophy, descKey: 'stepFinalDesc' as const },
+  { key: 'budget' as TileKey, labelKey: 'stepBudget' as const, icon: Wallet, descKey: 'stepBudgetDesc' as const },
+]
+
+// Auf dem Dashboard sichtbare Kacheln (Abstimmen & Aktivitäten sind keine eigenen Kacheln mehr:
+// Bewerten passiert in der KI-Empfehlung, Aktivitäten in den Präferenzen).
+// 'vote'/'activities'/'final' bleiben im Switch erreichbar (Smart-Next).
+const TILE_KEYS: TileKey[] = ['dates', 'members', 'availability', 'preferences', 'recommendation', 'budget']
+const DASHBOARD_TILES = TILE_KEYS.map(k => STEPS.find(s => s.key === k)!)
 
 export default function TripDashboard() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { getTripById } = useTripContext()
+  const { user } = useAuth()
   const { t } = useLanguage()
 
   const trip = id ? getTripById(id) : undefined
-  const [avgBudget, setAvgBudget] = useState<number | null>(null)
-  const [overlapStart, setOverlapStart] = useState<string | null>(null)
-  const [overlapEnd, setOverlapEnd] = useState<string | null>(null)
+  const [openTile, setOpenTile] = useState<TileKey | null>(null)
+  const [myBudget, setMyBudget] = useState<number | null>(null)
+  const [myInterests, setMyInterests] = useState<InterestType[]>([])
+  const [destCount, setDestCount] = useState(0)
+  const [syncTick, setSyncTick] = useState(0)
 
   useEffect(() => {
-    if (!id) return
-    const prefs = getTripPreferences(id)
-    if (prefs.length > 0) {
-      const sum = prefs.reduce((s, p) => s + p.budgetPerPerson, 0)
-      setAvgBudget(Math.round(sum / prefs.length))
+    if (!id || !user) return
+    const mine = getMemberPreferences(id, user.id)
+    setMyBudget(mine?.budgetPerPerson ?? null)
+    setMyInterests(mine?.interests ?? [])
+    setDestCount(getTripDestinations(id).length)
+  }, [id, user, openTile, syncTick])
 
-      // Calculate date overlap: latest start date AND earliest end date
-      const starts = prefs.map((p) => p.preferredStartDate).filter(Boolean) as string[]
-      const ends = prefs.map((p) => p.preferredEndDate).filter(Boolean) as string[]
-      if (starts.length > 0 && ends.length > 0) {
-        const latestStart = starts.reduce((a, b) => (a > b ? a : b))
-        const earliestEnd = ends.reduce((a, b) => (a < b ? a : b))
-        if (latestStart <= earliestEnd) {
-          setOverlapStart(latestStart)
-          setOverlapEnd(earliestEnd)
-        }
-      }
+  // Geteilte Reise: vom Server laden, regelmäßig aktualisieren, bei Updates neu rendern.
+  const tripCode = trip?.inviteCode
+  useEffect(() => {
+    if (!id || !tripCode) return
+    setActiveTrip(id, tripCode)
+    void pullTrip(tripCode)
+    startPolling()
+    const onSync = () => setSyncTick((t) => t + 1)
+    window.addEventListener('gotrip-sync', onSync)
+    return () => {
+      window.removeEventListener('gotrip-sync', onSync)
+      stopPolling()
+      setActiveTrip(null)
     }
-  }, [id])
+  }, [id, tripCode])
 
-  const STEPS = [
-    { labelKey: 'stepMembers' as const, icon: Users, path: 'members', descKey: 'stepMembersDesc' as const },
-    { labelKey: 'stepAvailability' as const, icon: Calendar, path: 'availability', descKey: 'stepAvailabilityDesc' as const },
-    { labelKey: 'stepPreferences' as const, icon: Heart, path: 'preferences', descKey: 'stepPreferencesDesc' as const },
-    { labelKey: 'stepRecommendation' as const, icon: Sparkles, path: 'recommendation', descKey: 'stepRecommendationDesc' as const, highlight: true },
-    { labelKey: 'stepVote' as const, icon: Star, path: 'vote', descKey: 'stepVoteDesc' as const },
-    { labelKey: 'stepActivities' as const, icon: Zap, path: 'activities', descKey: 'stepActivitiesDesc' as const },
-    { labelKey: 'stepFinal' as const, icon: Trophy, path: 'final', descKey: 'stepFinalDesc' as const },
-    { labelKey: 'stepBudget' as const, icon: Wallet, path: 'budget', descKey: 'stepBudgetDesc' as const },
-  ]
+  function closePopup() { setOpenTile(null) }
 
-  if (!trip) {
+  if (!trip || !user) {
     return (
       <div className="app-shell flex flex-col items-center justify-center min-h-svh px-6 text-center">
         <p className="text-gray-500 mb-4">{t('tripNotFound')}</p>
@@ -62,72 +107,143 @@ export default function TripDashboard() {
     )
   }
 
-  return (
-    <div className="app-shell flex flex-col min-h-svh bg-gray-50">
-      <PageHeader title={trip.name} backTo="/home" />
+  const openStep = STEPS.find(s => s.key === openTile)
 
-      <main className="flex-1 px-4 py-5 pb-8 overflow-y-auto flex flex-col gap-3">
-        {/* Trip info card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">📅 Zeitraum</span>
-              <span className="text-gray-700 font-medium">
-                {trip.startDate} – {trip.endDate}
-              </span>
+  const datesSet = trip.startDate !== trip.endDate
+  const fmtDate = (iso: string) => {
+    try { return format(parseISO(iso), 'd. MMM', { locale: de }) } catch { return iso }
+  }
+  const dateRange = datesSet ? `${fmtDate(trip.startDate)} – ${fmtDate(trip.endDate)}` : 'Noch festlegen'
+
+  function renderTileContent(key: TileKey) {
+    switch (key) {
+      case 'dates':
+        return <DatesSheet trip={trip!} onNext={closePopup} />
+      case 'members':
+        return <MembersSheet trip={trip!} onNext={closePopup} />
+      case 'availability':
+        return <AvailabilitySheet trip={trip!} user={user!} onNext={closePopup} />
+      case 'preferences':
+        return <PreferencesSheet trip={trip!} user={user!} onNext={closePopup} />
+      case 'recommendation':
+        return <RecommendationSheet trip={trip!} user={user!} onNext={closePopup} />
+      case 'vote':
+        return <VoteSheet trip={trip!} user={user!} onNext={closePopup} />
+      case 'activities':
+        return <ActivitiesSheet trip={trip!} user={user!} onNext={closePopup} />
+      case 'final':
+        return <FinalSheet trip={trip!} onNext={closePopup} />
+      case 'budget':
+        return <BudgetSheet trip={trip!} user={user!} onNext={closePopup} />
+    }
+  }
+
+  return (
+    <div className="app-shell relative flex flex-col min-h-svh overflow-hidden">
+      {/* Heller Foto-Hintergrund: am Viewport fixiert (wächst nicht mit der Seite) */}
+      <div className="fixed inset-y-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-0 pointer-events-none">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: TRIP_BG, filter: 'blur(2px)', transform: 'scale(1.08)' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/45 via-white/80 to-white" />
+      </div>
+
+      <div className="relative z-10 flex flex-col min-h-svh">
+        <PageHeader title={trip.name} showBack={false} transparent onLight />
+
+        <main className="flex-1 px-4 py-5 pb-28 overflow-y-auto flex flex-col gap-3">
+          {/* Zusammenfassung — weiße Frost-Karte */}
+          <div className="rounded-2xl bg-white/80 backdrop-blur-md border border-white/90 shadow-sm p-4 flex flex-col gap-3.5">
+            <div className="grid grid-cols-2 gap-3">
+              <SummaryItem icon={CalendarRange} label={t('travelPeriod').replace(' *', '')} value={dateRange} muted={!datesSet} />
+              <SummaryItem icon={Users} label={t('memberCount')} value={`${trip.members.length}`} />
             </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">👥 {t('memberCount')}</span>
-              <span className="text-gray-700 font-medium">{trip.members.length}</span>
-            </div>
-            {avgBudget != null && (
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">💶 {t('avgBudgetLabel')}</span>
-                <span className="text-gray-700 font-medium">{avgBudget}€</span>
+
+            {myBudget != null && (
+              <div className="border-t border-gray-100 pt-3">
+                <SummaryItem icon={WalletIcon} label={t('stepBudget')} value={`${myBudget.toLocaleString('de-DE')} €`} />
               </div>
             )}
-            {overlapStart && overlapEnd && (
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">✅ {t('commonPeriod')}</span>
-                <span className="text-gray-700 font-medium text-xs">{overlapStart} – {overlapEnd}</span>
+
+            {myInterests.length > 0 && (
+              <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
+                <span className="text-[11px] font-bold text-ink/50 uppercase tracking-wider">{t('interests')}</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {myInterests.map(i => {
+                    const Icon = INTEREST_ICON[i]
+                    return (
+                      <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold capitalize">
+                        <Icon size={13} aria-hidden="true" />{i}
+                      </span>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {destCount > 0 && (
+              <div className="border-t border-gray-100 pt-3">
+                <SummaryItem icon={MapPin} label="Vorgeschlagene Ziele" value={`${destCount}`} />
               </div>
             )}
           </div>
-        </div>
 
-        {/* Section label */}
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1 mt-1">
-          {t('whatToDo')}
-        </p>
+          {/* Section label */}
+          <p className="text-xs font-bold text-ink/60 uppercase tracking-wider px-1 mt-1">{t('whatToDo')}</p>
 
-        {/* Step tiles */}
-        {STEPS.map(({ labelKey, icon: Icon, path, descKey, highlight }) => (
-          <button
-            key={path}
-            onClick={() => navigate(`/trip/${id}/${path}`)}
-            className={`w-full text-left rounded-2xl border p-4 flex items-center gap-4 transition-all active:scale-[0.98] hover:shadow-md ${
-              highlight
-                ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                : 'bg-white border-gray-100 text-gray-900'
-            }`}
-          >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              highlight ? 'bg-white/20' : 'bg-primary/10'
-            }`}>
-              <Icon size={20} className={highlight ? 'text-white' : 'text-primary'} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className={`font-semibold text-sm ${highlight ? 'text-white' : 'text-gray-900'}`}>
-                {t(labelKey)}
-              </p>
-              <p className={`text-xs mt-0.5 ${highlight ? 'text-white/80' : 'text-gray-400'}`}>
-                {t(descKey)}
-              </p>
-            </div>
-            <ChevronRight size={18} className={highlight ? 'text-white/60' : 'text-gray-300'} />
-          </button>
-        ))}
-      </main>
+          {/* Kacheln — zwei Spalten, kompakt, neutral; Petrol nur bei Hover */}
+          <div className="grid grid-cols-2 gap-3">
+            {DASHBOARD_TILES.map(({ key, labelKey, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setOpenTile(key)}
+                className="group text-left rounded-2xl border border-gray-200/80 bg-white/85 backdrop-blur-md shadow-sm p-4 flex items-center gap-3 transition-all active:scale-[0.97] hover:bg-primary hover:border-primary hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
+              >
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 transition-colors group-hover:bg-white/20">
+                  <Icon size={18} className="text-primary transition-colors group-hover:text-white" />
+                </div>
+                <p className="font-semibold text-sm leading-tight text-ink transition-colors group-hover:text-white">{t(labelKey)}</p>
+              </button>
+            ))}
+          </div>
+        </main>
+
+        <BottomNav />
+      </div>
+
+      {/* Glas-Pop-up mit dem Inhalt der angetippten Kachel */}
+      <GlassPopup
+        open={openTile !== null}
+        title={openStep ? t(openStep.labelKey) : ''}
+        onClose={closePopup}
+      >
+        {openTile && renderTileContent(openTile)}
+      </GlassPopup>
+    </div>
+  )
+}
+
+// Kompakte Zeile für die Zusammenfassung (Icon · Label · Wert)
+function SummaryItem({
+  icon: Icon, label, value, muted,
+}: {
+  icon: typeof Users
+  label: string
+  value: string
+  muted?: boolean
+}) {
+  return (
+    <div className="flex items-center gap-2.5 min-w-0">
+      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+        <Icon size={16} className="text-primary" />
+      </div>
+      <div className="flex flex-col min-w-0">
+        <span className="text-[10px] font-bold text-ink/45 uppercase tracking-wider leading-none">{label}</span>
+        <span className={`text-sm font-semibold truncate leading-tight mt-0.5 ${muted ? 'text-ink/45 italic font-normal' : 'text-ink'}`}>
+          {value}
+        </span>
+      </div>
     </div>
   )
 }

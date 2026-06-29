@@ -28,3 +28,8 @@ server/.env
 *.njsproj
 *.sln
 *.sw?
+
+.intern/
+
+# Lokale Design-Vorschau (kein App-Bestandteil)
+design-preview/

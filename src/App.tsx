@@ -8,7 +8,6 @@ import { Toaster } from '@/components/shared/Toast'
 import type { ReactNode } from 'react'
 
 // Pages
-import Login from '@/pages/Login'
 import Home from '@/pages/Home'
 import CreateTrip from '@/pages/CreateTrip'
 import EditTrip from '@/pages/EditTrip'
@@ -23,6 +22,7 @@ import ActivitiesVoting from '@/pages/ActivitiesVoting'
 import FinalOverview from '@/pages/FinalOverview'
 import BudgetTracker from '@/pages/BudgetTracker'
 import TripDashboard from '@/pages/TripDashboard'
+import Management from '@/pages/Management'
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth()
@@ -41,15 +41,16 @@ function RequireAuth({ children }: { children: ReactNode }) {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public */}
-      <Route path="/" element={<Login />} />
+      {/* Public — EIN Startscreen: Willkommen + Login zugleich */}
+      <Route path="/" element={<Home />} />
+      <Route path="/home" element={<Home />} />
       <Route path="/join/:code" element={<JoinTrip />} />
 
       {/* Protected */}
-      <Route path="/home" element={<RequireAuth><Home /></RequireAuth>} />
       <Route path="/create" element={<RequireAuth><CreateTrip /></RequireAuth>} />
       <Route path="/trip/:id/edit" element={<RequireAuth><EditTrip /></RequireAuth>} />
       <Route path="/trip/:id/dashboard" element={<RequireAuth><TripDashboard /></RequireAuth>} />
+      <Route path="/trip/:id/management" element={<RequireAuth><Management /></RequireAuth>} />
       <Route path="/trip/:id/invite" element={<RequireAuth><InviteFriends /></RequireAuth>} />
       <Route path="/trip/:id/members" element={<RequireAuth><GroupMembers /></RequireAuth>} />
       <Route path="/trip/:id/availability" element={<RequireAuth><Availability /></RequireAuth>} />

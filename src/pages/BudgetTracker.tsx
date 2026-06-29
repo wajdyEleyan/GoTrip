@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Wallet } from 'lucide-react'
-import { PageHeader } from '@/components/shared/PageHeader'
+import { TripScreen } from '@/components/shared/TripScreen'
 import { Button } from '@/components/ui/button'
 import { ExpenseCard } from '@/components/budget/ExpenseCard'
 import { BalanceSummary } from '@/components/budget/BalanceSummary'
@@ -69,17 +69,15 @@ export default function BudgetTracker() {
   if (!trip) {
     return (
       <div className="app-shell flex flex-col items-center justify-center min-h-svh px-6 text-center">
-        <p className="text-gray-500 mb-4">Reise nicht gefunden.</p>
+        <p className="text-white/70 mb-4">Reise nicht gefunden.</p>
         <Button variant="outline" onClick={() => navigate('/home')}>Zur Übersicht</Button>
       </div>
     )
   }
 
   return (
-    <div className="app-shell flex flex-col min-h-svh bg-gray-50">
-      <PageHeader title="Budget-Tracker" />
-
-      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-8">
+    <TripScreen title="Budget-Tracker" backTo={`/trip/${id}/dashboard`}>
+      <main className="flex-1 px-4 py-5 overflow-y-auto flex flex-col gap-4 pb-28">
 
         {/* Total spending card */}
         <div className="bg-primary rounded-2xl p-4 text-white flex items-center gap-4 shadow-lg">
@@ -102,8 +100,8 @@ export default function BudgetTracker() {
 
         {/* Expense list */}
         {expenses.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4">
-            <h3 className="text-sm font-semibold text-gray-700 py-3 border-b border-gray-100">
+          <div className="glass-card px-4">
+            <h3 className="text-sm font-semibold text-gray-700 py-3 border-b border-white/30">
               Alle Ausgaben
             </h3>
             {[...expenses].sort((a, b) => b.date.localeCompare(a.date)).map((exp) => (
@@ -126,10 +124,10 @@ export default function BudgetTracker() {
           />
         )}
 
-        <Button variant="outline" onClick={() => navigate(`/trip/${id}/final`)} className="w-full">
+        <Button variant="outline" onClick={() => navigate(`/trip/${id}/final`)} className="w-full border-primary/30 text-primary hover:bg-primary-soft">
           Zurück zur Übersicht
         </Button>
       </main>
-    </div>
+    </TripScreen>
   )
 }
