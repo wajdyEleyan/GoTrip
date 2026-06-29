@@ -75,7 +75,7 @@ export function getMockLLMAnalysis(input: AnalyzeInput): LLMAnalysis {
     score: baseScore,
     reasoning: REASONINGS[key] ?? REASONINGS.default,
     dataPoints,
-    source: 'mock',
+    source: 'engine',
   }
 }
 
