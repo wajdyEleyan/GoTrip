@@ -150,7 +150,7 @@ export default function TripDashboard() {
       </div>
 
       <div className="relative z-10 flex flex-col min-h-svh">
-        <PageHeader title={trip.name} showBack={false} transparent onLight />
+        <PageHeader title={trip.name} backTo="/home" transparent onLight />
 
         <main className="flex-1 px-4 py-5 pb-28 overflow-y-auto flex flex-col gap-3">
           {/* Zusammenfassung — weiße Frost-Karte */}

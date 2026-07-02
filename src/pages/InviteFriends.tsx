@@ -30,7 +30,7 @@ export default function InviteFriends() {
       className="app-shell flex flex-col min-h-svh"
       style={{ ['--ambient' as any]: ambientImage(trip?.name ?? '') }}
     >
-      <PageHeader title={t('inviteFriends')} />
+      <PageHeader title={t('inviteFriends')} backTo={`/trip/${trip.id}/dashboard`} />
 
       <main className="flex-1 px-4 py-6 overflow-y-auto flex flex-col gap-6">
         {/* Trip photo-card banner */}
