@@ -92,12 +92,6 @@ export function InviteLink({ inviteCode, trip }: InviteLinkProps) {
         </button>
       </div>
 
-      {/* Invite Code Badge */}
-      <div className="text-center">
-        <span className="text-sm text-gray-500">Einladungscode: </span>
-        <span className="text-sm font-mono font-bold text-primary tracking-widest">{inviteCode}</span>
-      </div>
-
       {/* Share Buttons */}
       <div className="grid grid-cols-3 gap-3">
         <button
