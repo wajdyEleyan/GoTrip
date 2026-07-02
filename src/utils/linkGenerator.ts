@@ -5,8 +5,8 @@ import type { Trip } from '@/types/trip'
 
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
 
-// Render-Deployment URL — Einladungslinks zeigen immer hierhin
-const RENDER_URL = 'https://gotrip-9id7.onrender.com'
+// Lokaler Server (Express) — alle im gleichen WLAN können beitreten
+const RENDER_URL = 'http://172.16.200.78:3001'
 
 export function generateInviteCode(): string {
   return Array.from({ length: 6 }, () =>

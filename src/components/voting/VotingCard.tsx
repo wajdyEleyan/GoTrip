@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { MessageSquare, Thermometer, Sun, Star } from 'lucide-react'
 import { StarRating } from './StarRating'
+import { ScoreRing } from '@/components/recommendations/ScoreRing'
 import type { RankedDestination } from '@/types/destination'
 
 interface VotingCardProps {
@@ -41,6 +42,7 @@ export function VotingCard({ dest, myVote, myComment = '', onVote }: VotingCardP
             <span>{dest.voteCount} Stimmen</span>
           </div>
         </div>
+        {dest.llmAnalysis && <ScoreRing score={dest.hybridScore} size={56} />}
       </div>
 
       {/* Star rating */}
