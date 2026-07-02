@@ -2,7 +2,6 @@
 // src/components/recommendations/DestinationCard.tsx
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Thermometer, CloudRain, Sun, Star } from 'lucide-react'
-import { ScoreRing } from './ScoreRing'
 import { DataSourceBadges } from './DataSourceBadges'
 import { DestinationSkeleton } from '@/components/shared/SkeletonCard'
 import { cn } from '@/lib/utils'
@@ -79,13 +78,6 @@ export function DestinationCard({ dest, rank, onVoteClick, showVoteButton = true
             </div>
           </div>
 
-          {/* Score ring — zeigt den reinen Daten-Score (Sterne separat unten) */}
-          {dest.llmAnalysis && (
-            <div className="flex flex-col items-center gap-0.5 shrink-0">
-              <ScoreRing score={dest.llmAnalysis.score / 100} size={60} />
-              <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wide">Daten</span>
-            </div>
-          )}
         </div>
 
         {/* Data source badges */}
