@@ -9,6 +9,7 @@ import {
   getMemberVote, getTripPreferences, saveVote,
 } from '@/utils/storage'
 import { analyzeDestination } from '@/services/llmService'
+import { generateUUID } from '@/utils/uuid'
 import { calcHybridScore } from '@/utils/scoring'
 import { toast } from '@/components/shared/Toast'
 import type { Destination, RankedDestination } from '@/types/destination'
@@ -57,7 +58,7 @@ export function RecommendationSheet({ trip, user, onNext }: Props) {
   async function handleAddDestination(name: string, country: string) {
     setIsAdding(true)
     const dest: Destination = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       tripId: trip.id,
       name: country ? `${name}, ${country}` : name,
       country,

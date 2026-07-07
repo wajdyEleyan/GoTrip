@@ -1,14 +1,18 @@
 // src/components/sheets/ActivitiesSheet.tsx
 import { useState, useEffect } from 'react'
-import { Plus } from 'lucide-react'
-import { ActivityCard } from '@/components/activities/ActivityCard'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { getTripActivities, saveActivity } from '@/utils/storage'
+import { Sparkles, ThumbsUp, RefreshCw } from 'lucide-react'
+import {
+  getItinerary, saveItinerary, updateItinerarySlot, getTripPreferences,
+  getTripDestinations, getTripVotes, getItineraryDestination,
+} from '@/utils/storage'
+import { generateItinerary, tripDaysCount } from '@/services/activitiesService'
+import { calcHybridScore } from '@/utils/scoring'
 import { toast } from '@/components/shared/Toast'
-import type { Activity } from '@/types/activity'
+import type { TripItinerary } from '@/types/itinerary'
 import type { Trip } from '@/types/trip'
 import type { StoredAuth } from '@/utils/storage'
+import { format, parseISO } from 'date-fns'
+import { de } from 'date-fns/locale'
 
 interface Props {
   trip: Trip
@@ -16,93 +20,166 @@ interface Props {
   onNext: () => void
 }
 
+function fmtDate(dateStr: string): string {
+  try { return format(parseISO(dateStr), 'EEE, d. MMM', { locale: de }) } catch { return dateStr }
+}
+
+function getWinnerDestination(tripId: string): string | null {
+  const dests = getTripDestinations(tripId)
+  if (dests.length === 0) return null
+  const allVotes = getTripVotes(tripId)
+  const ranked = dests.map(d => {
+    const votes = allVotes.filter(v => v.destinationId === d.id)
+    const starsAvg = votes.length > 0 ? votes.reduce((s, v) => s + v.stars, 0) / votes.length : 0
+    return { name: d.name, hybridScore: calcHybridScore(d.llmAnalysis?.score ?? 50, starsAvg) }
+  }).sort((a, b) => b.hybridScore - a.hybridScore)
+  return ranked[0]?.name ?? null
+}
+
 export function ActivitiesSheet({ trip, user, onNext }: Props) {
-  const [activities, setActivities] = useState<Activity[]>([])
-  const [newName, setNewName] = useState('')
-  const [showInput, setShowInput] = useState(false)
+  const [plan, setPlan] = useState<TripItinerary | null>(null)
+  const [generating, setGenerating] = useState(false)
+  const [currentDest, setCurrentDest] = useState<string>('')
 
   useEffect(() => {
-    setActivities(getTripActivities(trip.id))
+    const winner = getWinnerDestination(trip.id) ?? trip.name
+    const storedDest = getItineraryDestination(trip.id)
+    const stored = getItinerary(trip.id)
+
+    if (stored && storedDest === winner) {
+      setPlan(stored)
+      setCurrentDest(winner)
+    } else {
+      // Ziel hat sich geändert oder kein Plan → neu generieren
+      generate(winner)
+    }
   }, [trip.id])
 
-  function handleAdd() {
-    const trimmed = newName.trim()
-    if (!trimmed) return
-    const act: Activity = {
-      id: crypto.randomUUID(),
-      tripId: trip.id,
-      name: trimmed,
-      addedBy: user.id,
-      addedByName: user.name,
-      createdAt: new Date().toISOString(),
-      voteCount: 0,
-      votedBy: [],
-    }
-    saveActivity(act)
-    setActivities(prev => [...prev, act])
-    setNewName('')
-    setShowInput(false)
-    toast.success('Aktivität hinzugefügt!')
+  function generate(destination?: string) {
+    const dest = destination ?? getWinnerDestination(trip.id) ?? trip.name
+    setGenerating(true)
+    setCurrentDest(dest)
+    const prefs = getTripPreferences(trip.id)
+    const allInterests = [...new Set(prefs.flatMap(p => p.interests))]
+    const budgets = prefs.map(p => p.budgetPerPerson).filter(b => b > 0)
+    const minBudget = budgets.length > 0 ? Math.min(...budgets) : 30
+
+    const newPlan = generateItinerary({
+      interests: allInterests,
+      budgetPerPerson: minBudget,
+      startDate: trip.startDate,
+      endDate: trip.endDate,
+      destination: dest,
+    })
+    saveItinerary(trip.id, newPlan, dest)
+    setPlan(newPlan)
+    setGenerating(false)
   }
 
-  function handleVote(activityId: string) {
-    setActivities(prev =>
-      prev.map(a => {
-        if (a.id !== activityId) return a
-        const alreadyVoted = a.votedBy.includes(user.id)
-        const updated: Activity = {
-          ...a,
-          voteCount: alreadyVoted ? a.voteCount - 1 : a.voteCount + 1,
-          votedBy: alreadyVoted ? a.votedBy.filter(uid => uid !== user.id) : [...a.votedBy, user.id],
-        }
-        saveActivity(updated)
-        return updated
-      })
+  function handleRegenerate() {
+    generate()
+    toast.success('Neuer Plan generiert!')
+  }
+
+  function handleVote(dayNumber: number, slotId: string) {
+    if (!plan) return
+    const newPlan = plan.map(day => {
+      if (day.dayNumber !== dayNumber) return day
+      return {
+        ...day,
+        slots: day.slots.map(slot => {
+          if (slot.id !== slotId) return slot
+          const voted = slot.votedBy.includes(user.id)
+          const updated = {
+            ...slot,
+            votedBy: voted
+              ? slot.votedBy.filter(id => id !== user.id)
+              : [...slot.votedBy, user.id],
+          }
+          updateItinerarySlot(trip.id, dayNumber, updated)
+          return updated
+        }),
+      }
+    })
+    setPlan(newPlan)
+  }
+
+  const days = tripDaysCount(trip.startDate, trip.endDate)
+
+  if (generating || !plan) {
+    return (
+      <div className="px-4 py-10 flex flex-col items-center gap-3 text-center">
+        <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-gray-500">KI erstellt deinen Reiseplan…</p>
+      </div>
     )
   }
 
-  const sorted = [...activities].sort((a, b) => b.voteCount - a.voteCount)
-
   return (
     <div className="px-4 py-4 flex flex-col gap-4 pb-6">
-      <p className="text-sm text-gray-700">
-        Was wollt ihr in <strong className="text-gray-900">{trip.name}</strong> unternehmen?
-      </p>
-
-      {sorted.length === 0 ? (
-        <div className="text-center py-8 text-gray-500 text-sm bg-gray-50 rounded-2xl">
-          Noch keine Aktivitäten — sei der Erste!
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles size={15} className="text-primary" />
+          <div>
+            <p className="text-sm font-bold text-gray-700">
+              KI-Reiseplan · {days} {days === 1 ? 'Tag' : 'Tage'}
+            </p>
+            {currentDest && (
+              <p className="text-xs text-gray-400 truncate max-w-[160px]">{currentDest}</p>
+            )}
+          </div>
         </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 px-4 divide-y divide-gray-100">
-          {sorted.map(act => (
-            <ActivityCard key={act.id} activity={act} currentUserId={user.id} onVote={handleVote} />
-          ))}
-        </div>
-      )}
-
-      {showInput ? (
-        <div className="flex gap-2">
-          <Input
-            placeholder="z.B. Beach Day, Food Tour…"
-            value={newName}
-            onChange={e => setNewName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleAdd()}
-            autoFocus
-          />
-          <Button onClick={handleAdd} disabled={!newName.trim()} className="shrink-0">
-            <Plus size={16} />
-          </Button>
-        </div>
-      ) : (
         <button
-          onClick={() => setShowInput(true)}
-          className="flex items-center gap-2 w-full p-4 rounded-2xl border-2 border-dashed border-gray-200 text-sm font-medium text-gray-500 hover:border-primary hover:text-primary transition-colors"
+          onClick={handleRegenerate}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-600 text-xs font-medium hover:bg-gray-200 transition-colors active:scale-95"
         >
-          <Plus size={18} />
-          + Aktivität hinzufügen
+          <RefreshCw size={12} />
+          Neu generieren
         </button>
-      )}
+      </div>
+
+      {/* Tage */}
+      {plan.map(day => (
+        <div key={day.dayNumber} className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 px-1">
+            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0">
+              <span className="text-white text-[11px] font-bold">{day.dayNumber}</span>
+            </div>
+            <p className="text-sm font-bold text-gray-800">
+              Tag {day.dayNumber} · {fmtDate(day.date)}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            {day.slots.map((slot, idx) => {
+              const voted = slot.votedBy.includes(user.id)
+              const isMeal = slot.type === 'meal'
+              return (
+                <div
+                  key={slot.id}
+                  className={`flex items-center gap-3 px-4 py-3 ${idx < day.slots.length - 1 ? 'border-b border-gray-50' : ''}`}
+                >
+                  <span className="text-xs font-bold text-gray-400 w-10 shrink-0">{slot.time}</span>
+                  <span className="text-lg shrink-0">{slot.emoji}</span>
+                  <span className={`flex-1 text-sm leading-tight ${isMeal ? 'text-gray-500 italic' : 'text-gray-800 font-medium'}`}>
+                    {slot.activity}
+                  </span>
+                  <button
+                    onClick={() => handleVote(day.dayNumber, slot.id)}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-colors shrink-0 ${
+                      voted ? 'bg-primary text-white' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                    }`}
+                  >
+                    <ThumbsUp size={11} />
+                    {slot.votedBy.length > 0 && <span>{slot.votedBy.length}</span>}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ))}
 
       <button
         onClick={onNext}

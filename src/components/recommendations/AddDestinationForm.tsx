@@ -47,8 +47,12 @@ export function AddDestinationForm({ onAdd, isLoading }: AddDestinationFormProps
       reset()
     } catch (err) {
       if (err instanceof GeoNetworkError) {
-        // Dienst nicht erreichbar → KEINE ungeprüfte Eingabe zulassen (Stadt muss validiert sein).
-        setError('Stadt konnte nicht geprüft werden (offline?). Bitte erneut versuchen.')
+        // Geocoding-Dienst nicht erreichbar → Eingabe trotzdem akzeptieren
+        const country = countryByCode(countryCode)
+        if (country) {
+          await onAdd(c, country.name)
+          reset()
+        }
       } else {
         setError('Validierung fehlgeschlagen. Bitte erneut versuchen.')
       }

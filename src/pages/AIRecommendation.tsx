@@ -138,9 +138,6 @@ export default function AIRecommendation() {
           <p className="text-sm text-gray-600">
             Basierend auf Verfügbarkeit, Budget &amp; Präferenzen
           </p>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Score = KI×40% + Sterne×60%
-          </p>
         </div>
 
         {ranked.length === 0 ? (

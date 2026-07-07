@@ -3,7 +3,7 @@
 // Anmelden/Registrieren. Eingeloggt: Neue Reise / Meine Reisen / Code eingeben.
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Globe, LogOut, ArrowRight, Plane, Plus, FolderHeart, Ticket } from 'lucide-react'
+import { Globe, LogOut, ArrowRight, Plane, FolderHeart } from 'lucide-react'
 import { BottomSheet } from '@/components/shared/BottomSheet'
 import { GlassPopup } from '@/components/shared/GlassPopup'
 import { TripCard } from '@/components/trips/TripCard'
@@ -11,13 +11,12 @@ import { CreateTripSheet } from '@/components/sheets/CreateTripSheet'
 import { useTripContext } from '@/context/TripContext'
 import { useAuth, type AuthOutcome } from '@/context/AuthContext'
 import { useLanguage } from '@/context/LanguageContext'
-import { joinTripByCode } from '@/services/joinTrip'
 import type { Lang } from '@/i18n/translations'
 
 const LANGS: { code: Lang }[] = [{ code: 'de' }, { code: 'en' }, { code: 'es' }]
 const HERO_IMG = 'https://images.unsplash.com/photo-1764276266750-4d6316e972e0?q=80&w=1400&auto=format&fit=crop'
 
-type ActiveSheet = 'create' | 'trips' | 'join' | null
+type ActiveSheet = 'create' | 'trips' | null
 type Mode = 'signin' | 'register'
 
 export default function Home() {
@@ -36,14 +35,8 @@ export default function Home() {
   const [mode, setMode] = useState<Mode>('signin')
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
-  const [regCode, setRegCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [authError, setAuthError] = useState('')
-
-  // „Code eingeben" (eingeloggt)
-  const [joinCode, setJoinCode] = useState('')
-  const [joinBusy, setJoinBusy] = useState(false)
-  const [joinError, setJoinError] = useState('')
 
   useEffect(() => { refreshTrips() }, [])
 
@@ -77,24 +70,10 @@ export default function Home() {
     setAuthError('')
     const res: AuthOutcome = mode === 'signin'
       ? await signIn(username, password)
-      : await register(username, password, regCode.trim() || undefined)
+      : await register(username, password)
     setBusy(false)
     if (!res.ok) setAuthError(errorText(res.error))
     // bei Erfolg: user gesetzt → derselbe Screen zeigt den eingeloggten Zustand
-  }
-
-  async function handleJoinInApp() {
-    if (!user) return
-    const code = joinCode.trim()
-    if (!code || joinBusy) return
-    setJoinBusy(true)
-    setJoinError('')
-    const res = await joinTripByCode(code, user)
-    setJoinBusy(false)
-    if (!res.ok) { setJoinError(t('errBadCode')); return }
-    refreshTrips()
-    setJoinCode('')
-    setSheet('trips') // direkt „Meine Reisen" zeigen
   }
 
   // Kurzer Ladezustand, bis die gespeicherte Sitzung gelesen ist.
@@ -204,20 +183,12 @@ export default function Home() {
               {t('createNewTrip')}
               <ArrowRight size={18} />
             </button>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => { refreshTrips(); setSheet('trips') }}
-                className="h-12 rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/40 text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-              >
-                <FolderHeart size={16} />{t('myTrips')}
-              </button>
-              <button
-                onClick={() => { setJoinError(''); setSheet('join') }}
-                className="h-12 rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/40 text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-              >
-                <Ticket size={16} />{t('enterCodeTitle')}
-              </button>
-            </div>
+            <button
+              onClick={() => { refreshTrips(); setSheet('trips') }}
+              className="h-12 rounded-2xl bg-white/15 backdrop-blur-md ring-1 ring-white/40 text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            >
+              <FolderHeart size={16} />{t('myTrips')}
+            </button>
           </div>
         ) : (
           /* Nicht eingeloggt: Anmelden / Registrieren auf DEMSELBEN Screen */
@@ -259,17 +230,7 @@ export default function Home() {
               className="w-full h-12 px-4 rounded-xl bg-white/92 text-gray-900 text-base placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
 
-            {mode === 'register' && (
-              <input
-                value={regCode}
-                onChange={e => { setRegCode(e.target.value.toUpperCase()); setAuthError('') }}
-                onKeyDown={e => { if (e.key === 'Enter') handleAuth() }}
-                placeholder={t('inviteCodeOptional')}
-                className="w-full h-12 px-4 rounded-xl bg-white/92 text-gray-900 text-base font-mono tracking-widest placeholder:tracking-normal placeholder:font-sans placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            )}
-
-            {authError && <p className="text-xs text-red-200 font-medium" role="alert">{authError}</p>}
+{authError && <p className="text-xs text-red-200 font-medium" role="alert">{authError}</p>}
 
             <button
               onClick={handleAuth}
@@ -289,31 +250,6 @@ export default function Home() {
         <CreateTripSheet onCreated={() => setSheet(null)} />
       </GlassPopup>
 
-      {/* Pop-up: Code eingeben (in der App beitreten) */}
-      <GlassPopup open={sheet === 'join'} title={t('enterCodeTitle')} onClose={() => setSheet(null)}>
-        <div className="px-4 py-5 flex flex-col gap-4">
-          <p className="text-sm text-gray-600">{t('enterCodeHint')}</p>
-          <input
-            type="text"
-            value={joinCode}
-            onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinError('') }}
-            onKeyDown={e => e.key === 'Enter' && handleJoinInApp()}
-            placeholder="z.B. AB12CD"
-            autoFocus
-            className="w-full h-13 px-4 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-gray-900 text-base font-mono tracking-widest text-center placeholder:tracking-normal placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-colors"
-          />
-          {joinError && <p className="text-sm text-red-500" role="alert">{joinError}</p>}
-          <button
-            onClick={handleJoinInApp}
-            disabled={!joinCode.trim() || joinBusy}
-            className="w-full h-13 rounded-2xl bg-black text-white text-base font-bold flex items-center justify-center gap-2 disabled:opacity-25 active:scale-[0.98] transition-all"
-          >
-            {joinBusy ? '…' : t('join')}
-            {!joinBusy && <ArrowRight size={18} />}
-          </button>
-        </div>
-      </GlassPopup>
-
       {/* Sheet: Meine Reisen */}
       <BottomSheet open={sheet === 'trips'} title={t('myTrips')} onClose={() => setSheet(null)}>
         <div className="px-4 py-4 pb-6 flex flex-col gap-3">
@@ -330,12 +266,6 @@ export default function Home() {
                 </div>
               ))
           )}
-          <button
-            onClick={() => { setJoinError(''); setSheet('join') }}
-            className="mt-1 flex items-center justify-center gap-2 w-full h-12 rounded-2xl border-2 border-dashed border-gray-200 text-sm font-semibold text-gray-500 hover:border-primary hover:text-primary transition-colors"
-          >
-            <Plus size={16} />{t('enterCodeTitle')}
-          </button>
         </div>
       </BottomSheet>
     </div>

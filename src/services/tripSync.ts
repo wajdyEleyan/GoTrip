@@ -13,6 +13,7 @@ import type { MemberPreferences } from '@/types/preferences'
 import type { Destination, DestinationVote } from '@/types/destination'
 import type { Activity } from '@/types/activity'
 import type { Expense } from '@/types/expense'
+import type { TripItinerary } from '@/types/itinerary'
 
 const K = {
   trips: 'gotrip_trips',
@@ -24,6 +25,8 @@ const K = {
   exps: 'gotrip_expenses',
 }
 
+function itinKey(tripId: string) { return `gotrip_itinerary_${tripId}` }
+
 interface TripBundle {
   trip: Trip
   availabilities: MemberAvailability[]
@@ -32,6 +35,7 @@ interface TripBundle {
   votes: DestinationVote[]
   activities: Activity[]
   expenses: Expense[]
+  itinerary?: TripItinerary
 }
 
 function readArr<T>(key: string): T[] {
@@ -56,6 +60,7 @@ function collectBundle(tripId: string): TripBundle | null {
   if (!trip) return null
   const destinations = readArr<Destination>(K.dest).filter((d) => d.tripId === tripId)
   const destIds = new Set(destinations.map((d) => d.id))
+  const itin = localStorage.getItem(itinKey(tripId))
   return {
     trip,
     availabilities: readArr<MemberAvailability>(K.avail).filter((a) => a.tripId === tripId),
@@ -64,6 +69,78 @@ function collectBundle(tripId: string): TripBundle | null {
     votes: readArr<DestinationVote>(K.votes).filter((v) => destIds.has(v.destinationId)),
     activities: readArr<Activity>(K.acts).filter((a) => a.tripId === tripId),
     expenses: readArr<Expense>(K.exps).filter((e) => e.tripId === tripId),
+    itinerary: itin ? JSON.parse(itin) as TripItinerary : undefined,
+  }
+}
+
+// ── Änderungen erkennen & als Notification-Events feuern ────────────────────
+function notify(message: string, tile?: string) {
+  window.dispatchEvent(new CustomEvent('gotrip-notification', { detail: { message, tile } }))
+}
+
+function fireNotifications(before: TripBundle | null, after: TripBundle): void {
+  if (!before) return
+
+  // 1. Neue Reiseziele
+  const beforeDestIds = new Set(before.destinations.map(d => d.id))
+  for (const dest of after.destinations) {
+    if (!beforeDestIds.has(dest.id)) {
+      notify(`${dest.proposedByName || 'Jemand'} hat „${dest.name}" vorgeschlagen`, 'recommendation')
+    }
+  }
+
+  // 2. Neue Stimmen
+  const beforeVoteKeys = new Set(before.votes.map(v => `${v.destinationId}-${v.memberId}`))
+  for (const vote of after.votes) {
+    if (!beforeVoteKeys.has(`${vote.destinationId}-${vote.memberId}`)) {
+      const dest = after.destinations.find(d => d.id === vote.destinationId)
+      notify(`${vote.memberName || 'Jemand'} hat für „${dest?.name || 'ein Ziel'}" abgestimmt`, 'vote')
+    }
+  }
+
+  // 3. Neue Mitglieder
+  const beforeMemberIds = new Set(before.trip.members.map(m => m.id))
+  for (const member of after.trip.members) {
+    if (!beforeMemberIds.has(member.id)) {
+      notify(`${member.name} ist der Gruppe beigetreten`, 'members')
+    }
+  }
+
+  // 4. Verfügbarkeit eingetragen / geändert
+  const beforeAvailIds = new Set(before.availabilities.map(a => a.memberId))
+  for (const avail of after.availabilities) {
+    const beforeAvail = before.availabilities.find(a => a.memberId === avail.memberId)
+    if (!beforeAvailIds.has(avail.memberId)) {
+      notify(`${avail.memberName} hat seine Verfügbarkeit eingetragen`, 'availability')
+    } else if (beforeAvail && JSON.stringify(beforeAvail.dates) !== JSON.stringify(avail.dates)) {
+      notify(`${avail.memberName} hat seine Verfügbarkeit aktualisiert`, 'availability')
+    }
+  }
+
+  // 5. Präferenzen / Budget gesetzt oder geändert
+  const beforePrefIds = new Set(before.preferences.map(p => p.memberId))
+  for (const pref of after.preferences) {
+    const beforePref = before.preferences.find(p => p.memberId === pref.memberId)
+    const member = after.trip.members.find(m => m.id === pref.memberId)
+    const name = member?.name || 'Jemand'
+    if (!beforePrefIds.has(pref.memberId)) {
+      notify(`${name} hat Präferenzen & Budget gesetzt`, 'preferences')
+    } else if (beforePref) {
+      if (beforePref.budgetPerPerson !== pref.budgetPerPerson) {
+        notify(`${name} hat Budget auf ${pref.budgetPerPerson} € geändert`, 'budget')
+      }
+      if (JSON.stringify(beforePref.interests) !== JSON.stringify(pref.interests)) {
+        notify(`${name} hat Interessen aktualisiert`, 'preferences')
+      }
+    }
+  }
+
+  // 6. Neue Ausgaben
+  const beforeExpIds = new Set(before.expenses.map(e => e.id))
+  for (const exp of after.expenses) {
+    if (!beforeExpIds.has(exp.id)) {
+      notify(`${exp.paidByName} hat eine Ausgabe hinzugefügt: „${exp.description}" (${exp.amount} €)`, 'budget')
+    }
   }
 }
 
@@ -71,7 +148,8 @@ function collectBundle(tripId: string): TripBundle | null {
 function applyBundle(bundle: TripBundle): boolean {
   if (!bundle?.trip) return false
   const tripId = bundle.trip.id
-  const before = JSON.stringify(collectBundle(tripId) ?? {})
+  const before = collectBundle(tripId)
+  const beforeStr = JSON.stringify(before ?? {})
 
   const trips = readArr<Trip>(K.trips).filter((t) => t.id !== tripId)
   trips.push(bundle.trip)
@@ -85,9 +163,12 @@ function applyBundle(bundle: TripBundle): boolean {
   writeArr(K.votes, [...readArr<DestinationVote>(K.votes).filter((v) => !newDestIds.has(v.destinationId)), ...(bundle.votes || [])])
   writeArr(K.acts, [...readArr<Activity>(K.acts).filter((a) => a.tripId !== tripId), ...(bundle.activities || [])])
   writeArr(K.exps, [...readArr<Expense>(K.exps).filter((e) => e.tripId !== tripId), ...(bundle.expenses || [])])
+  if (bundle.itinerary) localStorage.setItem(itinKey(tripId), JSON.stringify(bundle.itinerary))
 
-  const after = JSON.stringify(collectBundle(tripId) ?? {})
-  return before !== after // true, wenn sich etwas geändert hat
+  const afterStr = JSON.stringify(collectBundle(tripId) ?? {})
+  const changed = beforeStr !== afterStr
+  if (changed) fireNotifications(before, bundle)
+  return changed
 }
 
 // ── Server-Kommunikation ─────────────────────────────────────────────────────

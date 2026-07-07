@@ -21,14 +21,18 @@ import { BudgetSheet } from '@/components/sheets/BudgetSheet'
 import { useTripContext } from '@/context/TripContext'
 import { useAuth } from '@/context/AuthContext'
 import { useLanguage } from '@/context/LanguageContext'
-import { getMemberPreferences, getTripDestinations } from '@/utils/storage'
-import { setActiveTrip, pullTrip, startPolling, stopPolling } from '@/services/tripSync'
+import {
+  getMemberPreferences, getTripDestinations, getTripPreferences,
+  getTripVotes, getTripAvailabilities, getTripExpenses,
+  getLastVisit, markVisited, getVisitCount, saveVisitCount,
+  getTripById as getTripByIdFromStorage,
+} from '@/utils/storage'
 import { TRIP_BG } from '@/utils/destinationImage'
 import type { PlanStep } from '@/utils/flow'
 import type { InterestType } from '@/types/preferences'
 import {
   Users, Calendar, Heart, MapPinned, Star, Zap, Trophy, Wallet, CalendarRange,
-  MapPin, Wallet as WalletIcon,
+  MapPin, Wallet as WalletIcon, Lock,
   Umbrella, Building2, Trees, Mountain, Landmark, Music, Flower2, Utensils, ShoppingBag,
   type LucideIcon,
 } from 'lucide-react'
@@ -52,10 +56,7 @@ const STEPS = [
   { key: 'budget' as TileKey, labelKey: 'stepBudget' as const, icon: Wallet, descKey: 'stepBudgetDesc' as const },
 ]
 
-// Auf dem Dashboard sichtbare Kacheln (Abstimmen & Aktivitäten sind keine eigenen Kacheln mehr:
-// Bewerten passiert in der KI-Empfehlung, Aktivitäten in den Präferenzen).
-// 'vote'/'activities'/'final' bleiben im Switch erreichbar (Smart-Next).
-const TILE_KEYS: TileKey[] = ['dates', 'members', 'availability', 'preferences', 'recommendation', 'budget']
+const TILE_KEYS: TileKey[] = ['dates', 'members', 'availability', 'preferences', 'recommendation', 'budget', 'activities']
 const DASHBOARD_TILES = TILE_KEYS.map(k => STEPS.find(s => s.key === k)!)
 
 export default function TripDashboard() {
@@ -71,30 +72,76 @@ export default function TripDashboard() {
   const [myInterests, setMyInterests] = useState<InterestType[]>([])
   const [destCount, setDestCount] = useState(0)
   const [syncTick, setSyncTick] = useState(0)
+  const [activitiesUnlocked, setActivitiesUnlocked] = useState(false)
+  const [badges, setBadges] = useState<Partial<Record<TileKey, number>>>({})
 
   useEffect(() => {
     if (!id || !user) return
     const mine = getMemberPreferences(id, user.id)
     setMyBudget(mine?.budgetPerPerson ?? null)
     setMyInterests(mine?.interests ?? [])
-    setDestCount(getTripDestinations(id).length)
+    const dests = getTripDestinations(id)
+    setDestCount(dests.length)
+    // Aktivitäten freischalten
+    const hasDates = trip && trip.startDate !== trip.endDate
+    const hasDestination = dests.length > 0
+    const allPrefs = getTripPreferences(id)
+    const hasPrefs = allPrefs.some(p => p.interests.length > 0 && p.budgetPerPerson > 0)
+    setActivitiesUnlocked(!!(hasDates && hasDestination && hasPrefs))
+    // Badges berechnen
+    const newBadges: Partial<Record<TileKey, number>> = {}
+
+    // Timestamp-basiert: Reiseziele & Votes
+    const lastDest = getLastVisit(id, 'recommendation')
+    if (lastDest) {
+      const count = dests.filter(d => d.createdAt > lastDest).length
+      if (count > 0) newBadges['recommendation'] = count
+    }
+    const lastVote = getLastVisit(id, 'vote')
+    if (lastVote) {
+      const count = getTripVotes(id).filter(v => v.votedAt > lastVote).length
+      if (count > 0) newBadges['vote'] = count
+    }
+
+    // Zählbasiert: Mitglieder, Verfügbarkeit, Präferenzen, Budget
+    function countBadge(tile: TileKey, current: number) {
+      const saved = getVisitCount(id!, tile)
+      if (saved >= 0 && current > saved) newBadges[tile] = current - saved
+    }
+    countBadge('members', getTripByIdFromStorage(id)?.members.length ?? 0)
+    countBadge('availability', getTripAvailabilities(id).length)
+    countBadge('preferences', getTripPreferences(id).length)
+    countBadge('budget', getTripExpenses(id).length)
+
+    setBadges(newBadges)
   }, [id, user, openTile, syncTick])
 
-  // Geteilte Reise: vom Server laden, regelmäßig aktualisieren, bei Updates neu rendern.
-  const tripCode = trip?.inviteCode
+  // Counts beim ersten Öffnen initialisieren (damit spätere Änderungen Badges auslösen)
   useEffect(() => {
-    if (!id || !tripCode) return
-    setActiveTrip(id, tripCode)
-    void pullTrip(tripCode)
-    startPolling()
-    const onSync = () => setSyncTick((t) => t + 1)
-    window.addEventListener('gotrip-sync', onSync)
-    return () => {
-      window.removeEventListener('gotrip-sync', onSync)
-      stopPolling()
-      setActiveTrip(null)
+    if (!id) return
+    if (getVisitCount(id, 'members') < 0) {
+      const t = getTripByIdFromStorage(id)
+      saveVisitCount(id, 'members', t?.members.length ?? 0)
     }
-  }, [id, tripCode])
+    if (getVisitCount(id, 'availability') < 0)
+      saveVisitCount(id, 'availability', getTripAvailabilities(id).length)
+    if (getVisitCount(id, 'preferences') < 0)
+      saveVisitCount(id, 'preferences', getTripPreferences(id).length)
+    if (getVisitCount(id, 'budget') < 0)
+      saveVisitCount(id, 'budget', getTripExpenses(id).length)
+    if (!getLastVisit(id, 'recommendation'))
+      markVisited(id, 'recommendation')
+    if (!getLastVisit(id, 'vote'))
+      markVisited(id, 'vote')
+  }, [id]) // nur einmal beim Öffnen
+
+  // Badge-Updates: bei jedem Sync-Event UND alle 4s als Fallback
+  useEffect(() => {
+    const tick = () => setSyncTick((t) => t + 1)
+    window.addEventListener('gotrip-sync', tick)
+    const timer = setInterval(tick, 4000)
+    return () => { window.removeEventListener('gotrip-sync', tick); clearInterval(timer) }
+  }, [])
 
   function closePopup() { setOpenTile(null) }
 
@@ -194,18 +241,51 @@ export default function TripDashboard() {
 
           {/* Kacheln — zwei Spalten, kompakt, neutral; Petrol nur bei Hover */}
           <div className="grid grid-cols-2 gap-3">
-            {DASHBOARD_TILES.map(({ key, labelKey, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => setOpenTile(key)}
-                className="group text-left rounded-2xl border border-gray-200/80 bg-white/85 backdrop-blur-md shadow-sm p-4 flex items-center gap-3 transition-all active:scale-[0.97] hover:bg-primary hover:border-primary hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5"
-              >
-                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 transition-colors group-hover:bg-white/20">
-                  <Icon size={18} className="text-primary transition-colors group-hover:text-white" />
-                </div>
-                <p className="font-semibold text-sm leading-tight text-ink transition-colors group-hover:text-white">{t(labelKey)}</p>
-              </button>
-            ))}
+            {DASHBOARD_TILES.map(({ key, labelKey, icon: Icon }) => {
+              const locked = key === 'activities' && !activitiesUnlocked
+              return (
+                <button
+                  key={key}
+                  onClick={() => {
+                    if (locked) return
+                    if (id) {
+                      markVisited(id, key)
+                      // Zählbasierte Tiles: aktuellen Stand merken
+                      if (key === 'members') saveVisitCount(id, 'members', trip!.members.length)
+                      if (key === 'availability') saveVisitCount(id, 'availability', getTripAvailabilities(id).length)
+                      if (key === 'preferences') saveVisitCount(id, 'preferences', getTripPreferences(id).length)
+                      if (key === 'budget') saveVisitCount(id, 'budget', getTripExpenses(id).length)
+                    }
+                    setBadges(prev => ({ ...prev, [key]: 0 }))
+                    setOpenTile(key)
+                  }}
+                  disabled={locked}
+                  title={locked ? 'Erst Urlaubstage, Reiseziel, Präferenzen & Budget ausfüllen' : undefined}
+                  className={`group relative text-left rounded-2xl border shadow-sm p-4 flex items-center gap-3 transition-all ${
+                    locked
+                      ? 'border-gray-200/50 bg-white/50 opacity-50 cursor-not-allowed'
+                      : 'border-gray-200/80 bg-white/85 backdrop-blur-md active:scale-[0.97] hover:bg-primary hover:border-primary hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5'
+                  }`}
+                >
+                  {/* Badge */}
+                  {!locked && (badges[key] ?? 0) > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center z-10">
+                      {badges[key]}
+                    </span>
+                  )}
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${locked ? 'bg-gray-100' : 'bg-primary/10 group-hover:bg-white/20'}`}>
+                    {locked
+                      ? <Lock size={16} className="text-gray-400" />
+                      : <Icon size={18} className="text-primary transition-colors group-hover:text-white" />
+                    }
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <p className={`font-semibold text-sm leading-tight transition-colors ${locked ? 'text-gray-400' : 'text-ink group-hover:text-white'}`}>{t(labelKey)}</p>
+                    {locked && <p className="text-[10px] text-gray-400 mt-0.5">Alle Schritte ausfüllen</p>}
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </main>
 

@@ -80,7 +80,12 @@ export async function findCityInCountry(
   const query = encodeURIComponent(city.trim())
   const url = `https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=10&language=de&format=json`
 
-  const resp = await fetch(url, { signal: AbortSignal.timeout(7000) })
+  let resp: Response
+  try {
+    resp = await fetch(url, { signal: AbortSignal.timeout(7000) })
+  } catch {
+    throw new GeoNetworkError()
+  }
   if (!resp.ok) throw new GeoNetworkError()
   const data = (await resp.json()) as { results?: OpenMeteoResult[] }
   const results = data.results ?? []

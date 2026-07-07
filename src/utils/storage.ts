@@ -6,6 +6,7 @@ import type { MemberPreferences } from '@/types/preferences'
 import type { Destination, DestinationVote } from '@/types/destination'
 import type { Activity } from '@/types/activity'
 import type { Expense } from '@/types/expense'
+import type { TripItinerary, ItinerarySlot } from '@/types/itinerary'
 import { scheduleSync } from '@/services/tripSync'
 
 const TRIPS_KEY = 'gotrip_trips'
@@ -200,4 +201,53 @@ export function deleteExpense(expId: string): void {
   const all: Expense[] = raw ? JSON.parse(raw) : []
   localStorage.setItem(EXP_KEY, JSON.stringify(all.filter((e) => e.id !== expId)))
   scheduleSync()
+}
+
+// ─── Itinerary ───────────────────────────────────────────────────────────────
+// ─── Last-Visit-Tracking (für Badge-Zähler) ──────────────────────────────────
+export function getLastVisit(tripId: string, tile: string): string | null {
+  return localStorage.getItem(`gotrip_visit_${tripId}_${tile}`)
+}
+
+export function markVisited(tripId: string, tile: string): void {
+  localStorage.setItem(`gotrip_visit_${tripId}_${tile}`, new Date().toISOString())
+}
+
+export function getVisitCount(tripId: string, tile: string): number {
+  const raw = localStorage.getItem(`gotrip_count_${tripId}_${tile}`)
+  if (raw === null) return -1
+  const n = parseInt(raw, 10)
+  return isNaN(n) ? -1 : n
+}
+
+export function saveVisitCount(tripId: string, tile: string, count: number): void {
+  localStorage.setItem(`gotrip_count_${tripId}_${tile}`, String(count))
+}
+
+function itineraryKey(tripId: string) { return `gotrip_itinerary_${tripId}` }
+function itineraryDestKey(tripId: string) { return `gotrip_itinerary_dest_${tripId}` }
+
+export function getItinerary(tripId: string): TripItinerary | null {
+  const raw = localStorage.getItem(itineraryKey(tripId))
+  return raw ? JSON.parse(raw) : null
+}
+
+export function getItineraryDestination(tripId: string): string | null {
+  return localStorage.getItem(itineraryDestKey(tripId))
+}
+
+export function saveItinerary(tripId: string, plan: TripItinerary, destination?: string): void {
+  localStorage.setItem(itineraryKey(tripId), JSON.stringify(plan))
+  if (destination) localStorage.setItem(itineraryDestKey(tripId), destination)
+  scheduleSync()
+}
+
+export function updateItinerarySlot(tripId: string, dayNumber: number, slot: ItinerarySlot): void {
+  const plan = getItinerary(tripId)
+  if (!plan) return
+  const day = plan.find(d => d.dayNumber === dayNumber)
+  if (!day) return
+  const idx = day.slots.findIndex(s => s.id === slot.id)
+  if (idx >= 0) day.slots[idx] = slot
+  saveItinerary(tripId, plan)
 }

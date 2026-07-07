@@ -6,7 +6,7 @@ import type { Trip } from '@/types/trip'
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
 
 // Lokaler Server (Express) — alle im gleichen WLAN können beitreten
-const RENDER_URL = 'http://172.16.200.78:3001'
+const RENDER_URL = 'http://172.16.200.90:3001'
 
 export function generateInviteCode(): string {
   return Array.from({ length: 6 }, () =>
