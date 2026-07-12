@@ -56,9 +56,9 @@ const de = {
   continue: 'Weiter',
   nextStep: 'Weiter',
   guestStart: "Los geht's",
-  navOverview: 'Übersicht',
+  navOverview: 'Startseite',
   navCalendar: 'Kalender',
-  navManagement: 'Management',
+  navManagement: 'Übersicht',
   navRecommendation: 'KI',
   navGroup: 'Gruppe',
   // General
