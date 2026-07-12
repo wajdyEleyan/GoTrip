@@ -19,5 +19,7 @@ services:
       # Im Render-Dashboard unter "Environment" setzen (sync: false).
       - key: EARTHDATA_TOKEN
         sync: false
+      - key: NODE_ENV
+        value: production
       - key: NODE_VERSION
         value: "22"

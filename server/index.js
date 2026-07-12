@@ -39,7 +39,11 @@ const app = express()
 const PORT = process.env.PORT || 3001
 const EARTHDATA_TOKEN = process.env.EARTHDATA_TOKEN
 
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:4173'] }))
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production'
+    ? true
+    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:4173']
+}))
 app.use(express.json({ limit: '2mb' }))
 
 // ─── Geteilte Reise-Datenbank (Postgres / Neon) ─────────────────────────────
