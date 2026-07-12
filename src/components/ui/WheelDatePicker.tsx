@@ -1,5 +1,5 @@
 // src/components/ui/WheelDatePicker.tsx — kompaktes iOS-Rad, kein Scrollbar
-import { useLayoutEffect, useRef, useCallback } from 'react'
+import { useLayoutEffect, useRef, useCallback, useEffect } from 'react'
 
 const ITEM_H = 36
 const VISIBLE = 3          // 3 Einträge sichtbar
@@ -21,21 +21,42 @@ interface ColProps {
 function WheelCol({ items, selected, onSelect, widthClass = 'flex-1' }: ColProps) {
   const ref = useRef<HTMLDivElement>(null)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  // Letzten gescrollten Wert merken, damit beim Unmount nichts verloren geht
+  const pendingVal = useRef<string | null>(null)
+  const onSelectRef = useRef(onSelect)
+  const selectedRef = useRef(selected)
+  useEffect(() => { onSelectRef.current = onSelect; selectedRef.current = selected })
 
   useLayoutEffect(() => {
     const i = items.indexOf(selected)
     if (ref.current) ref.current.scrollTop = Math.max(0, i) * ITEM_H
   }, []) // nur beim Mount
 
+  // Beim Unmount: ausstehenden Timer abbrechen und Wert sofort übernehmen
+  useEffect(() => {
+    return () => {
+      clearTimeout(timer.current)
+      if (pendingVal.current !== null && pendingVal.current !== selectedRef.current) {
+        onSelectRef.current(pendingVal.current)
+      }
+    }
+  }, [])
+
   const snap = useCallback(() => {
     if (!ref.current) return
     const i = Math.round(ref.current.scrollTop / ITEM_H)
     const c = Math.max(0, Math.min(i, items.length - 1))
     ref.current.scrollTo({ top: c * ITEM_H, behavior: 'smooth' })
+    pendingVal.current = null
     onSelect(items[c])
   }, [items, onSelect])
 
   function onScroll() {
+    if (ref.current) {
+      const i = Math.round(ref.current.scrollTop / ITEM_H)
+      const c = Math.max(0, Math.min(i, items.length - 1))
+      pendingVal.current = items[c]
+    }
     clearTimeout(timer.current)
     timer.current = setTimeout(snap, 100)
   }
