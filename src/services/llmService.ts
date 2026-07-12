@@ -27,6 +27,8 @@ export interface AnalyzeResult {
   biodiversity?: BiodiversityData
   nasa?: NasaData
   earthdata?: EarthdataData
+  coastal?: boolean
+  population?: number
 }
 
 function aggregateInterests(prefs: MemberPreferences[]): string[] {
@@ -78,5 +80,7 @@ export async function analyzeDestination(req: AnalyzeRequest): Promise<AnalyzeRe
     biodiversity: biodiversity ?? undefined,
     nasa: nasa ?? undefined,
     earthdata: earthdata ?? undefined,
+    coastal: coastal === true,
+    population: geo.population,
   }
 }

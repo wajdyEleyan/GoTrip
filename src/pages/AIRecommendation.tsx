@@ -14,6 +14,7 @@ import { getTripDestinations, saveDestination, getTripVotes, getMemberVote } fro
 import { getTripPreferences } from '@/utils/storage'
 import { analyzeDestination } from '@/services/llmService'
 import { calcHybridScore } from '@/utils/scoring'
+import { recomputeAnalysis } from '@/services/scoreEngine'
 import type { Destination, RankedDestination } from '@/types/destination'
 import { Sparkles, Thermometer, Sun, Star } from 'lucide-react'
 import { StepNav } from '@/components/shared/StepNav'
@@ -43,7 +44,9 @@ export default function AIRecommendation() {
     .map((d) => {
       const votes = id ? getTripVotes(id).filter((v) => v.destinationId === d.id) : []
       const starsAvg = votes.length > 0 ? votes.reduce((s, v) => s + v.stars, 0) / votes.length : 0
-      const llmScore = d.llmAnalysis?.score ?? 50
+      const prefs = id ? getTripPreferences(id) : []
+      const dynamicAnalysis = d.llmAnalysis ? recomputeAnalysis(d, prefs) : undefined
+      const llmScore = dynamicAnalysis?.score ?? d.llmAnalysis?.score ?? 50
       const myVote = user ? getMemberVote(d.id, user.id)?.stars : undefined
       return {
         ...d,
@@ -51,6 +54,7 @@ export default function AIRecommendation() {
         voteCount: votes.length,
         hybridScore: calcHybridScore(llmScore, starsAvg),
         myVote,
+        dynamicAnalysis,
       }
     })
     .sort((a, b) => b.hybridScore - a.hybridScore)
@@ -95,6 +99,8 @@ export default function AIRecommendation() {
         nasa: result.nasa,
         earthdata: result.earthdata,
         llmAnalysis: result.llm,
+        coastal: result.coastal,
+        population: result.population,
       }
       saveDestination(analyzed)
       setDestinations((prev) => prev.map((d) => d.id === dest.id ? analyzed : d))

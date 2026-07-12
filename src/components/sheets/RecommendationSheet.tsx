@@ -10,6 +10,7 @@ import {
 import { analyzeDestination } from '@/services/llmService'
 import { generateUUID } from '@/utils/uuid'
 import { calcHybridScore } from '@/utils/scoring'
+import { recomputeAnalysis } from '@/services/scoreEngine'
 import { toast } from '@/components/shared/Toast'
 import type { Destination, RankedDestination } from '@/types/destination'
 import type { Trip } from '@/types/trip'
@@ -36,14 +37,18 @@ export function RecommendationSheet({ trip, user, onNext }: Props) {
       const votes = getTripVotes(trip.id).filter(v => v.destinationId === d.id)
       const starsAvg = votes.length > 0 ? votes.reduce((s, v) => s + v.stars, 0) / votes.length : 0
       const mine = getMemberVote(d.id, user.id)
+      const prefs = getTripPreferences(trip.id)
+      const dynamicAnalysis = d.llmAnalysis ? recomputeAnalysis(d, prefs) : undefined
+      const llmScore = dynamicAnalysis?.score ?? d.llmAnalysis?.score ?? 50
       return {
         ...d,
         starsAvg,
         voteCount: votes.length,
-        hybridScore: calcHybridScore(d.llmAnalysis?.score ?? 50, starsAvg),
+        hybridScore: calcHybridScore(llmScore, starsAvg),
         myVote: mine?.stars ?? 0,
         myComment: mine?.comment ?? '',
         allVotes: votes,
+        dynamicAnalysis,
       }
     })
     .sort((a, b) => b.hybridScore - a.hybridScore)
@@ -87,6 +92,8 @@ export function RecommendationSheet({ trip, user, onNext }: Props) {
         nasa: result.nasa,
         earthdata: result.earthdata,
         llmAnalysis: result.llm,
+        coastal: result.coastal,
+        population: result.population,
       }
       saveDestination(analyzed)
       setDestinations(prev => prev.map(d => d.id === dest.id ? analyzed : d))

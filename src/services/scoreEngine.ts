@@ -9,8 +9,9 @@
 // Beispiel: Interesse „Strand", aber das Ziel liegt im Binnenland (kein Meer)
 // → niedrige Erfüllung → niedriger Gesamt-Score.
 import type {
-  ClimateData, BiodiversityData, NasaData, EarthdataData, DestinationAnalysis,
+  ClimateData, BiodiversityData, NasaData, EarthdataData, DestinationAnalysis, Destination,
 } from '@/types/destination'
+import type { MemberPreferences } from '@/types/preferences'
 
 export interface ScoreInput {
   climate?: ClimateData | null
@@ -133,4 +134,23 @@ export function computeDestinationScore(input: ScoreInput): DestinationAnalysis 
   const reasoning = `${verdict} — ${parts.join('; ') || 'auf Basis der Messdaten'}. Regelbasiert aus echten Daten (Copernicus, GBIF, NASA), ohne KI-Sprachmodell.`
 
   return { score, reasoning, dataPoints, source: 'engine' }
+}
+
+// Berechnet den Score dynamisch mit den AKTUELLEN Grupppräferenzen.
+// Nutzt die bereits gespeicherten Rohdaten (climate, nasa, …) — kein neuer API-Call.
+export function recomputeAnalysis(dest: Destination, prefs: MemberPreferences[]): DestinationAnalysis {
+  const interests = prefs
+    .flatMap(p => p.interests ?? [])
+    .reduce<Record<string, number>>((acc, i) => { acc[i] = (acc[i] ?? 0) + 1; return acc }, {})
+  const sortedInterests = Object.entries(interests).sort((a, b) => b[1] - a[1]).map(([k]) => k)
+
+  return computeDestinationScore({
+    climate: dest.climate,
+    biodiversity: dest.biodiversity,
+    nasa: dest.nasa,
+    earthdata: dest.earthdata,
+    interests: sortedInterests,
+    coastal: dest.coastal,
+    population: dest.population,
+  })
 }

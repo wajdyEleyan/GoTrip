@@ -75,7 +75,7 @@ export function DestinationCard({ dest, rank, myVote = 0, myComment = '', onVote
             </div>
           </div>
 
-          {dest.llmAnalysis && <ScoreRing score={dest.hybridScore} size={52} />}
+          {(dest.dynamicAnalysis ?? dest.llmAnalysis) && <ScoreRing score={dest.hybridScore} size={52} />}
         </div>
 
         {/* Datenquellen */}
@@ -90,31 +90,36 @@ export function DestinationCard({ dest, rank, myVote = 0, myComment = '', onVote
           </div>
         )}
 
-        {/* Warum dieser Score? */}
-        {dest.llmAnalysis?.reasoning && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 mt-3 text-xs text-primary font-medium"
-            aria-expanded={expanded}
-          >
-            {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            {expanded ? 'Weniger' : 'Warum dieser Score?'}
-          </button>
-        )}
-
-        {expanded && dest.llmAnalysis && (
-          <div className="mt-2 p-3 bg-gray-50 rounded-xl text-xs text-gray-600 leading-relaxed">
-            <p className="mb-2">{dest.llmAnalysis.reasoning}</p>
-            <ul className="space-y-1">
-              {dest.llmAnalysis.dataPoints.map((pt, i) => (
-                <li key={i} className="flex items-start gap-1.5">
-                  <span className="text-primary mt-0.5">•</span>
-                  <span>{pt}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        {/* Warum dieser Score? — zeigt dynamisch berechnete Begründung */}
+        {(() => {
+          const analysis = dest.dynamicAnalysis ?? dest.llmAnalysis
+          if (!analysis?.reasoning) return null
+          return (
+            <>
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="flex items-center gap-1 mt-3 text-xs text-primary font-medium"
+                aria-expanded={expanded}
+              >
+                {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                {expanded ? 'Weniger' : 'Warum dieser Score?'}
+              </button>
+              {expanded && (
+                <div className="mt-2 p-3 bg-gray-50 rounded-xl text-xs text-gray-600 leading-relaxed">
+                  <p className="mb-2">{analysis.reasoning}</p>
+                  <ul className="space-y-1">
+                    {analysis.dataPoints.map((pt, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="text-primary mt-0.5">•</span>
+                        <span>{pt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )
+        })()}
 
         {/* Bewertung */}
         {onVote && (

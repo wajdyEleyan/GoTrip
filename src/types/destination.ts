@@ -53,6 +53,8 @@ export interface Destination {
   nasa?: NasaData
   earthdata?: EarthdataData
   llmAnalysis?: DestinationAnalysis
+  coastal?: boolean          // Küstenlage — für dynamische Score-Neuberechnung
+  population?: number        // Einwohnerzahl — für dynamische Score-Neuberechnung
   isLoading?: boolean
   dataError?: boolean        // true, wenn echte Daten nicht geladen werden konnten
 }
@@ -73,4 +75,5 @@ export interface RankedDestination extends Destination {
   myVote?: number
   myComment?: string
   allVotes?: DestinationVote[]
+  dynamicAnalysis?: DestinationAnalysis  // mit aktuellen Präferenzen neu berechnet
 }
