@@ -1,6 +1,6 @@
 // Autor: Eya Mathlouthi
 // src/components/voting/StarRating.tsx
-import { useState } from 'react'
+import { useState, useId } from 'react'
 import { RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -15,6 +15,7 @@ const SIZE_MAP = { sm: 18, md: 24, lg: 32 }
 
 export function StarRating({ value, onChange, readonly = false, size = 'md' }: StarRatingProps) {
   const [hovered, setHovered] = useState<number | null>(null)
+  const uid = useId()
   const starSize = SIZE_MAP[size]
   const display = hovered ?? value
 
@@ -64,13 +65,13 @@ export function StarRating({ value, onChange, readonly = false, size = 'md' }: S
                 d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
                 fill="#E5E7EB"
               />
-              <clipPath id={`half-${star}`}>
+              <clipPath id={`${uid}-${star}`}>
                 <rect x="0" y="0" width={half ? '50%' : full ? '100%' : '0%'} height="100%" />
               </clipPath>
               <path
                 d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
                 fill="#F59E0B"
-                clipPath={`url(#half-${star})`}
+                clipPath={`url(#${uid}-${star})`}
               />
             </svg>
           </button>
