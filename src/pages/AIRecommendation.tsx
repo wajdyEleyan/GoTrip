@@ -222,7 +222,6 @@ export default function AIRecommendation() {
                   <DestinationCard
                     dest={topDest}
                     rank={heroRank}
-                    onVoteClick={() => navigate(`/trip/${id}/vote`)}
                   />
                 </div>
               </div>
@@ -234,7 +233,6 @@ export default function AIRecommendation() {
                 <DestinationCard
                   dest={topDest}
                   rank={1}
-                  onVoteClick={() => navigate(`/trip/${id}/vote`)}
                 />
               </div>
             )}
@@ -257,7 +255,6 @@ export default function AIRecommendation() {
                     <DestinationCard
                       dest={d}
                       rank={ranked.findIndex(x => x.id === d.id) + 1}
-                      onVoteClick={() => navigate(`/trip/${id}/vote`)}
                     />
                   </div>
                 ))}

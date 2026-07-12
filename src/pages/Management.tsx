@@ -1,35 +1,28 @@
 // src/pages/Management.tsx
-// Gesamtübersicht über die Bar: zeigt ALLES, was die Gruppe eingegeben hat —
-// gemeinsame Reiseziele (mit echten KI-Werten + Direkt-Bewertung) und pro
-// Mitglied Verfügbarkeit, Interessen, Budget, Reiseziel-Wunsch und Bewertungen.
-// Ganz oben: eine Schlussfolgerung — die gemeinsame Reise mit den Daten, die
-// auf ALLE zutreffen. Bewerten ist hier direkt möglich (kein reines Lesen mehr).
 import { useEffect, useState, type ReactNode } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import { de } from 'date-fns/locale'
 import {
-  Users, Star, MapPin, MapPinned, CalendarCheck, Heart, Wallet,
+  Users, Star, MapPinned, CalendarCheck, Heart, Wallet,
   Umbrella, Building2, Trees, Mountain, Landmark, Music, Flower2, Utensils, ShoppingBag, Zap, ThumbsUp,
-  Sparkles, ChevronDown, ChevronUp, Check, Crown, ListChecks, Trophy, CalendarRange,
+  Sparkles, Check, Crown, ListChecks, Trophy, CalendarRange,
   type LucideIcon,
 } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { BottomNav } from '@/components/shared/BottomNav'
 import { Button } from '@/components/ui/button'
-import { StarRating } from '@/components/voting/StarRating'
 import { useTripContext } from '@/context/TripContext'
 import { useAuth } from '@/context/AuthContext'
 import { useLanguage } from '@/context/LanguageContext'
 import {
   getTripDestinations, getTripVotes, getTripPreferences,
-  getTripAvailabilities, getTripActivities, saveVote,
+  getTripAvailabilities, getTripActivities,
 } from '@/utils/storage'
 import { calcHybridScore } from '@/utils/scoring'
 import { setActiveTrip, pullTrip, startPolling, stopPolling } from '@/services/tripSync'
 import { TRIP_BG } from '@/utils/destinationImage'
 import type { InterestType } from '@/types/preferences'
-import type { DestinationVote } from '@/types/destination'
 
 const INTEREST_ICON: Record<InterestType, LucideIcon> = {
   beach: Umbrella, city: Building2, nature: Trees, adventure: Mountain, culture: Landmark,
@@ -49,8 +42,6 @@ export default function Management() {
 
   const trip = id ? getTripById(id) : undefined
   const [, setSyncTick] = useState(0)
-  const [openData, setOpenData] = useState<string | null>(null)
-  const reload = () => setSyncTick(n => n + 1)
 
   const tripCode = trip?.inviteCode
   useEffect(() => {
@@ -83,46 +74,24 @@ export default function Management() {
   const activities = getTripActivities(trip.id)
   const memberCount = trip.members.length
 
-  // ── Reiseziele + Bewertung (nach Hybrid-Score sortiert) ──────────────────
   const rankedDest = destinations.map(d => {
     const votes = allVotes.filter(v => v.destinationId === d.id)
     const starsAvg = votes.length > 0 ? votes.reduce((s, v) => s + v.stars, 0) / votes.length : 0
-    const dataScore = d.llmAnalysis?.score ?? 0
     return {
-      id: d.id, name: d.name, dataScore, starsAvg, voteCount: votes.length,
+      id: d.id, name: d.name, starsAvg, voteCount: votes.length,
       hybrid: calcHybridScore(d.llmAnalysis?.score ?? 50, starsAvg),
-      votes, dest: d,
     }
   }).sort((a, b) => b.hybrid - a.hybrid)
 
   const destName = (destId: string) => destinations.find(d => d.id === destId)?.name ?? '—'
 
-  // Reiseziel-Panel öffnen und hinscrollen (z. B. aus der Mitglieder-Zeile).
-  function openDestPanel(destId: string) {
-    setOpenData(prev => (prev === destId ? null : destId))
-    setTimeout(() => document.getElementById(`dest-${destId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60)
-  }
-
-  // Bewertung direkt hier speichern (vorhandenen Kommentar behalten).
-  function handleVote(destId: string, stars: number) {
-    if (!user) return
-    const mine = allVotes.find(v => v.destinationId === destId && v.memberId === user.id)
-    saveVote({
-      destinationId: destId, memberId: user.id, memberName: user.name,
-      stars, comment: mine?.comment, votedAt: new Date().toISOString(),
-    })
-    reload()
-  }
-
   // ── Schlussfolgerung: Daten, die auf ALLE zutreffen ──────────────────────
   const winner = rankedDest[0]
 
-  // Budget, das für alle passt = das kleinste angegebene (sonst überschreitet es jemanden).
   const budgets = allPrefs.map(p => p.budgetPerPerson).filter((n): n is number => typeof n === 'number')
   const budgetFitAll = budgets.length ? Math.min(...budgets) : null
   const budgetMax = budgets.length ? Math.max(...budgets) : null
 
-  // Tage, an denen ALLE verfügbar sind.
   const dayCount: Record<string, number> = {}
   allAvail.forEach(a => Object.entries(a.dates || {}).forEach(([d, s]) => {
     if (s === 'available') dayCount[d] = (dayCount[d] ?? 0) + 1
@@ -134,7 +103,6 @@ export default function Management() {
     ? (commonDays.length === 1 ? fmtDay(commonDays[0]) : `${fmtDay(commonDays[0])} – ${fmtDay(commonDays[commonDays.length - 1])}`)
     : null
 
-  // Interessen, die jedes Mitglied (mit Präferenzen) ausgewählt hat.
   const prefsWithInterests = allPrefs.filter(p => (p.interests?.length ?? 0) > 0)
   const interestCount: Record<string, number> = {}
   prefsWithInterests.forEach(p => p.interests.forEach(i => { interestCount[i] = (interestCount[i] ?? 0) + 1 }))
@@ -152,7 +120,6 @@ export default function Management() {
 
   return (
     <div className="app-shell relative flex flex-col min-h-svh overflow-hidden">
-      {/* Heller Foto-Hintergrund: am Viewport fixiert (siehe TripScreen) */}
       <div className="fixed inset-y-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-0 pointer-events-none">
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -166,7 +133,7 @@ export default function Management() {
 
         <main className="flex-1 px-4 py-5 pb-28 overflow-y-auto flex flex-col gap-4">
           <p className="text-xs text-ink/55 px-1">
-            Alles, was die Gruppe eingegeben hat — für alle sichtbar. Bewerten geht hier direkt.
+            Alles, was die Gruppe eingegeben hat — für alle sichtbar.
           </p>
 
           {/* ════════ SCHLUSSFOLGERUNG — die gemeinsame Reise ════════ */}
@@ -237,130 +204,6 @@ export default function Management() {
             </div>
           </section>
 
-          {/* Reiseziele & Bewertung — echte KI-Werte + direkt bewerten */}
-          <section className="flex flex-col gap-2">
-            <h2 className="text-[11px] font-bold text-ink/50 uppercase tracking-wider px-1 flex items-center gap-1.5">
-              <MapPin size={13} /> Reiseziele &amp; Bewertung
-            </h2>
-            {rankedDest.length === 0 ? (
-              <div className="rounded-2xl bg-white/80 border border-white/90 shadow-sm p-4 text-sm text-gray-500 text-center">
-                Noch keine Reiseziele vorgeschlagen.
-              </div>
-            ) : rankedDest.map(d => {
-              const open = openData === d.id
-              const dest = d.dest
-              const an = dest.llmAnalysis
-              const isLeader = rankedDest.length > 1 && rankedDest[0].id === d.id
-              const myStars = user ? (d.votes.find(v => v.memberId === user.id)?.stars ?? 0) : 0
-              return (
-                <div key={d.id} id={`dest-${d.id}`} className="rounded-2xl bg-white/85 backdrop-blur-md border border-white/90 shadow-sm overflow-hidden scroll-mt-20">
-                  <div className="p-3.5 flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-sm font-bold text-ink truncate">{d.name}</p>
-                        {isLeader && (
-                          <span className="shrink-0 inline-flex items-center gap-0.5 text-[9px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full">
-                            <Crown size={9} /> Spitzenreiter
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-ink/50 mt-0.5">
-                        Vorgeschlagen von {dest.proposedByName} · {d.voteCount} {d.voteCount === 1 ? 'Stimme' : 'Stimmen'}
-                      </p>
-                    </div>
-                    {d.dataScore > 0 && (
-                      <span className="text-xs font-bold text-primary shrink-0">{d.dataScore}%</span>
-                    )}
-                    <span className="flex items-center gap-1 text-xs font-bold text-amber-500 shrink-0">
-                      <Star size={13} className="fill-amber-400 text-amber-400" />
-                      {d.starsAvg > 0 ? d.starsAvg.toFixed(1) : '–'}
-                    </span>
-                  </div>
-
-                  {/* KI-Analyse-Zeile — Klick zeigt alle gesammelten API-Daten + Bewertung */}
-                  <button
-                    onClick={() => setOpenData(open ? null : d.id)}
-                    className="w-full flex items-center justify-between px-3.5 py-2.5 border-t border-gray-100 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors"
-                    aria-expanded={open}
-                  >
-                    <span className="flex items-center gap-1.5"><Sparkles size={13} /> KI-Werte · bewerten · wer hat bewertet</span>
-                    {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-                  </button>
-
-                  {open && (
-                    <div className="px-3.5 pb-3.5 pt-1 flex flex-col gap-3 text-[12px] text-ink/80 border-t border-gray-50">
-                      {/* Echte KI-/API-Werte */}
-                      {dest.dataError ? (
-                        <p className="text-danger">Echte Daten konnten nicht geladen werden.</p>
-                      ) : !an ? (
-                        <p className="text-ink/40 italic">Noch keine Analyse — Ziel in „Reiseziel" hinzufügen.</p>
-                      ) : (
-                        <div className="flex flex-col gap-2.5">
-                          {dest.climate && (
-                            <DataBlock label="Klima · Copernicus/ERA5">
-                              ⌀ {dest.climate.temp_avg}°C ({dest.climate.temp_min}–{dest.climate.temp_max}°C) · {dest.climate.precipitation_mm} mm Niederschlag · {dest.climate.sunshine_hours} h Sonne
-                            </DataBlock>
-                          )}
-                          {dest.biodiversity && (
-                            <DataBlock label="Natur · GBIF">
-                              {dest.biodiversity.species_count.toLocaleString('de-DE')} Arten · {dest.biodiversity.highlight}
-                            </DataBlock>
-                          )}
-                          {dest.nasa && (
-                            <DataBlock label="NASA POWER">
-                              {dest.nasa.solar_irradiance != null && <>{dest.nasa.solar_irradiance} kWh/m²/Tag Sonne · </>}
-                              {dest.nasa.humidity != null && <>{dest.nasa.humidity}% Luftfeuchte · </>}
-                              {dest.nasa.wind_speed != null && <>{dest.nasa.wind_speed} m/s Wind</>}
-                            </DataBlock>
-                          )}
-                          {dest.earthdata && (
-                            <DataBlock label="NASA Earthdata">
-                              {dest.earthdata.granule_count} Datensätze · {dest.earthdata.dataset}
-                            </DataBlock>
-                          )}
-                          <DataBlock label={`Begründung · Score ${an.score}%`}>
-                            {an.reasoning}
-                          </DataBlock>
-                          {an.dataPoints.length > 0 && (
-                            <ul className="flex flex-col gap-1 mt-0.5">
-                              {an.dataPoints.map((pt, i) => (
-                                <li key={i} className="flex items-start gap-1.5">
-                                  <span className="text-primary mt-0.5">•</span><span>{pt}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Direkt bewerten */}
-                      {!dest.dataError && (
-                        <div className="border-t border-gray-100 pt-3">
-                          <p className="text-[10px] font-bold text-ink/45 uppercase tracking-wide mb-1.5">Deine Bewertung</p>
-                          <StarRating value={myStars} onChange={(v) => handleVote(d.id, v)} size="md" />
-                        </div>
-                      )}
-
-                      {/* Wer hat bewertet */}
-                      <div className="border-t border-gray-100 pt-3">
-                        <p className="text-[10px] font-bold text-ink/45 uppercase tracking-wide mb-1.5">Wer hat bewertet</p>
-                        {d.votes.length === 0 ? (
-                          <p className="text-ink/40 italic">Noch keine Bewertung.</p>
-                        ) : (
-                          <div className="flex flex-col gap-1.5">
-                            {d.votes.map(v => (
-                              <VoterRow key={v.memberId} vote={v} isMe={v.memberId === user?.id} />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </section>
-
           {/* Pro Mitglied — eigenes Profil hervorgehoben */}
           <section className="flex flex-col gap-2">
             <h2 className="text-[11px] font-bold text-ink/50 uppercase tracking-wider px-1 flex items-center gap-1.5">
@@ -398,13 +241,12 @@ export default function Management() {
                     <span className="flex flex-wrap gap-1">
                       {myDests.length > 0
                         ? myDests.map(d => (
-                            <button
+                            <span
                               key={d.id}
-                              onClick={() => openDestPanel(d.id)}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-semibold hover:bg-primary/20 transition-colors active:scale-95"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-semibold"
                             >
                               <Sparkles size={10} />{d.name.split(',')[0]}
-                            </button>
+                            </span>
                           ))
                         : <span className="text-ink/35">noch keins vorgeschlagen</span>}
                     </span>
@@ -480,16 +322,6 @@ export default function Management() {
   )
 }
 
-// Beschrifteter Datenblock für die aufgeklappte KI-Analyse.
-function DataBlock({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <p className="text-[10px] font-bold text-ink/45 uppercase tracking-wide mb-0.5">{label}</p>
-      <p className="leading-snug">{children}</p>
-    </div>
-  )
-}
-
 // Zeile in der Schlussfolgerungs-Karte (weiß auf Petrol).
 function ConclusionRow({ icon: Icon, label, children }: { icon: LucideIcon; label: string; children: ReactNode }) {
   return (
@@ -501,23 +333,6 @@ function ConclusionRow({ icon: Icon, label, children }: { icon: LucideIcon; labe
         <p className="text-[10px] font-bold text-white/70 uppercase tracking-wide leading-none">{label}</p>
         <div className="text-sm font-semibold leading-tight mt-1">{children}</div>
       </div>
-    </div>
-  )
-}
-
-// Eine Stimme in „Wer hat bewertet" (mit Sternen + optionalem Kommentar).
-function VoterRow({ vote, isMe }: { vote: DestinationVote; isMe: boolean }) {
-  return (
-    <div className={`rounded-xl px-2.5 py-2 ${isMe ? 'bg-primary/10' : 'bg-gray-50'}`}>
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-ink truncate flex-1">
-          {vote.memberName}{isMe && <span className="text-primary"> · Du</span>}
-        </span>
-        <span className="flex items-center gap-0.5 text-xs font-bold text-amber-500 shrink-0">
-          <Star size={11} className="fill-amber-400 text-amber-400" />{vote.stars.toFixed(1)}
-        </span>
-      </div>
-      {vote.comment?.trim() && <p className="text-[11px] text-ink/60 mt-0.5 leading-snug">{vote.comment}</p>}
     </div>
   )
 }

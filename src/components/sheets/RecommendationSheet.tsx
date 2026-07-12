@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Sparkles } from 'lucide-react'
 import { DestinationCard } from '@/components/recommendations/DestinationCard'
-import { VotingCard } from '@/components/voting/VotingCard'
 import { AddDestinationForm } from '@/components/recommendations/AddDestinationForm'
 import {
   getTripDestinations, saveDestination, getTripVotes,
@@ -116,17 +115,14 @@ export function RecommendationSheet({ trip, user, onNext }: Props) {
       ) : (
         <div className="flex flex-col gap-3">
           {ranked.map((d, i) => (
-            <div key={d.id} className="flex flex-col gap-2">
-              <DestinationCard dest={d} rank={i + 1} showVoteButton={false} />
-              {!d.isLoading && !d.dataError && (
-                <VotingCard
-                  dest={d}
-                  myVote={d.myVote ?? 0}
-                  myComment={d.myComment}
-                  onVote={(stars, comment) => handleVote(d.id, stars, comment)}
-                />
-              )}
-            </div>
+            <DestinationCard
+              key={d.id}
+              dest={d}
+              rank={i + 1}
+              myVote={d.myVote ?? 0}
+              myComment={d.myComment}
+              onVote={(stars, comment) => handleVote(d.id, stars, comment)}
+            />
           ))}
         </div>
       )}
