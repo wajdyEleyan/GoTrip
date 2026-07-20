@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad
+// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
 // Passwortlose Konten: Identität = eindeutiger Username (auth.id == name).
 // signIn meldet ein bestehendes Konto an, register legt eines an (optional + Code).
 // Ohne Server (error 'offline') kommt der Nutzer lokal rein → App läuft weiter.

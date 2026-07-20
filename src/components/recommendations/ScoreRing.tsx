@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad
+// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
 interface ScoreRingProps {
   score: number   // 0–1
   size?: number

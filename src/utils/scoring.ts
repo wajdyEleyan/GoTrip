@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad
+// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
 // NON-NEGOTIABLE: Hybrid-Score-Formel aus constitution.md
 
 /**

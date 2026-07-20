@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad
+// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 

@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad
+// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
 import type { Trip } from '@/types/trip'
 import type { MemberAvailability } from '@/types/availability'
 import type { MemberPreferences } from '@/types/preferences'

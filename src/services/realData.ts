@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad
+// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
 // Externe API-Aufrufe: Open-Meteo, GBIF, NASA POWER, NASA Earthdata (via Server-Proxy).
 import type { ClimateData, BiodiversityData, NasaData, EarthdataData } from '@/types/destination'
 

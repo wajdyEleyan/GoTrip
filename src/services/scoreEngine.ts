@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad
+// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
 // Score = Klima-Komfort (40 %) + Interessen-Erfüllung (60 %), beides aus echten API-Daten.
 import type {
   ClimateData, BiodiversityData, NasaData, EarthdataData, DestinationAnalysis, Destination,

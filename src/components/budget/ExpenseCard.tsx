@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad
+// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
 import { Trash2, CreditCard } from 'lucide-react'
 import type { Expense } from '@/types/expense'
 

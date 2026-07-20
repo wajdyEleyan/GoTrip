@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad
+// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
 // Generates a 6-character alphanumeric invite code (ambiguous chars excluded)
 import type { Trip } from '@/types/trip'
 

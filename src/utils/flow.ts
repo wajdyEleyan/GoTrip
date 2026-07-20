@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad
+// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
 // Zentrale Definition des Planungs-Flows für die 3-Klick-Regel.
 // Eine Quelle der Wahrheit für Reihenfolge, „nächster Schritt" und Smart-Next.
 import {

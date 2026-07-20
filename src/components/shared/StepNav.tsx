@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad
+// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
 // „Weiter →"-Button für 1-Tap-Kontinuität zwischen Planungs-Schritten (3-Klick-Regel).
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
