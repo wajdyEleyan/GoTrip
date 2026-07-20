@@ -1,21 +1,9 @@
 // Autor: Mohamad Haj Ahmad
-// server/index.js — Schlanker Backend-Proxy NUR für NASA Earthdata (CMR).
-//
-// Alle anderen Datenquellen (Copernicus/ERA5, GBIF, NASA POWER) ruft das
-// Frontend direkt auf (CORS-fähig). Die Bewertung erfolgt regelbasiert im
-// Frontend — KEIN LLM, KEINE Mock-Daten.
-//
-// Dieser Server existiert nur, weil der Earthdata-Token NICHT ins Frontend
-// gehört. Läuft der Server nicht, funktioniert die App trotzdem — dann eben
-// ohne die optionalen Earthdata-Satellitendaten.
+// Server-Proxy für NASA Earthdata. Earthdata-Token bleibt serverseitig — alle anderen APIs ruft das Frontend direkt auf.
 const path = require('path')
 const fs = require('fs')
 const crypto = require('crypto')
 
-// ─── Passwort-Hashing (salted scrypt, ohne Zusatz-Abhängigkeit) ─────────────
-// Passwörter werden NIE im Klartext gespeichert: pro Konto ein zufälliges Salt
-// + scrypt-Hash, abgelegt als "salt:hash". Beim Login wird neu gehasht und
-// zeitkonstant verglichen.
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex')
   const hash = crypto.scryptSync(password, salt, 64).toString('hex')
@@ -29,8 +17,6 @@ function verifyPassword(password, stored) {
   const b = Buffer.from(test, 'hex')
   return a.length === b.length && crypto.timingSafeEqual(a, b)
 }
-// .env immer aus dem server-Ordner laden — egal, von wo gestartet wird.
-// (Auf Render kommt der Token als echte Env-Var; dotenv überschreibt die nicht.)
 require('dotenv').config({ path: path.join(__dirname, '.env') })
 const express = require('express')
 const cors = require('cors')
@@ -46,13 +32,6 @@ app.use(cors({
 }))
 app.use(express.json({ limit: '2mb' }))
 
-// ─── Geteilte Reise-Datenbank (Postgres / Neon) ─────────────────────────────
-// Speichert pro Reise EIN Dokument (alle Daten) unter ihrem inviteCode, damit
-// alle Gruppenmitglieder dieselbe Reise sehen. Ohne DATABASE_URL ist die
-// Sync-API inaktiv → die App läuft dann rein lokal pro Browser (wie zuvor).
-// ─── In-Memory-Fallback (wenn keine DATABASE_URL gesetzt) ───────────────────
-// Daten leben im RAM des Servers — kein Neustart, kein Verlust. Reicht für
-// Demo / HCI-Projekt vollständig aus.
 const mem = { trips: new Map(), users: new Map() }
 
 let pool = null
@@ -69,9 +48,6 @@ if (DATABASE_URL) {
   `).then(() => console.log('DB: Tabelle "trips" bereit'))
     .catch((e) => console.error('DB-Init-Fehler:', e.message))
 
-  // Benutzerkonten: Username ist die (eindeutige) Identität. Pro Konto merken
-  // wir die Einladungscodes der Reisen, an denen es beteiligt ist — so sieht
-  // ein Nutzer seine Reisen auf JEDEM Gerät, sobald er sich mit dem Namen anmeldet.
   pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       username      TEXT PRIMARY KEY,
@@ -84,8 +60,6 @@ if (DATABASE_URL) {
     .catch((e) => console.error('DB-Init-Fehler (users):', e.message))
 }
 
-// Arrays nach Schlüssel mergen: vorhandene bleiben, eingehende gewinnen bei
-// Konflikt. So gehen Beiträge anderer Mitglieder nicht verloren.
 function mergeArray(existing = [], incoming = [], keyFn) {
   const map = new Map()
   for (const it of existing) map.set(keyFn(it), it)
@@ -95,7 +69,6 @@ function mergeArray(existing = [], incoming = [], keyFn) {
 
 function mergeTrip(existing, incoming) {
   if (!existing) return incoming
-  // Mitglieder leben in trip.members und müssen vereint werden (Beitreten!).
   const baseTrip = incoming.trip ?? existing.trip
   const members = mergeArray(existing.trip?.members, incoming.trip?.members, (m) => m.id)
   return {
@@ -151,12 +124,6 @@ app.put('/api/trips/:code', async (req, res) => {
   }
 })
 
-// ─── Benutzerkonten ─────────────────────────────────────────────────────────
-// Eindeutiger Username (PRIMARY KEY) = Identität, passwortlos. `codes` = die
-// Einladungscodes der Reisen des Kontos (für „sieht seine Daten überall").
-
-// POST /api/signin {username, password} → anmelden, Passwort wird verglichen.
-// 404 'notfound' (Konto unbekannt) · 401 'wrongpass' (Passwort falsch).
 app.post('/api/signin', async (req, res) => {
   if (!pool) {
     const username = String(req.body?.username || '').trim()
@@ -190,10 +157,6 @@ app.post('/api/signin', async (req, res) => {
   }
 })
 
-// POST /api/register {username, password, code?} → neues Konto anlegen (eindeutig),
-// Passwort gehasht speichern, optional direkt einer Reise beitreten. Reihenfolge:
-// erst Code prüfen (keine Karteileiche), dann anlegen (409 bei vergebenem Namen),
-// dann Code anhängen.
 app.post('/api/register', async (req, res) => {
   if (!pool) {
     const username = String(req.body?.username || '').trim()
@@ -265,10 +228,6 @@ app.post('/api/users/:username/codes', async (req, res) => {
   }
 })
 
-// ─── NASA Earthdata (CMR) ───────────────────────────────────────────────────
-// Nutzt den Earthdata Login Token (Bearer/JWT) gegen das Common Metadata
-// Repository und ermittelt, wie viele MODIS-Aufnahmen (Land Surface
-// Temperature, MOD11A1) die Zielregion im Reisemonat abdecken.
 const NASA_MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
 
 async function fetchEarthdataCoverage(lat, lon, startDate) {
@@ -308,7 +267,6 @@ async function fetchEarthdataCoverage(lat, lon, startDate) {
   }
 }
 
-// ─── GET /api/earthdata?lat=&lon=&date= ─────────────────────────────────────
 app.get('/api/earthdata', async (req, res) => {
   const lat = Number(req.query.lat)
   const lon = Number(req.query.lon)
@@ -340,15 +298,9 @@ app.get('/health', (_req, res) => res.json({
   trips: mem.trips.size,
 }))
 
-// ─── Produktion (z. B. Render): Frontend-Build mit ausliefern ───────────────
-// In Produktion liegen Frontend und API auf DERSELBEN Domain — dadurch
-// funktioniert der relative Pfad /api/earthdata ohne Cross-Domain-Proxy.
-// In der lokalen Entwicklung existiert /dist nicht → dieser Block ist inaktiv,
-// dort liefert Vite das Frontend aus und proxyt /api zum Server.
 const distDir = path.join(__dirname, '..', 'dist')
 if (fs.existsSync(distDir)) {
   app.use(express.static(distDir))
-  // SPA-Fallback: alle Nicht-API-Routen liefern index.html (Client-Routing).
   app.get('*', (_req, res) => res.sendFile(path.join(distDir, 'index.html')))
 }
 
