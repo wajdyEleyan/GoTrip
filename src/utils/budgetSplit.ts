@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
+// Autor: Mohamad Haj Ahmad, Eya Mathlouthi und Wajdy Eleyan
 import type { Expense, MemberBalance, Settlement } from '@/types/expense'
 import type { Member } from '@/types/trip'
 

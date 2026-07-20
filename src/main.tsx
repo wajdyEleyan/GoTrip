@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
+// Autor: Mohamad Haj Ahmad, Eya Mathlouthi und Wajdy Eleyan
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'

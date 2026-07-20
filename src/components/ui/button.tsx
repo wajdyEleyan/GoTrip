@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
+// Autor: Mohamad Haj Ahmad, Eya Mathlouthi und Wajdy Eleyan
 import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'

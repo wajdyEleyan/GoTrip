@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
+// Autor: Mohamad Haj Ahmad, Eya Mathlouthi und Wajdy Eleyan
 import { ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { MemberBalance, Settlement } from '@/types/expense'

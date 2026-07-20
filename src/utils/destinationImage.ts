@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
+// Autor: Mohamad Haj Ahmad, Eya Mathlouthi und Wajdy Eleyan
 // Liefert ein stabiles Reiseziel-Foto (Unsplash) zu einem Namen.
 // Bekannte Ziele werden gezielt gemappt, sonst deterministischer Fallback-Pool.
 

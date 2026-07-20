@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
+// Autor: Mohamad Haj Ahmad, Eya Mathlouthi und Wajdy Eleyan
 // Shows group availability heatmap for the trip date range
 import { useMemo } from 'react'
 import { cn } from '@/lib/utils'

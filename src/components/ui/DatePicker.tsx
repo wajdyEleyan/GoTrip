@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
+// Autor: Mohamad Haj Ahmad, Eya Mathlouthi und Wajdy Eleyan
 // Themenkonformer Date-Picker (ersetzt den nativen Browser-Kalender).
 import { useEffect, useRef, useState } from 'react'
 import {

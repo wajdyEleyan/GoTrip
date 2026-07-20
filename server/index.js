@@ -1,4 +1,4 @@
-// Autor: Mohamad Haj Ahmad und Wajdy Eleyan
+// Autor: Mohamad Haj Ahmad, Eya Mathlouthi und Wajdy Eleyan
 // Server-Proxy für NASA Earthdata. Earthdata-Token bleibt serverseitig — alle anderen APIs ruft das Frontend direkt auf.
 const path = require('path')
 const fs = require('fs')
