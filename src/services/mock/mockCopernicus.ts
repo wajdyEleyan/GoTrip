@@ -1,4 +1,4 @@
-// Autor: Wajdy Eleyan
+// Autor: Amal Najah und Wajdy Eleyan
 // Mock-Fallback für Copernicus ERA5 Klimadaten (Priorität 1)
 import type { ClimateData } from '@/types/destination'
 

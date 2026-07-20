@@ -1,4 +1,4 @@
-// Autor: Wajdy Eleyan
+// Autor: Amal Najah und Wajdy Eleyan
 import { Sun, CloudSun, Cloud, CloudRain, Thermometer } from 'lucide-react'
 import type { ClimateData } from '@/types/destination'
 

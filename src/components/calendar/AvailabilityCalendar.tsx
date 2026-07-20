@@ -1,4 +1,4 @@
-// Autor: Wajdy Eleyan
+// Autor: Amal Najah und Wajdy Eleyan
 // Interactive monthly calendar for marking personal availability
 import { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'

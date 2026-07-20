@@ -1,4 +1,4 @@
-// Autor: Wajdy Eleyan
+// Autor: Amal Najah und Wajdy Eleyan
 import { AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 

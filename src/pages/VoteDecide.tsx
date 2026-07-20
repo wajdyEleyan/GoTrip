@@ -1,4 +1,4 @@
-// Autor: Wajdy Eleyan
+// Autor: Amal Najah und Wajdy Eleyan
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { TripScreen } from '@/components/shared/TripScreen'

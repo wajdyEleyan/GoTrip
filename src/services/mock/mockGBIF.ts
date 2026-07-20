@@ -1,4 +1,4 @@
-// Autor: Wajdy Eleyan
+// Autor: Amal Najah und Wajdy Eleyan
 // Mock-Fallback für GBIF Biodiversitätsdaten (Priorität 2)
 import type { BiodiversityData } from '@/types/destination'
 

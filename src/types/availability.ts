@@ -1,4 +1,4 @@
-// Autor: Wajdy Eleyan
+// Autor: Amal Najah und Wajdy Eleyan
 
 export type AvailabilityStatus = 'available' | 'maybe' | 'not-available'
 

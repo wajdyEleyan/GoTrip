@@ -1,4 +1,4 @@
-// Autor: Wajdy Eleyan
+// Autor: Amal Najah und Wajdy Eleyan
 import { cn } from '@/lib/utils'
 import type { AvailabilityStatus } from '@/types/availability'
 

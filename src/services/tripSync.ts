@@ -1,4 +1,4 @@
-// Autor: Wajdy Eleyan
+// Autor: Amal Najah und Wajdy Eleyan
 // Synchronisiert Reisedaten zwischen localStorage und Server (Polling alle 6 s).
 import type { Trip } from '@/types/trip'
 import type { MemberAvailability } from '@/types/availability'
