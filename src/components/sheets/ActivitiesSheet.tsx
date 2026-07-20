@@ -1,4 +1,3 @@
-// src/components/sheets/ActivitiesSheet.tsx
 import { useState, useEffect } from 'react'
 import { Sparkles, ThumbsUp, RefreshCw } from 'lucide-react'
 import {

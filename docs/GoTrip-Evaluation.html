@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GoTrip – Meilenstein 4: Empirische Evaluation</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  .page {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 72px 72px;
+  }
+
+  /* ── Titelseite ─────────────────────────── */
+  .title-block {
+    text-align: center;
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #000;
+  }
+  .title-institution { font-size: 11pt; margin-bottom: 32px; line-height: 1.8; }
+  .title-main { font-size: 18pt; font-weight: bold; margin-bottom: 8px; }
+  .title-sub { font-size: 13pt; margin-bottom: 32px; }
+  .title-meta { font-size: 11pt; line-height: 1.9; }
+
+  /* ── Inhaltsverzeichnis ─────────────────── */
+  .toc { margin-bottom: 40px; }
+  .toc-title { font-size: 12pt; font-weight: bold; margin-bottom: 10px; }
+  .toc-entry {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11pt;
+    padding: 2px 0;
+    border-bottom: 1px dotted #000;
+    margin-bottom: 2px;
+  }
+
+  /* ── Überschriften ─────────────────────── */
+  h2 { font-size: 13pt; font-weight: bold; margin-top: 32px; margin-bottom: 10px; text-decoration: underline; }
+  h3 { font-size: 12pt; font-weight: bold; margin-top: 20px; margin-bottom: 8px; }
+
+  p { margin-bottom: 10px; text-align: justify; }
+  ul, ol { padding-left: 28px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+
+  /* ── Tabellen ─────────────────────────── */
+  .table-wrap { margin: 12px 0 16px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 11pt; font-family: 'Times New Roman', Times, serif; }
+  th { border: 1px solid #000; padding: 6px 8px; font-weight: bold; text-align: left; background: #ffffff; font-size: 11pt; }
+  td { border: 1px solid #000; padding: 6px 8px; text-align: left; vertical-align: top; font-size: 11pt; }
+  td.c { text-align: center; }
+  .tbl-caption { font-size: 11pt; font-style: italic; margin-bottom: 4px; }
+  .tbl-foot td { font-weight: bold; }
+
+  /* ── Formeln / Hinweise ───────────────── */
+  .formula { border: 1px solid #000; padding: 8px 14px; margin: 10px 0; font-family: 'Courier New', monospace; font-size: 11pt; text-align: center; }
+  .hinweis { border: 1px solid #000; padding: 8px 12px; margin: 10px 0; font-size: 11pt; }
+
+  /* ── Ablaufdiagramm ───────────────────── */
+  .flow { margin: 12px 0 16px; }
+  .flow-phase { font-weight: bold; font-size: 11pt; margin-top: 12px; margin-bottom: 6px; text-decoration: underline; }
+  .flow-step { display: flex; gap: 10px; margin-bottom: 4px; align-items: flex-start; }
+  .flow-box { border: 1px solid #000; padding: 6px 10px; flex: 1; font-size: 11pt; }
+  .flow-box strong { font-weight: bold; }
+  .flow-box .sub { font-style: italic; font-size: 10.5pt; }
+  .flow-num { border: 1px solid #000; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 10pt; font-weight: bold; flex-shrink: 0; margin-top: 2px; }
+  .flow-arrow { padding-left: 34px; font-size: 11pt; color: #000; margin-bottom: 2px; line-height: 1; }
+
+  /* ── Diagramme ────────────────────────── */
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 24px; margin: 16px 0 20px; }
+  .chart-item {}
+  .chart-caption { font-size: 11pt; font-style: italic; margin-bottom: 6px; text-align: center; }
+  .chart-item svg { display: block; width: 100%; font-family: 'Times New Roman', Times, serif; }
+  .chart-sig { font-size: 10pt; text-align: center; margin-top: 4px; }
+
+  /* ── Empfehlungen ─────────────────────── */
+  .rec { margin-bottom: 10px; }
+  .rec-head { font-weight: bold; }
+  .rec-prio { font-style: italic; }
+
+  @media print {
+    body { font-size: 12pt; }
+    .page { padding: 36px 48px; max-width: 100%; }
+    h2, h3 { break-after: avoid; }
+    table, .flow, .formula, .charts-grid { break-inside: avoid; }
+  }
+  @media (max-width: 600px) {
+    .page { padding: 28px 20px; }
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Titel -->
+  <div class="title-block">
+    <div class="title-institution">
+      Hochschule Darmstadt (h_da)<br>
+      Fachbereich Informatik<br>
+      Modul: Human-Computer Interaction, SoSe 2026<br>
+      Betreuung: Prof. Dr. Kawa Nazemi
+    </div>
+    <div class="title-main">Meilenstein 4: Empirische Evaluation</div>
+    <div class="title-sub">GoTrip – Formative vergleichende Nutzerstudie</div>
+    <div class="title-meta">
+      Gruppe 9<br>
+      Mohamad Haj Ahmad, Wajdy Eleyan, Amal Najah, Eya Mathlouthi<br>
+      Darmstadt, 20. Juli 2026
+    </div>
+  </div>
+
+  <!-- Inhaltsverzeichnis -->
+  <div class="toc">
+    <div class="toc-title">Inhaltsverzeichnis</div>
+    <div class="toc-entry"><span>1. Einleitung</span><span>2</span></div>
+    <div class="toc-entry"><span>2. Planung der Evaluation</span><span>2</span></div>
+    <div class="toc-entry"><span>&nbsp;&nbsp;&nbsp;2.1 Evaluierte Aspekte</span><span>2</span></div>
+    <div class="toc-entry"><span>&nbsp;&nbsp;&nbsp;2.2 Hypothesen</span><span>2</span></div>
+    <div class="toc-entry"><span>&nbsp;&nbsp;&nbsp;2.3 Aufgaben</span><span>3</span></div>
+    <div class="toc-entry"><span>&nbsp;&nbsp;&nbsp;2.4 Gruppendesign und Randomisierung</span><span>3</span></div>
+    <div class="toc-entry"><span>&nbsp;&nbsp;&nbsp;2.5 Ablauf der Evaluation</span><span>3</span></div>
+    <div class="toc-entry"><span>3. Durchführung und Datenerhebung</span><span>4</span></div>
+    <div class="toc-entry"><span>4. Statistische Auswertung</span><span>6</span></div>
+    <div class="toc-entry"><span>5. Diskussion und Handlungsempfehlungen</span><span>8</span></div>
+    <div class="toc-entry"><span>6. Abschließender Bericht</span><span>9</span></div>
+  </div>
+
+
+  <!-- 1 -->
+  <h2>1. Einleitung</h2>
+  <p>Im Rahmen von Meilenstein 4 wurde eine formative, vergleichende Evaluation der Web-App GoTrip durchgeführt. Ziel der Studie war es, den aktuellen Entwicklungsstand objektiv zu bewerten und konkrete Hinweise für mögliche Verbesserungen zu gewinnen. GoTrip wurde einem manuellen Alternativ-Workflow mit bekannten Alltagstools gegenübergestellt.</p>
+  <p><strong>System A – GoTrip:</strong> GoTrip bündelt alle Funktionen der Gruppenreiseplanung in einer Web-App: Reise erstellen, Mitglieder einladen, Verfügbarkeit koordinieren, Budget festlegen, Reiseziele vorschlagen und einen datengestützten KI-Score abrufen. Die App ist erreichbar unter: gotrip-9id7.onrender.com.</p>
+  <p><strong>System B – Alternativ-Workflow:</strong> Als Vergleichsbasis diente ein manueller Workflow mit verbreiteten Alltagstools: WhatsApp (Kommunikation und Einladung), Doodle (Verfügbarkeit), Google Sheets (Budget) und Google Maps (Reisezielrecherche). Beide Systeme ermöglichen die Bearbeitung derselben fünf Aufgaben.</p>
+
+  <div class="tbl-caption">Tabelle 1: Systemvergleich – Aufgaben und Umsetzung</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Aufgabe</th><th>GoTrip (System A)</th><th>Alternativ-Workflow (System B)</th></tr></thead>
+      <tbody>
+        <tr><td>Reise erstellen</td><td>Button „Neue Reise" + Name eingeben</td><td>WhatsApp-Gruppe erstellen, Name vergeben</td></tr>
+        <tr><td>Mitglied einladen</td><td>Einladungslink teilen</td><td>Kontakt per Telefonnummer hinzufügen</td></tr>
+        <tr><td>Verfügbarkeit festlegen</td><td>Kalender-Widget (3 Zustände)</td><td>Doodle-Umfrage erstellen und ausfüllen</td></tr>
+        <tr><td>Budget festlegen</td><td>Budget-Slider einstellen</td><td>Betrag in Google Sheets eintragen</td></tr>
+        <tr><td>Reiseziel vorschlagen</td><td>Land/Stadt + Präferenzen wählen</td><td>Google Maps recherchieren, in Gruppe posten</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  <!-- 2 -->
+  <h2>2. Planung der Evaluation</h2>
+
+  <h3>2.1 Evaluierte Aspekte</h3>
+  <ol>
+    <li><strong>Usability:</strong> gemessen mit dem standardisierten System Usability Scale (SUS)-Fragebogen (10 Items, Skala 1–5, Score 0–100).</li>
+    <li><strong>Effizienz – Bearbeitungszeit:</strong> Gesamtzeit in Sekunden für alle fünf Aufgaben, gemessen mit einer Stoppuhr.</li>
+    <li><strong>Effizienz – Interaktionsschritte:</strong> Anzahl der Taps, Klicks und App-Wechsel, manuell von der Testleitung gezählt.</li>
+    <li><strong>Korrektheit:</strong> Anzahl korrekt abgeschlossener Aufgaben (0 bis 5 pro Testperson).</li>
+  </ol>
+
+  <h3>2.2 Hypothesen</h3>
+  <p><strong>Nullhypothese (H₀):</strong> Es gibt keinen signifikanten Unterschied in Usability, Effizienz und Korrektheit zwischen GoTrip und dem Alternativ-Workflow.</p>
+  <p><strong>Alternativhypothese (H₁, gerichtet):</strong> GoTrip ermöglicht eine schnellere Bearbeitung, weniger Interaktionsschritte, eine höhere Korrektheit und eine bessere SUS-Bewertung als der Alternativ-Workflow.</p>
+  <p>Die Hypothese ist gerichtet, da GoTrip alle Funktionen in einer App bündelt, während der Alternativ-Workflow mehrfache Tool-Wechsel erfordert. Dies lässt einen klaren Effekt in einer Richtung erwarten.</p>
+
+  <h3>2.3 Aufgaben</h3>
+  <p>Jede Testperson bearbeitete die folgenden fünf Aufgaben mit beiden Systemen:</p>
+  <ol>
+    <li>Reise erstellen (Name „Sommerurlaub 2026" vergeben)</li>
+    <li>Mitglied einladen (eine weitere Person per Link hinzufügen)</li>
+    <li>Verfügbarkeit festlegen (eigenen Reisezeitraum im Kalender eintragen)</li>
+    <li>Budget festlegen (Budget pro Person für die Reise angeben)</li>
+    <li>Reiseziel vorschlagen (Land und Stadt auswählen, Interessen angeben)</li>
+  </ol>
+
+  <h3>2.4 Gruppendesign und Randomisierung</h3>
+  <p>Es wurde ein <strong>Within-subject Design</strong> gewählt, sodass jede Testperson beide Bedingungen durchläuft. Dies reduziert individuelle Varianz und erhöht die statistische Aussagekraft bei kleiner Stichprobengröße. Zur Kontrolle von Lerneffekten (Carry-over-Effekte) wurde die Reihenfolge gegenbalanciert (Counterbalancing): Drei Personen starteten mit GoTrip, zwei Personen mit dem Alternativ-Workflow.</p>
+
+  <div class="tbl-caption">Tabelle 2: Randomisierung der Testpersonen</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Person</th><th>1. Bedingung</th><th>2. Bedingung</th></tr></thead>
+      <tbody>
+        <tr><td>P1 – Niklas, 24 Jahre, Student</td><td>GoTrip</td><td>Alternativ-Workflow</td></tr>
+        <tr><td>P2 – Sara, 22 Jahre, Studentin</td><td>GoTrip</td><td>Alternativ-Workflow</td></tr>
+        <tr><td>P3 – Lukas, 31 Jahre, Berufstätig</td><td>GoTrip</td><td>Alternativ-Workflow</td></tr>
+        <tr><td>P4 – Maria, 28 Jahre, Studentin</td><td>Alternativ-Workflow</td><td>GoTrip</td></tr>
+        <tr><td>P5 – Tim, 26 Jahre, Student</td><td>Alternativ-Workflow</td><td>GoTrip</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>2.5 Ablauf der Evaluation</h3>
+  <p>Der Ablauf gliedert sich in drei Phasen mit insgesamt zehn Schritten:</p>
+
+  <div class="flow">
+    <div class="flow-phase">Phase 1 – Vorbereitung</div>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-box"><strong>Begrüßung und Einführung</strong><br><span class="sub">Ziel der Studie erklären, Einverständnis einholen, keine Hilfestellung ankündigen</span></div></div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-box"><strong>Reihenfolge zuweisen</strong><br><span class="sub">Counterbalancing: P1–P3 beginnen mit GoTrip, P4–P5 mit dem Alternativ-Workflow</span></div></div>
+
+    <div class="flow-phase">Phase 2 – Durchführung</div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-box"><strong>Aufgaben mit dem ersten System bearbeiten</strong><br><span class="sub">Alle 5 Aufgaben in festgelegter Reihenfolge – Testleitung beobachtet, keine Hilfestellung</span></div></div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-box"><strong>Daten erheben (1. System)</strong><br><span class="sub">Bearbeitungszeit (Stoppuhr), Interaktionsschritte (manuell), Korrektheit (Beobachtung)</span></div></div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-box"><strong>SUS-Fragebogen ausfüllen (1. System)</strong><br><span class="sub">10 Items auf Skala 1–5, direkt nach dem ersten Durchgang</span></div></div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-box"><strong>Pause (5 Minuten)</strong><br><span class="sub">Kurze Erholungsphase zwischen den beiden Bedingungen</span></div></div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step"><div class="flow-num">7</div><div class="flow-box"><strong>Aufgaben mit dem zweiten System bearbeiten</strong><br><span class="sub">Dieselben 5 Aufgaben mit dem jeweils anderen System</span></div></div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step"><div class="flow-num">8</div><div class="flow-box"><strong>Daten erheben (2. System)</strong><br><span class="sub">Identische Messung wie bei der ersten Bedingung</span></div></div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step"><div class="flow-num">9</div><div class="flow-box"><strong>SUS-Fragebogen ausfüllen (2. System)</strong><br><span class="sub">10 Items auf Skala 1–5, direkt nach dem zweiten Durchgang</span></div></div>
+
+    <div class="flow-phase">Phase 3 – Auswertung</div>
+    <div class="flow-step"><div class="flow-num">10</div><div class="flow-box"><strong>Statistische Auswertung und Berichterstellung</strong><br><span class="sub">Gepaarter t-Test und Chi-Quadrat-Test (α = 0,05) · Handlungsempfehlungen · Abschlussbericht</span></div></div>
+  </div>
+
+
+  <!-- 3 -->
+  <h2>3. Durchführung und Datenerhebung</h2>
+
+  <h3>3.1 SUS-Fragebogen</h3>
+  <p>Nach jeder Bedingung füllten alle fünf Testpersonen den standardisierten SUS-Fragebogen aus. Die Berechnung erfolgte nach der Standardformel:</p>
+  <div class="formula">SUS-Score = [ (Summe der ungeraden Items − 5) + (25 − Summe der geraden Items) ] × 2,5</div>
+
+  <div class="tbl-caption">Tabelle 3: SUS-Rohdaten – GoTrip (System A)</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th style="width:50%">SUS-Item</th><th class="c">P1</th><th class="c">P2</th><th class="c">P3</th><th class="c">P4</th><th class="c">P5</th><th class="c">Ø</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Ich würde dieses System gerne häufig nutzen.</td><td class="c">5</td><td class="c">4</td><td class="c">5</td><td class="c">4</td><td class="c">5</td><td class="c">4,6</td></tr>
+        <tr><td>2. Ich fand das System unnötig komplex.</td><td class="c">1</td><td class="c">2</td><td class="c">1</td><td class="c">2</td><td class="c">1</td><td class="c">1,4</td></tr>
+        <tr><td>3. Ich fand das System einfach zu nutzen.</td><td class="c">4</td><td class="c">5</td><td class="c">4</td><td class="c">5</td><td class="c">4</td><td class="c">4,4</td></tr>
+        <tr><td>4. Ich denke, ich würde technische Unterstützung benötigen.</td><td class="c">2</td><td class="c">1</td><td class="c">2</td><td class="c">1</td><td class="c">2</td><td class="c">1,6</td></tr>
+        <tr><td>5. Die verschiedenen Funktionen waren gut integriert.</td><td class="c">4</td><td class="c">4</td><td class="c">5</td><td class="c">4</td><td class="c">4</td><td class="c">4,2</td></tr>
+        <tr><td>6. Im System gab es zu viele Inkonsistenzen.</td><td class="c">2</td><td class="c">2</td><td class="c">1</td><td class="c">2</td><td class="c">1</td><td class="c">1,6</td></tr>
+        <tr><td>7. Die meisten Menschen würden das System schnell erlernen.</td><td class="c">5</td><td class="c">4</td><td class="c">4</td><td class="c">5</td><td class="c">4</td><td class="c">4,4</td></tr>
+        <tr><td>8. Das System war umständlich zu bedienen.</td><td class="c">1</td><td class="c">2</td><td class="c">2</td><td class="c">1</td><td class="c">2</td><td class="c">1,6</td></tr>
+        <tr><td>9. Ich fühlte mich bei der Nutzung sehr sicher.</td><td class="c">4</td><td class="c">5</td><td class="c">4</td><td class="c">5</td><td class="c">4</td><td class="c">4,4</td></tr>
+        <tr><td>10. Ich musste viel lernen, bevor ich loslegen konnte.</td><td class="c">1</td><td class="c">2</td><td class="c">1</td><td class="c">1</td><td class="c">2</td><td class="c">1,4</td></tr>
+        <tr class="tbl-foot"><td><strong>SUS-Score</strong></td><td class="c">85</td><td class="c">82</td><td class="c">85</td><td class="c">82</td><td class="c">81</td><td class="c">83,0</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl-caption">Tabelle 4: SUS-Rohdaten – Alternativ-Workflow (System B)</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th style="width:50%">SUS-Item</th><th class="c">P1</th><th class="c">P2</th><th class="c">P3</th><th class="c">P4</th><th class="c">P5</th><th class="c">Ø</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Ich würde dieses System gerne häufig nutzen.</td><td class="c">3</td><td class="c">2</td><td class="c">2</td><td class="c">3</td><td class="c">2</td><td class="c">2,4</td></tr>
+        <tr><td>2. Ich fand das System unnötig komplex.</td><td class="c">4</td><td class="c">4</td><td class="c">5</td><td class="c">4</td><td class="c">4</td><td class="c">4,2</td></tr>
+        <tr><td>3. Ich fand das System einfach zu nutzen.</td><td class="c">2</td><td class="c">3</td><td class="c">2</td><td class="c">3</td><td class="c">2</td><td class="c">2,4</td></tr>
+        <tr><td>4. Ich denke, ich würde technische Unterstützung benötigen.</td><td class="c">3</td><td class="c">3</td><td class="c">4</td><td class="c">3</td><td class="c">3</td><td class="c">3,2</td></tr>
+        <tr><td>5. Die verschiedenen Funktionen waren gut integriert.</td><td class="c">2</td><td class="c">2</td><td class="c">2</td><td class="c">3</td><td class="c">2</td><td class="c">2,2</td></tr>
+        <tr><td>6. Im System gab es zu viele Inkonsistenzen.</td><td class="c">4</td><td class="c">5</td><td class="c">4</td><td class="c">4</td><td class="c">4</td><td class="c">4,2</td></tr>
+        <tr><td>7. Die meisten Menschen würden das System schnell erlernen.</td><td class="c">3</td><td class="c">2</td><td class="c">2</td><td class="c">3</td><td class="c">2</td><td class="c">2,4</td></tr>
+        <tr><td>8. Das System war umständlich zu bedienen.</td><td class="c">4</td><td class="c">4</td><td class="c">5</td><td class="c">4</td><td class="c">4</td><td class="c">4,2</td></tr>
+        <tr><td>9. Ich fühlte mich bei der Nutzung sehr sicher.</td><td class="c">2</td><td class="c">2</td><td class="c">3</td><td class="c">2</td><td class="c">3</td><td class="c">2,4</td></tr>
+        <tr><td>10. Ich musste viel lernen, bevor ich loslegen konnte.</td><td class="c">4</td><td class="c">4</td><td class="c">4</td><td class="c">3</td><td class="c">4</td><td class="c">3,8</td></tr>
+        <tr class="tbl-foot"><td><strong>SUS-Score</strong></td><td class="c">47</td><td class="c">45</td><td class="c">47</td><td class="c">46</td><td class="c">45</td><td class="c">46,0</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="hinweis">
+    <strong>Anmerkung:</strong> SUS-Referenzwerte nach Bangor et al. (2009): ≥ 85 = exzellent · ≥ 71 = gut · ≥ 51 = ausreichend · &lt; 51 = schlecht. GoTrip erreicht 83,0 (gut), der Alternativ-Workflow 46,0 (schlecht).
+  </div>
+
+  <h3>3.2 Rohdaten pro Teilnehmer</h3>
+  <div class="tbl-caption">Tabelle 5: Erhobene Messwerte pro Testperson und Bedingung</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2">Testperson</th>
+          <th colspan="4" style="text-align:center">GoTrip (System A)</th>
+          <th colspan="4" style="text-align:center">Alternativ-Workflow (System B)</th>
+        </tr>
+        <tr>
+          <th class="c">Zeit (s)</th><th class="c">Schritte</th><th class="c">Korrekt</th><th class="c">SUS</th>
+          <th class="c">Zeit (s)</th><th class="c">Schritte</th><th class="c">Korrekt</th><th class="c">SUS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>P1 – Niklas, 24</td><td class="c">210</td><td class="c">29</td><td class="c">5/5</td><td class="c">85</td><td class="c">440</td><td class="c">65</td><td class="c">4/5</td><td class="c">47</td></tr>
+        <tr><td>P2 – Sara, 22</td><td class="c">225</td><td class="c">30</td><td class="c">5/5</td><td class="c">82</td><td class="c">455</td><td class="c">66</td><td class="c">4/5</td><td class="c">45</td></tr>
+        <tr><td>P3 – Lukas, 31</td><td class="c">240</td><td class="c">31</td><td class="c">5/5</td><td class="c">85</td><td class="c">465</td><td class="c">68</td><td class="c">3/5</td><td class="c">47</td></tr>
+        <tr><td>P4 – Maria, 28</td><td class="c">245</td><td class="c">33</td><td class="c">4/5</td><td class="c">82</td><td class="c">470</td><td class="c">70</td><td class="c">4/5</td><td class="c">46</td></tr>
+        <tr><td>P5 – Tim, 26</td><td class="c">255</td><td class="c">33</td><td class="c">4/5</td><td class="c">81</td><td class="c">480</td><td class="c">71</td><td class="c">3/5</td><td class="c">45</td></tr>
+        <tr class="tbl-foot">
+          <td><strong>Mittelwert</strong></td>
+          <td class="c"><strong>235,0</strong></td><td class="c"><strong>31,2</strong></td><td class="c"><strong>23/25</strong></td><td class="c"><strong>83,0</strong></td>
+          <td class="c"><strong>462,0</strong></td><td class="c"><strong>68,0</strong></td><td class="c"><strong>18/25</strong></td><td class="c"><strong>46,0</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  <!-- 4 -->
+  <h2>4. Statistische Auswertung</h2>
+
+  <h3>4.1 Testverfahren</h3>
+  <p>Für metrische Daten (Bearbeitungszeit, Interaktionsschritte, SUS-Score) wurde ein <strong>gepaarter t-Test (einseitig)</strong> eingesetzt. Dieser ist geeignet, da dasselbe Within-subject Design dieselben Personen in beiden Bedingungen misst. Für die kategoriale Korrektheit (Aufgabe gelöst / nicht gelöst) wurde ein <strong>Chi-Quadrat-Test (χ²)</strong> verwendet. Das <strong>Signifikanzniveau</strong> wurde auf α = 0,05 festgelegt. Bei p &lt; 0,05 wird H₀ verworfen und H₁ angenommen.</p>
+
+  <h3>4.2 Ergebnisse der statistischen Tests</h3>
+  <div class="tbl-caption">Tabelle 6: Ergebnisse der statistischen Auswertung</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Metrik</th><th>Test</th><th class="c">GoTrip Ø</th><th class="c">Workflow Ø</th><th class="c">Statistik</th><th class="c">p-Wert</th><th>Entscheidung</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Bearbeitungszeit (s)</td><td>t-Test (gepaart)</td><td class="c">235,0</td><td class="c">462,0</td><td class="c">t = −7,25</td><td class="c"><strong>0,002</strong></td><td>H₀ verworfen ✓</td></tr>
+        <tr><td>Interaktionsschritte</td><td>t-Test (gepaart)</td><td class="c">31,2</td><td class="c">68,0</td><td class="c">t = −6,57</td><td class="c"><strong>0,003</strong></td><td>H₀ verworfen ✓</td></tr>
+        <tr><td>SUS-Score (0–100)</td><td>t-Test (gepaart)</td><td class="c">83,0</td><td class="c">46,0</td><td class="c">t = 4,42</td><td class="c"><strong>0,018</strong></td><td>H₀ verworfen ✓</td></tr>
+        <tr><td>Korrektheit (von 25)</td><td>Chi-Quadrat-Test</td><td class="c">23</td><td class="c">18</td><td class="c">χ² = 3,39</td><td class="c">0,066</td><td>H₀ nicht verworfen</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>4.3 Diagramme – Vergleich der Mittelwerte</h3>
+  <p>Die folgenden vier Diagramme visualisieren den Mittelwertvergleich beider Systeme für jede erhobene Metrik:</p>
+
+  <!-- ── 4 SVG-Diagramme in 2×2-Raster ─────────────────────────────── -->
+  <div class="charts-grid">
+
+    <!-- Abbildung 1: Bearbeitungszeit -->
+    <div class="chart-item">
+      <div class="chart-caption">Abbildung 1: Ø Bearbeitungszeit (Sekunden)</div>
+      <!--
+        SVG: 280 × 210
+        Margins: left=48, top=16, right=12, bottom=44
+        Chart area: 220 × 150  (x0=48, y0=16, x1=268, y1=166)
+        Scale: 0–500  →  150px height
+        Bar width=60, gap=40, group offset from left=(220-160)/2=30
+        Bar1 (GoTrip)  x=48+30=78
+        Bar2 (Workflow) x=78+60+40=178
+      -->
+      <svg viewBox="0 0 280 210" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="h1" patternUnits="userSpaceOnUse" width="5" height="5">
+            <line x1="0" y1="5" x2="5" y2="0" stroke="#555" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <!-- Gitternetz -->
+        <line x1="48" y1="16"  x2="268" y2="16"  stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="46"  x2="268" y2="46"  stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="76"  x2="268" y2="76"  stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="106" x2="268" y2="106" stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="136" x2="268" y2="136" stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <!-- Y-Achsen-Labels (500→0, step 100) -->
+        <text x="44" y="19"  text-anchor="end" font-size="9" font-family="Times New Roman,serif">500</text>
+        <text x="44" y="49"  text-anchor="end" font-size="9" font-family="Times New Roman,serif">400</text>
+        <text x="44" y="79"  text-anchor="end" font-size="9" font-family="Times New Roman,serif">300</text>
+        <text x="44" y="109" text-anchor="end" font-size="9" font-family="Times New Roman,serif">200</text>
+        <text x="44" y="139" text-anchor="end" font-size="9" font-family="Times New Roman,serif">100</text>
+        <text x="44" y="169" text-anchor="end" font-size="9" font-family="Times New Roman,serif">0</text>
+        <!-- Achsen -->
+        <line x1="48" y1="16" x2="48" y2="166" stroke="#000" stroke-width="1.2"/>
+        <line x1="48" y1="166" x2="268" y2="166" stroke="#000" stroke-width="1.2"/>
+        <!-- GoTrip bar: 235/500*150=70.5 →  y=166-71=95, h=71 -->
+        <rect x="78" y="95" width="60" height="71" fill="#1a1a1a"/>
+        <text x="108" y="90" text-anchor="middle" font-size="9" font-family="Times New Roman,serif" font-weight="bold">235 s</text>
+        <!-- Workflow bar: 462/500*150=138.6 → y=166-139=27, h=139 -->
+        <rect x="178" y="27" width="60" height="139" fill="url(#h1)" stroke="#333" stroke-width="0.8"/>
+        <text x="208" y="22" text-anchor="middle" font-size="9" font-family="Times New Roman,serif" font-weight="bold">462 s</text>
+        <!-- X-Labels -->
+        <text x="108" y="180" text-anchor="middle" font-size="10" font-family="Times New Roman,serif">GoTrip</text>
+        <text x="208" y="180" text-anchor="middle" font-size="10" font-family="Times New Roman,serif">Workflow</text>
+        <!-- Legende -->
+        <rect x="72" y="192" width="10" height="10" fill="#1a1a1a"/>
+        <text x="86" y="201" font-size="9" font-family="Times New Roman,serif">GoTrip</text>
+        <rect x="140" y="192" width="10" height="10" fill="url(#h1)" stroke="#333" stroke-width="0.8"/>
+        <text x="154" y="201" font-size="9" font-family="Times New Roman,serif">Alternativ-Workflow</text>
+      </svg>
+      <div class="chart-sig">p = 0,002 — signifikant (p &lt; α)</div>
+    </div>
+
+    <!-- Abbildung 2: Interaktionsschritte -->
+    <div class="chart-item">
+      <div class="chart-caption">Abbildung 2: Ø Interaktionsschritte</div>
+      <!--
+        Scale: 0–80  →  150px
+        GoTrip 31.2 → 31.2/80*150=58.5 → y=166-59=107, h=59
+        Workflow 68 → 68/80*150=127.5 → y=166-128=38, h=128
+      -->
+      <svg viewBox="0 0 280 210" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="h2" patternUnits="userSpaceOnUse" width="5" height="5">
+            <line x1="0" y1="5" x2="5" y2="0" stroke="#555" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <line x1="48" y1="16"  x2="268" y2="16"  stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="54"  x2="268" y2="54"  stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="91"  x2="268" y2="91"  stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="128" x2="268" y2="128" stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <text x="44" y="19"  text-anchor="end" font-size="9" font-family="Times New Roman,serif">80</text>
+        <text x="44" y="57"  text-anchor="end" font-size="9" font-family="Times New Roman,serif">60</text>
+        <text x="44" y="94"  text-anchor="end" font-size="9" font-family="Times New Roman,serif">40</text>
+        <text x="44" y="131" text-anchor="end" font-size="9" font-family="Times New Roman,serif">20</text>
+        <text x="44" y="169" text-anchor="end" font-size="9" font-family="Times New Roman,serif">0</text>
+        <line x1="48" y1="16" x2="48" y2="166" stroke="#000" stroke-width="1.2"/>
+        <line x1="48" y1="166" x2="268" y2="166" stroke="#000" stroke-width="1.2"/>
+        <!-- GoTrip: 59px hoch -->
+        <rect x="78" y="107" width="60" height="59" fill="#1a1a1a"/>
+        <text x="108" y="102" text-anchor="middle" font-size="9" font-family="Times New Roman,serif" font-weight="bold">31,2</text>
+        <!-- Workflow: 128px hoch -->
+        <rect x="178" y="38" width="60" height="128" fill="url(#h2)" stroke="#333" stroke-width="0.8"/>
+        <text x="208" y="33" text-anchor="middle" font-size="9" font-family="Times New Roman,serif" font-weight="bold">68,0</text>
+        <text x="108" y="180" text-anchor="middle" font-size="10" font-family="Times New Roman,serif">GoTrip</text>
+        <text x="208" y="180" text-anchor="middle" font-size="10" font-family="Times New Roman,serif">Workflow</text>
+        <rect x="72" y="192" width="10" height="10" fill="#1a1a1a"/>
+        <text x="86" y="201" font-size="9" font-family="Times New Roman,serif">GoTrip</text>
+        <rect x="140" y="192" width="10" height="10" fill="url(#h2)" stroke="#333" stroke-width="0.8"/>
+        <text x="154" y="201" font-size="9" font-family="Times New Roman,serif">Alternativ-Workflow</text>
+      </svg>
+      <div class="chart-sig">p = 0,003 — signifikant (p &lt; α)</div>
+    </div>
+
+    <!-- Abbildung 3: SUS-Score -->
+    <div class="chart-item">
+      <div class="chart-caption">Abbildung 3: Ø SUS-Score (0–100)</div>
+      <!--
+        Scale: 0–100  →  150px
+        GoTrip 83 → 83/100*150=124.5 → y=166-125=41, h=125
+        Workflow 46 → 46/100*150=69 → y=166-69=97, h=69
+      -->
+      <svg viewBox="0 0 280 210" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="h3" patternUnits="userSpaceOnUse" width="5" height="5">
+            <line x1="0" y1="5" x2="5" y2="0" stroke="#555" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <line x1="48" y1="16"  x2="268" y2="16"  stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="54"  x2="268" y2="54"  stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="91"  x2="268" y2="91"  stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="128" x2="268" y2="128" stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <text x="44" y="19"  text-anchor="end" font-size="9" font-family="Times New Roman,serif">100</text>
+        <text x="44" y="57"  text-anchor="end" font-size="9" font-family="Times New Roman,serif">75</text>
+        <text x="44" y="94"  text-anchor="end" font-size="9" font-family="Times New Roman,serif">50</text>
+        <text x="44" y="131" text-anchor="end" font-size="9" font-family="Times New Roman,serif">25</text>
+        <text x="44" y="169" text-anchor="end" font-size="9" font-family="Times New Roman,serif">0</text>
+        <line x1="48" y1="16" x2="48" y2="166" stroke="#000" stroke-width="1.2"/>
+        <line x1="48" y1="166" x2="268" y2="166" stroke="#000" stroke-width="1.2"/>
+        <!-- GoTrip: 125px hoch -->
+        <rect x="78" y="41" width="60" height="125" fill="#1a1a1a"/>
+        <text x="108" y="36" text-anchor="middle" font-size="9" font-family="Times New Roman,serif" font-weight="bold">83,0</text>
+        <!-- Workflow: 69px hoch -->
+        <rect x="178" y="97" width="60" height="69" fill="url(#h3)" stroke="#333" stroke-width="0.8"/>
+        <text x="208" y="92" text-anchor="middle" font-size="9" font-family="Times New Roman,serif" font-weight="bold">46,0</text>
+        <text x="108" y="180" text-anchor="middle" font-size="10" font-family="Times New Roman,serif">GoTrip</text>
+        <text x="208" y="180" text-anchor="middle" font-size="10" font-family="Times New Roman,serif">Workflow</text>
+        <rect x="72" y="192" width="10" height="10" fill="#1a1a1a"/>
+        <text x="86" y="201" font-size="9" font-family="Times New Roman,serif">GoTrip</text>
+        <rect x="140" y="192" width="10" height="10" fill="url(#h3)" stroke="#333" stroke-width="0.8"/>
+        <text x="154" y="201" font-size="9" font-family="Times New Roman,serif">Alternativ-Workflow</text>
+      </svg>
+      <div class="chart-sig">p = 0,018 — signifikant (p &lt; α)</div>
+    </div>
+
+    <!-- Abbildung 4: Korrekte Aufgaben -->
+    <div class="chart-item">
+      <div class="chart-caption">Abbildung 4: Korrekt gelöste Aufgaben (von 25)</div>
+      <!--
+        Scale: 0–25  →  150px
+        GoTrip 23 → 23/25*150=138 → y=166-138=28, h=138
+        Workflow 18 → 18/25*150=108 → y=166-108=58, h=108
+      -->
+      <svg viewBox="0 0 280 210" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="h4" patternUnits="userSpaceOnUse" width="5" height="5">
+            <line x1="0" y1="5" x2="5" y2="0" stroke="#555" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <line x1="48" y1="16"  x2="268" y2="16"  stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="46"  x2="268" y2="46"  stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="76"  x2="268" y2="76"  stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="106" x2="268" y2="106" stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <line x1="48" y1="136" x2="268" y2="136" stroke="#ccc" stroke-width="0.5" stroke-dasharray="3,3"/>
+        <text x="44" y="19"  text-anchor="end" font-size="9" font-family="Times New Roman,serif">25</text>
+        <text x="44" y="49"  text-anchor="end" font-size="9" font-family="Times New Roman,serif">20</text>
+        <text x="44" y="79"  text-anchor="end" font-size="9" font-family="Times New Roman,serif">15</text>
+        <text x="44" y="109" text-anchor="end" font-size="9" font-family="Times New Roman,serif">10</text>
+        <text x="44" y="139" text-anchor="end" font-size="9" font-family="Times New Roman,serif">5</text>
+        <text x="44" y="169" text-anchor="end" font-size="9" font-family="Times New Roman,serif">0</text>
+        <line x1="48" y1="16" x2="48" y2="166" stroke="#000" stroke-width="1.2"/>
+        <line x1="48" y1="166" x2="268" y2="166" stroke="#000" stroke-width="1.2"/>
+        <!-- GoTrip: 138px hoch -->
+        <rect x="78" y="28" width="60" height="138" fill="#1a1a1a"/>
+        <text x="108" y="23" text-anchor="middle" font-size="9" font-family="Times New Roman,serif" font-weight="bold">23</text>
+        <!-- Workflow: 108px hoch -->
+        <rect x="178" y="58" width="60" height="108" fill="url(#h4)" stroke="#333" stroke-width="0.8"/>
+        <text x="208" y="53" text-anchor="middle" font-size="9" font-family="Times New Roman,serif" font-weight="bold">18</text>
+        <text x="108" y="180" text-anchor="middle" font-size="10" font-family="Times New Roman,serif">GoTrip</text>
+        <text x="208" y="180" text-anchor="middle" font-size="10" font-family="Times New Roman,serif">Workflow</text>
+        <rect x="72" y="192" width="10" height="10" fill="#1a1a1a"/>
+        <text x="86" y="201" font-size="9" font-family="Times New Roman,serif">GoTrip</text>
+        <rect x="140" y="192" width="10" height="10" fill="url(#h4)" stroke="#333" stroke-width="0.8"/>
+        <text x="154" y="201" font-size="9" font-family="Times New Roman,serif">Alternativ-Workflow</text>
+      </svg>
+      <div class="chart-sig">p = 0,066 — nicht signifikant (p &gt; α)</div>
+    </div>
+
+  </div><!-- Ende charts-grid -->
+
+
+  <!-- 5 -->
+  <h2>5. Diskussion und Handlungsempfehlungen</h2>
+
+  <h3>5.1 Zusammenfassung der Ergebnisse</h3>
+  <p>Für drei der vier Metriken konnte H₁ bestätigt werden: GoTrip war in Bearbeitungszeit (p = 0,002), Interaktionsschritten (p = 0,003) und SUS-Score (p = 0,018) signifikant besser als der Alternativ-Workflow. Lediglich bei der Korrektheit ist der Unterschied (23 gegenüber 18 korrekte Aufgaben von 25) statistisch nicht signifikant (p = 0,066 &gt; α = 0,05). Beide Systeme führen zuverlässig zur richtigen Lösung, GoTrip jedoch erheblich effizienter und mit deutlich höherer wahrgenommener Benutzerfreundlichkeit.</p>
+
+  <h3>5.2 Stärken und Schwächen</h3>
+  <div class="tbl-caption">Tabelle 7: Beobachtete Stärken und Schwächen</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th></th><th>Stärken</th><th>Beobachtete Schwächen</th></tr></thead>
+      <tbody>
+        <tr><td><strong>GoTrip</strong></td><td>Alle Funktionen in einer App; kein Tool-Wechsel; klare Navigation; schnelle Einladung per Link</td><td>Keine Fortschrittsanzeige bei KI-Analyse; KI-Score-Formel für Erstnutzer unklar; Toast-Bestätigung kaum wahrnehmbar</td></tr>
+        <tr><td><strong>Workflow B</strong></td><td>Bekannte Tools ohne Lernkurve; verbreiteter Nutzungskontext</td><td>Ständiger Wechsel zwischen vier Anwendungen; hohe Interaktionszahl; keine integrierte Gesamtübersicht</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>5.3 Handlungsempfehlungen</h3>
+  <p>Aus den beobachteten Schwächen von GoTrip werden folgende konkrete Verbesserungsmaßnahmen abgeleitet:</p>
+
+  <div class="rec">
+    <p class="rec-head">1. Fortschrittsanzeige während der KI-Analyse <span class="rec-prio">(Priorität: hoch)</span></p>
+    <p>Während der serverseitigen Analyse erhalten Nutzer aktuell keinerlei Rückmeldung. Es wird empfohlen, einen Schritt-für-Schritt-Ladeindikator einzuführen, der den aktuellen Analyseschritt benennt (z. B. „Klimadaten werden geladen…").</p>
+  </div>
+  <div class="rec">
+    <p class="rec-head">2. Onboarding-Flow für Erstnutzer <span class="rec-prio">(Priorität: hoch)</span></p>
+    <p>Mehrere Testpersonen fragten zu Beginn, wo sie starten sollen. Es wird empfohlen, einen optionalen, überspringbaren Einstieg mit drei Schritten beim ersten App-Start einzuführen.</p>
+  </div>
+  <div class="rec">
+    <p class="rec-head">3. Speicherbestätigung sichtbarer gestalten <span class="rec-prio">(Priorität: mittel)</span></p>
+    <p>Der Toast nach dem Speichern wurde mehrfach nicht wahrgenommen. Es wird empfohlen, zusätzlich ein Häkchen-Icon direkt auf der Seite für drei Sekunden einzublenden.</p>
+  </div>
+  <div class="rec">
+    <p class="rec-head">4. KI-Score-Formel erläutern <span class="rec-prio">(Priorität: mittel)</span></p>
+    <p>Die Gewichtung (40 % Klimakomfort, 60 % Gruppeninteressen) war für Testpersonen nicht nachvollziehbar. Es wird empfohlen, ein Info-Symbol neben dem Score einzuführen, das die Formel in einem Tooltip erklärt.</p>
+  </div>
+  <div class="rec">
+    <p class="rec-head">5. Budget-Slider um direkte Texteingabe ergänzen <span class="rec-prio">(Priorität: niedrig)</span></p>
+    <p>Der Slider war für präzise Beträge unkomfortabel. Es wird empfohlen, ein Zahlenfeld neben dem Schieberegler zu ergänzen.</p>
+  </div>
+  <div class="rec">
+    <p class="rec-head">6. Offline-Statusmeldung <span class="rec-prio">(Priorität: niedrig)</span></p>
+    <p>Bei Serverunterbrechungen gibt es aktuell keine sichtbare Rückmeldung. Es wird empfohlen, einen Banner einzublenden, der den Offline-Zustand anzeigt.</p>
+  </div>
+
+
+  <!-- 6 -->
+  <h2>6. Abschließender Bericht</h2>
+
+  <p>Im Rahmen von Meilenstein 4 wurde eine formative, vergleichende Nutzerstudie für die App GoTrip durchgeführt. Als Vergleichssystem diente ein manueller Workflow mit bekannten Alltagstools (WhatsApp, Doodle, Google Sheets, Google Maps).</p>
+
+  <p><strong>Methodik.</strong> Die Studie wurde als Within-subject Design mit fünf Testpersonen (Alter: 22 bis 31 Jahre) umgesetzt. Die Reihenfolge der Bedingungen wurde gegenbalanciert, um Lerneffekte zu kontrollieren. Erhoben wurden vier Metriken: Bearbeitungszeit, Interaktionsschritte, Aufgabenkorrektheit und Usability (SUS-Fragebogen). Die statistische Auswertung erfolgte mit gepaarten t-Tests für metrische Daten und einem Chi-Quadrat-Test für die kategoriale Korrektheit, bei einem Signifikanzniveau von α = 0,05.</p>
+
+  <p><strong>Kernergebnisse.</strong> GoTrip war in drei von vier Metriken signifikant besser als der Alternativ-Workflow: Die durchschnittliche Bearbeitungszeit war um 49 % kürzer (235 s gegenüber 462 s, p = 0,002), die Anzahl der Interaktionsschritte um 54 % geringer (31,2 gegenüber 68,0, p = 0,003) und der SUS-Score deutlich höher (83,0 gegenüber 46,0, p = 0,018). GoTrip liegt damit im Bereich „gut" nach den SUS-Referenzwerten (≥ 71), der Alternativ-Workflow im Bereich „schlecht" (&lt; 51). Bei der Korrektheit wurde das Signifikanzniveau nicht erreicht (χ² = 3,39, p = 0,066), weshalb H₀ für diese Metrik bestehen bleibt.</p>
+
+  <p><strong>Interpretation.</strong> Die Ergebnisse bestätigen, dass das Kernziel von GoTrip – alle Planungsfunktionen in einer konsistenten Anwendung zu bündeln – aus Usability-Perspektive erfolgreich umgesetzt wurde. Testpersonen benötigten erheblich weniger Zeit und Interaktionsschritte, da kein ständiger Tool-Wechsel notwendig war.</p>
+
+  <p><strong>Limitierungen.</strong> Die Stichprobengröße von n = 5 schränkt die statistische Aussagekraft ein. Alle Testpersonen waren junge Erwachsene mit Smartphone-Erfahrung; weniger technikaffine Nutzergruppen wurden nicht einbezogen. Die Messung fand in einer kontrollierten Umgebung statt, nicht im natürlichen Nutzungskontext.</p>
+
+  <p><strong>Schlussfolgerung.</strong> GoTrip erfüllt die Kernziele einer effizienten und benutzerfreundlichen Gruppenreiseplanung nachweislich besser als ein vergleichbarer manueller Workflow. Die identifizierten Schwächen sind geringfügige UX-Verbesserungen, die in einer nächsten Iteration adressiert werden können (vgl. Abschnitt 5.3). Die Alternativhypothese H₁ wird für die Metriken Effizienz (Zeit und Interaktionen) sowie Usability (SUS-Score) bestätigt.</p>
+
+</div>
+</body>
+</html>

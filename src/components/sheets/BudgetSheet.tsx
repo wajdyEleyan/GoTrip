@@ -1,5 +1,3 @@
-// src/components/sheets/BudgetSheet.tsx
-// Eigenes Reise-Budget pro Person festlegen (fließt in die KI-Bewertung ein).
 import { useState, useMemo } from 'react'
 import { BudgetSlider } from '@/components/preferences/BudgetSlider'
 import { getMemberPreferences, getTripPreferences, saveMemberPreferences } from '@/utils/storage'

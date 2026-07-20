@@ -1,4 +1,3 @@
-// src/pages/Availability.tsx
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { CalendarRange } from 'lucide-react'

@@ -1,4 +1,3 @@
-// src/components/shared/BottomSheet.tsx
 import { type ReactNode, useEffect } from 'react'
 import { X } from 'lucide-react'
 

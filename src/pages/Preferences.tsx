@@ -1,4 +1,3 @@
-// src/pages/Preferences.tsx
 import { useParams, useNavigate } from 'react-router-dom'
 import { TripScreen } from '@/components/shared/TripScreen'
 import { Button } from '@/components/ui/button'

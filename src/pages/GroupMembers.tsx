@@ -1,5 +1,3 @@
-// src/pages/GroupMembers.tsx
-// „Gruppe"-Tab: Mitglieder sehen + einladen. Kein Onboarding-Flow („Weiter").
 import { useParams, useNavigate } from 'react-router-dom'
 import { UserPlus } from 'lucide-react'
 import { TripScreen } from '@/components/shared/TripScreen'

@@ -1,6 +1,3 @@
-// src/components/sheets/CreateTripSheet.tsx
-// Reise erstellen = nur der Name. Datum & alle weiteren Daten werden danach
-// auf dem Planungs-Screen als aufklappbare Kacheln festgelegt.
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'

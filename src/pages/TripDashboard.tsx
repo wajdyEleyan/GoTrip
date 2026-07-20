@@ -1,6 +1,3 @@
-// src/pages/TripDashboard.tsx
-// Ein Screen: alle Planungsdaten als Kacheln in einem 2-Spalten-Raster.
-// Antippen öffnet den Inhalt in einem Glas-Pop-up (Blur dahinter).
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'

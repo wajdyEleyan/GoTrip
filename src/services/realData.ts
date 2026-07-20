@@ -1,10 +1,5 @@
-// src/services/realData.ts
-// Holt ECHTE Daten direkt im Browser (alle CORS-fähig, kostenlos, kein Key):
-//  • Open-Meteo Geocoding  → Koordinaten + Ländercode
-//  • Open-Meteo Archive    → Copernicus/ERA5-Klima
-//  • GBIF                  → Biodiversität
-//  • NASA POWER            → Sonne/Feuchte/Wind
-// NASA Earthdata (Token) ist optional und läuft nur über den lokalen Server.
+// Autor: Mohamad Haj Ahmad
+// Externe API-Aufrufe: Open-Meteo, GBIF, NASA POWER, NASA Earthdata (via Server-Proxy).
 import type { ClimateData, BiodiversityData, NasaData, EarthdataData } from '@/types/destination'
 
 export interface GeoPoint {
@@ -18,7 +13,6 @@ export interface GeoPoint {
 
 const timeout = (ms: number) => AbortSignal.timeout(ms)
 
-// ── Geocoding ──────────────────────────────────────────────────────────────
 export async function geocode(destination: string): Promise<GeoPoint | null> {
   const city = destination.split(',')[0].trim()
   const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=de&format=json`
@@ -37,8 +31,7 @@ export async function geocode(destination: string): Promise<GeoPoint | null> {
   }
 }
 
-// ── Küstennähe (Open-Meteo Marine API) ───────────────────────────────────────
-// Liefert nur an der Küste Wellendaten → ideal als „Meer/Strand vorhanden?".
+// Marine API liefert nur an der Küste Wellendaten → damit prüfen wir ob Strand möglich ist.
 export async function fetchCoastal(lat: number, lon: number): Promise<boolean> {
   try {
     const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&daily=wave_height_max&forecast_days=1`
@@ -52,7 +45,6 @@ export async function fetchCoastal(lat: number, lon: number): Promise<boolean> {
   }
 }
 
-// ── Copernicus ERA5 (via Open-Meteo Archive) ─────────────────────────────────
 export async function fetchClimate(lat: number, lon: number, startDate: string): Promise<ClimateData | null> {
   const tripDate = new Date(startDate)
   const baseYear = tripDate.getFullYear() - 2 // Archiv hat ~5 Monate Verzug
@@ -86,7 +78,6 @@ export async function fetchClimate(lat: number, lon: number, startDate: string):
   }
 }
 
-// ── GBIF Biodiversität ───────────────────────────────────────────────────────
 export async function fetchBiodiversity(countryCode: string, name: string): Promise<BiodiversityData | null> {
   const base = `https://api.gbif.org/v1/occurrence/search?country=${countryCode}&limit=0`
   const resp = await fetch(base, { signal: timeout(7000) })
@@ -105,7 +96,6 @@ export async function fetchBiodiversity(countryCode: string, name: string): Prom
   return { species_count: count, highlight, source: 'gbif' }
 }
 
-// ── NASA POWER ────────────────────────────────────────────────────────────────
 const NASA_MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
 
 export async function fetchNasaPower(lat: number, lon: number, startDate: string): Promise<NasaData | null> {
@@ -129,7 +119,6 @@ export async function fetchNasaPower(lat: number, lon: number, startDate: string
   }
 }
 
-// ── NASA Earthdata (optional, nur wenn lokaler Server + Token läuft) ──────────
 export async function fetchEarthdata(lat: number, lon: number, startDate: string): Promise<EarthdataData | null> {
   try {
     const url = `/api/earthdata?lat=${lat}&lon=${lon}&date=${encodeURIComponent(startDate)}`

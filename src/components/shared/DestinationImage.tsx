@@ -1,6 +1,3 @@
-// src/components/shared/DestinationImage.tsx
-// Zeigt ein echtes Foto des Reiseziels: sofort ein Platzhalter (Unsplash), dann
-// wird – sobald geladen – das echte Ortsfoto (Wikipedia/Commons) eingetauscht.
 import { useEffect, useState } from 'react'
 import { destinationImage } from '@/utils/destinationImage'
 import { fetchPlaceImage } from '@/utils/placeImage'

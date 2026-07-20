@@ -1,4 +1,3 @@
-// src/App.tsx
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
@@ -14,7 +13,6 @@ import type { ReactNode } from 'react'
 function GlobalSync() {
   const location = useLocation()
 
-  // Toast bei jedem gotrip-notification Event
   useEffect(() => {
     function onNotification(e: Event) {
       const { message } = (e as CustomEvent).detail ?? {}
@@ -24,7 +22,6 @@ function GlobalSync() {
     return () => window.removeEventListener('gotrip-notification', onNotification)
   }, [])
 
-  // Polling starten/stoppen je nach Seite
   useEffect(() => {
     const match = location.pathname.match(/^\/trip\/([^/]+)/)
     if (!match) {
@@ -47,7 +44,6 @@ function GlobalSync() {
   return null
 }
 
-// Pages
 import Home from '@/pages/Home'
 import CreateTrip from '@/pages/CreateTrip'
 import EditTrip from '@/pages/EditTrip'

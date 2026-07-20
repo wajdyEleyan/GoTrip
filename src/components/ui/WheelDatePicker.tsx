@@ -1,4 +1,3 @@
-// src/components/ui/WheelDatePicker.tsx — kompaktes iOS-Rad, kein Scrollbar
 import { useLayoutEffect, useRef, useCallback, useEffect } from 'react'
 
 const ITEM_H = 36

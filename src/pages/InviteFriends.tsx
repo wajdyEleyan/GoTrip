@@ -1,4 +1,3 @@
-// src/pages/InviteFriends.tsx
 import { useParams, useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { InviteLink } from '@/components/members/InviteLink'

@@ -1,6 +1,3 @@
-// src/services/activitiesService.ts
-// Regelbasierter KI-Tagesplan-Generator
-// Basiert auf: Interessen, Budget/Person, Urlaubstage, Reiseziel
 import type { InterestType } from '@/types/preferences'
 import type { TripItinerary, ItinerarySlot } from '@/types/itinerary'
 import { generateUUID } from '@/utils/uuid'

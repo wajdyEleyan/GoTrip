@@ -1,4 +1,3 @@
-// src/components/sheets/MembersSheet.tsx
 import { useState } from 'react'
 import { UserPlus, ChevronDown, ChevronUp } from 'lucide-react'
 import { MemberList } from '@/components/members/MemberList'

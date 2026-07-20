@@ -1,4 +1,3 @@
-// src/components/preferences/PreferencesForm.tsx
 import { useState, type ReactNode } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Label } from '@/components/ui/label'

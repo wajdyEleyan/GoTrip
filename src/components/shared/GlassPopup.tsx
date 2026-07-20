@@ -1,6 +1,3 @@
-// src/components/shared/GlassPopup.tsx
-// Zentriertes Pop-up im Glas-Look: starker Backdrop-Blur dahinter,
-// halbtransparente Glas-Karte mit weichem Rand & Schatten.
 import { type ReactNode, useEffect } from 'react'
 import { X } from 'lucide-react'
 

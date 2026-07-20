@@ -1,4 +1,3 @@
-// src/components/sheets/FinalSheet.tsx
 import { useEffect, useRef, useState } from 'react'
 import { Trophy, Users, Wallet, Star, ThumbsUp } from 'lucide-react'
 import { ScoreRing } from '@/components/recommendations/ScoreRing'

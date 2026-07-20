@@ -1,13 +1,5 @@
-// src/services/scoreEngine.ts
-// Transparente, regelbasierte Reiseziel-Bewertung — KEIN LLM, KEINE Mock-Daten.
-//
-// Die Bewertung besteht aus zwei Teilen, die aus ECHTEN Daten kommen:
-//   • Klima-Komfort (40 %): Temperatur, Niederschlag, Sonne, Wind, Feuchte
-//   • Interessen-Erfüllung (60 %): Passt das Ziel zu den gewählten Interessen?
-//
-// Wichtig: Ein NICHT erfüllbares Interesse senkt den Score deutlich.
-// Beispiel: Interesse „Strand", aber das Ziel liegt im Binnenland (kein Meer)
-// → niedrige Erfüllung → niedriger Gesamt-Score.
+// Autor: Mohamad Haj Ahmad
+// Score = Klima-Komfort (40 %) + Interessen-Erfüllung (60 %), beides aus echten API-Daten.
 import type {
   ClimateData, BiodiversityData, NasaData, EarthdataData, DestinationAnalysis, Destination,
 } from '@/types/destination'
@@ -38,7 +30,7 @@ export function computeDestinationScore(input: ScoreInput): DestinationAnalysis 
   const { climate, biodiversity, nasa, earthdata, interests, coastal, population } = input
   const dataPoints: string[] = []
 
-  // ════════════════════════ 1) KLIMA-KOMFORT (0–100) ════════════════════════
+  // 1) Klima-Komfort
   let climateScore = 50
   const temp = climate?.temp_avg ?? nasa?.temp_avg ?? null
   if (temp != null) {
@@ -74,7 +66,7 @@ export function computeDestinationScore(input: ScoreInput): DestinationAnalysis 
   }
   climateScore = clamp(climateScore)
 
-  // ════════════════════ 2) INTERESSEN-ERFÜLLUNG (0–100) ═════════════════════
+  // 2) Interessen-Erfüllung
   const species = biodiversity?.species_count ?? null
   const pop = population ?? 0
   const warm = temp != null && temp >= 22
@@ -103,10 +95,9 @@ export function computeDestinationScore(input: ScoreInput): DestinationAnalysis 
   const unmet = fits.filter(f => f.value < 35).map(f => INTEREST_LABEL[f.key] ?? f.key)
   const met = fits.filter(f => f.value >= 70).map(f => INTEREST_LABEL[f.key] ?? f.key)
 
-  // ════════════════════ 3) GESAMT: Interessen dominieren ════════════════════
+  // 3) Gesamt-Score
   const score = clamp(round(climateScore * 0.4 + interestScore * 0.6))
 
-  // ── Datenpunkte zu Lage & Interessen ──
   if (coastal != null) {
     dataPoints.push(coastal ? '🏖️ Küstenlage — Meer/Strand vorhanden' : '🏔️ Binnenland — kein Meer')
   }
@@ -120,7 +111,6 @@ export function computeDestinationScore(input: ScoreInput): DestinationAnalysis 
     dataPoints.push(`📡 ${earthdata.granule_count} NASA-Satellitenaufnahmen decken die Region ab (NASA Earthdata)`)
   }
 
-  // ── Begründung ──
   const verdict =
     score >= 80 ? 'Sehr gut geeignet'
     : score >= 65 ? 'Gut geeignet'

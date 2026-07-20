@@ -1,6 +1,3 @@
-// src/pages/Home.tsx
-// EIN Startscreen (Willkommen = Login). Nicht eingeloggt: Umschalter
-// Anmelden/Registrieren. Eingeloggt: Neue Reise / Meine Reisen / Code eingeben.
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Globe, LogOut, ArrowRight, Plane, FolderHeart } from 'lucide-react'

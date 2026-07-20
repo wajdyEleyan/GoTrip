@@ -1,4 +1,3 @@
-// src/components/sheets/VoteSheet.tsx
 import { useState, useEffect, useCallback } from 'react'
 import { VotingCard } from '@/components/voting/VotingCard'
 import { DestinationImage } from '@/components/shared/DestinationImage'

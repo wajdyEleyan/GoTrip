@@ -1,6 +1,3 @@
-// src/components/sheets/DatesSheet.tsx
-// Inline-Kachelinhalt: Reisezeitraum (Von/Bis) per Rad festlegen.
-// Ändern darf NUR der Admin (Ersteller). Alle anderen sehen den Zeitraum nur.
 import { useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { de } from 'date-fns/locale'

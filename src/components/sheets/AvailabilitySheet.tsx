@@ -1,4 +1,3 @@
-// src/components/sheets/AvailabilitySheet.tsx
 import { useState, useEffect } from 'react'
 import { CalendarRange } from 'lucide-react'
 import { AvailabilityCalendar } from '@/components/calendar/AvailabilityCalendar'

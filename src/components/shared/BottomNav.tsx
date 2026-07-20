@@ -1,4 +1,3 @@
-// src/components/shared/BottomNav.tsx
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Map, Plus, Link2, LayoutGrid, ClipboardList, Sparkles, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'

@@ -1,7 +1,3 @@
-// src/components/shared/TripScreen.tsx
-// Gemeinsames Layout für alle Trip-Seiten: heller Foto-Hintergrund (Bild bleibt
-// unter hellem Schleier), heller Header MIT Zurück-Button und die helle Bottom-Nav.
-// So sehen Dashboard, Management und alle Planungs-Schritte einheitlich aus.
 import type { ReactNode } from 'react'
 import { PageHeader } from './PageHeader'
 import { BottomNav } from './BottomNav'

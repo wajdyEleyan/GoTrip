@@ -1,8 +1,3 @@
-// src/services/joinTrip.ts
-// Eine einzige, wiederverwendbare Beitritts-Logik für: Registrieren+Code,
-// „Code eingeben" in der App und die /join/:code-Seite.
-// Ablauf: Reise vom Server holen → Mitglied hinzufügen (lokal + Push) →
-// Code ans Konto hängen → UI über `gotrip-sync` informieren.
 import { pullTrip, pushNow } from './tripSync'
 import { attachCodeToAccount } from './account'
 import { getTripByInviteCode, updateTrip } from '@/utils/storage'

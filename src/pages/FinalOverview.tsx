@@ -1,4 +1,3 @@
-// src/pages/FinalOverview.tsx
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { MapPin, Users, Wallet, Thermometer, Star, Trophy, PartyPopper, Sun, ThumbsUp } from 'lucide-react'

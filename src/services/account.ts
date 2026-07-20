@@ -1,14 +1,4 @@
-// src/services/account.ts
-// Account-API: Anmelden (signin) und Registrieren (register) per Username +
-// Passwort. Das Passwort wird serverseitig gehasht gespeichert (salted scrypt)
-// und beim Anmelden verglichen — nie im Klartext abgelegt.
-//
-// Eindeutigkeit & Vergleich:
-//  • Server mit DB (z. B. Render) ist die Wahrheit: username PK (409 = vergeben),
-//    Passwortvergleich serverseitig (401 = falsch).
-//  • Ohne erreichbare DB greift ein lokaler Fallback (localStorage), damit die
-//    App auch offline nutzbar bleibt; dort wird ein SHA-256-Hash verglichen.
-
+// Offline-Fallback: SHA-256-Hash in localStorage, wenn Server nicht erreichbar.
 export interface Account {
   username: string
   codes: string[]

@@ -1,4 +1,3 @@
-// src/context/TripContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import type { Trip, Member, CreateTripFormData } from '@/types/trip'
 import {

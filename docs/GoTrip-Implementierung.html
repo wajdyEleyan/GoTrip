@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GoTrip – Meilenstein 3: Implementierung</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  .page {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 72px 72px;
+  }
+
+  /* ── Titelbereich ─────────────────────── */
+  .title-block {
+    text-align: center;
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #000;
+  }
+  .title-institution { font-size: 11pt; margin-bottom: 32px; line-height: 1.8; }
+  .title-main { font-size: 18pt; font-weight: bold; margin-bottom: 8px; }
+  .title-sub { font-size: 13pt; margin-bottom: 32px; }
+  .title-meta { font-size: 11pt; line-height: 1.9; }
+
+  /* ── Inhaltsverzeichnis ─────────────────── */
+  .toc { margin-bottom: 40px; }
+  .toc-title { font-size: 12pt; font-weight: bold; margin-bottom: 10px; }
+  .toc-entry {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11pt;
+    padding: 2px 0;
+    border-bottom: 1px dotted #000;
+    margin-bottom: 2px;
+  }
+
+  /* ── Überschriften ─────────────────────── */
+  h2 { font-size: 13pt; font-weight: bold; margin-top: 32px; margin-bottom: 10px; text-decoration: underline; }
+  h3 { font-size: 12pt; font-weight: bold; margin-top: 20px; margin-bottom: 8px; }
+
+  p { margin-bottom: 10px; text-align: justify; }
+  ul, ol { padding-left: 28px; margin-bottom: 10px; }
+  li { margin-bottom: 5px; }
+
+  /* ── Tabellen ─────────────────────────── */
+  .table-wrap { margin: 12px 0 16px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 11pt; font-family: 'Times New Roman', Times, serif; }
+  th { border: 1px solid #000; padding: 6px 8px; font-weight: bold; text-align: left; font-size: 11pt; }
+  td { border: 1px solid #000; padding: 6px 8px; text-align: left; vertical-align: top; font-size: 11pt; }
+  .tbl-caption { font-size: 11pt; font-style: italic; margin-bottom: 4px; }
+  .tbl-foot td { font-weight: bold; }
+
+  /* ── Code-Block ───────────────────────── */
+  .code-block {
+    border: 1px solid #000;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-family: 'Courier New', monospace;
+    font-size: 9.5pt;
+    line-height: 1.55;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  /* ── Hinweis ──────────────────────────── */
+  .hinweis {
+    border: 1px solid #000;
+    padding: 8px 12px;
+    margin: 10px 0;
+    font-size: 11pt;
+  }
+
+  /* ── Release-Note Einträge ─────────────── */
+  .release { margin-bottom: 14px; }
+  .release-head { font-weight: bold; }
+  .release-date { font-style: italic; }
+
+  @media print {
+    body { font-size: 12pt; }
+    .page { padding: 36px 48px; max-width: 100%; }
+    h2, h3 { break-after: avoid; }
+    table, .code-block { break-inside: avoid; }
+  }
+  @media (max-width: 600px) { .page { padding: 28px 20px; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Titel -->
+  <div class="title-block">
+    <div class="title-institution">
+      Hochschule Darmstadt (h_da)<br>
+      Fachbereich Informatik<br>
+      Modul: Human-Computer Interaction, SoSe 2026<br>
+      Betreuung: Prof. Dr. Kawa Nazemi
+    </div>
+    <div class="title-main">Meilenstein 3: Implementierung</div>
+    <div class="title-sub">GoTrip – KI-gestützte Gruppenreiseplanung</div>
+    <div class="title-meta">
+      Gruppe 9<br>
+      Mohamad Haj Ahmad · Wajdy Eleyan · Amal Najah · Eya Mathlouthi<br>
+      Darmstadt, 20. Juli 2026
+    </div>
+  </div>
+
+  <!-- Inhaltsverzeichnis -->
+  <div class="toc">
+    <div class="toc-title">Inhaltsverzeichnis</div>
+    <div class="toc-entry"><span>1. Entwicklungs-Fundament</span><span>2</span></div>
+    <div class="toc-entry"><span>&nbsp;&nbsp;&nbsp;1.1 Haupt-Komponenten und Funktionen</span><span>2</span></div>
+    <div class="toc-entry"><span>&nbsp;&nbsp;&nbsp;1.2 Bibliotheken und Tools</span><span>2</span></div>
+    <div class="toc-entry"><span>&nbsp;&nbsp;&nbsp;1.3 Nutzungskontext und Ansichten</span><span>3</span></div>
+    <div class="toc-entry"><span>&nbsp;&nbsp;&nbsp;1.4 Datenquellen und API-Endpunkte</span><span>3</span></div>
+    <div class="toc-entry"><span>&nbsp;&nbsp;&nbsp;1.5 Code-Splitting und Ordnerstruktur</span><span>4</span></div>
+    <div class="toc-entry"><span>2. Implementierung</span><span>5</span></div>
+    <div class="toc-entry"><span>&nbsp;&nbsp;&nbsp;2.1 Systemübersicht</span><span>5</span></div>
+    <div class="toc-entry"><span>&nbsp;&nbsp;&nbsp;2.2 Code-Kommentierung und Autorenschaft</span><span>5</span></div>
+    <div class="toc-entry"><span>&nbsp;&nbsp;&nbsp;2.3 README und Release-Notes</span><span>6</span></div>
+  </div>
+
+
+  <!-- 1 -->
+  <h2>1. Entwicklungs-Fundament</h2>
+
+  <h3>1.1 Haupt-Komponenten und Funktionen</h3>
+
+  <p>
+    GoTrip ist eine mobile Web-App für die gemeinsame Gruppenreiseplanung. Die
+    Anwendung besteht aus 16 Screens (Seiten), die jeweils einer eigenen Route
+    entsprechen, sowie einer Reihe wiederverwendbarer Komponenten und Dienste.
+    Die folgende Tabelle gibt einen Überblick über die wichtigsten Screens und
+    deren Funktionen:
+  </p>
+
+  <div class="tbl-caption">Tabelle 1: Haupt-Screens und ihre Funktionen</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Screen</th><th>Funktion</th><th>Autorin / Autor</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Login</td><td>Name eingeben, kein Account erforderlich</td><td>Eya Mathlouthi</td></tr>
+        <tr><td>Home</td><td>Alle eigenen Reisen auf einen Blick</td><td>Wajdy Eleyan</td></tr>
+        <tr><td>Reise erstellen</td><td>Name, Zeitraum (Wheel-Picker), Budget, Gruppe</td><td>Wajdy Eleyan</td></tr>
+        <tr><td>Freunde einladen</td><td>Einladungslink teilen via Web-Share-API</td><td>Wajdy Eleyan</td></tr>
+        <tr><td>Verfügbarkeit</td><td>Kalender mit 3 Zuständen (Verfügbar / Vielleicht / Nein)</td><td>Eya Mathlouthi</td></tr>
+        <tr><td>Präferenzen</td><td>Budget-Picker + 9 Interessen-Chips</td><td>Eya Mathlouthi</td></tr>
+        <tr><td>KI-Empfehlung</td><td>Reiseziele vorschlagen, analysieren, KI-Score abrufen</td><td>Mohamad Haj Ahmad</td></tr>
+        <tr><td>Übersicht (Management)</td><td>Gruppenübersicht, Mitgliederstatus, Schlussfolgerung</td><td>Wajdy Eleyan</td></tr>
+        <tr><td>Aktivitäten</td><td>Vorschläge erstellen und per Thumbs-up abstimmen</td><td>Amal Najah</td></tr>
+        <tr><td>Budget-Tracker</td><td>Ausgaben pro Mitglied erfassen und aufschlüsseln</td><td>Amal Najah</td></tr>
+        <tr><td>Reiseplan</td><td>Tagesitinerary mit Zeitslots</td><td>Amal Najah</td></tr>
+        <tr><td>Abstimmung</td><td>Reiseziele mit Sternebewertung bewerten</td><td>Amal Najah</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>1.2 Bibliotheken und Tools</h3>
+
+  <p>
+    Die folgende Tabelle listet alle verwendeten Bibliotheken und Tools auf.
+    Neben React bilden React Router (Routing), die Context API (Zustandsverwaltung)
+    und Tailwind CSS (Styling) das Kern-Framework der Anwendung:
+  </p>
+
+  <div class="tbl-caption">Tabelle 2: Verwendete Bibliotheken und Tools</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Bereich</th><th>Technologie / Bibliothek</th><th>Version</th><th>Zweck</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>UI-Framework</td><td>React + TypeScript</td><td>React 19</td><td>Komponentenbasiertes Frontend</td></tr>
+        <tr><td>Build-Tool</td><td>Vite</td><td>v8</td><td>Schneller Entwicklungsserver und Build</td></tr>
+        <tr><td>Styling</td><td>Tailwind CSS</td><td>v4</td><td>Utility-first CSS-Framework</td></tr>
+        <tr><td>Routing</td><td>React Router</td><td>v7</td><td>Client-seitiges Routing, 16 Routen</td></tr>
+        <tr><td>Zustandsverwaltung</td><td>React Context API</td><td>–</td><td>AuthContext, TripContext, LanguageContext, AccessibilityContext</td></tr>
+        <tr><td>Formulare</td><td>React Hook Form + Zod</td><td>–</td><td>Formularvalidierung mit Schema-Typisierung</td></tr>
+        <tr><td>Icons</td><td>lucide-react</td><td>–</td><td>Konsistentes Icon-Set</td></tr>
+        <tr><td>UI-Komponenten</td><td>shadcn/ui</td><td>–</td><td>Barrierefreie Basis-Komponenten</td></tr>
+        <tr><td>Backend</td><td>Express.js</td><td>–</td><td>REST-API, NASA-Proxy, DB-Synchronisation</td></tr>
+        <tr><td>Datenbank</td><td>PostgreSQL (Neon Cloud)</td><td>–</td><td>Persistenz, Echtzeit-Sync via HTTP-Polling</td></tr>
+        <tr><td>Deployment</td><td>Render.com</td><td>–</td><td>Hosting für Frontend und Backend</td></tr>
+        <tr><td>Internationalisierung</td><td>Eigene i18n-Lösung</td><td>–</td><td>Deutsch, Englisch, Spanisch</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>1.3 Nutzungskontext und Ansichten</h3>
+
+  <p>
+    GoTrip ist ausschließlich als <strong>Mobile-Anwendung</strong> konzipiert. Die
+    App richtet sich an junge Erwachsene (Personas: Leon, 22 J.; Maya, 25 J.),
+    die unterwegs in einer Gruppe eine Reise planen. Der Nutzungskontext ist
+    mobil — auf dem Smartphone, häufig in der Gruppe oder in öffentlichen
+    Verkehrsmitteln.
+  </p>
+  <p>
+    Die <strong>Mobile-Ansicht hat uneingeschränkten Vorrang.</strong> Das Layout
+    verwendet eine feste maximale Breite von 430 px (entspricht einem
+    Standard-Smartphone), eine fixierte Bottom-Navigation, native
+    iOS-ähnliche Steuerelemente (Wheel-Date-Picker, Bottom-Sheets,
+    Swipe-Gesten) und Touch-optimierte Schaltflächen. Eine Tablet- oder
+    Desktop-Ansicht ist nicht vorgesehen; die App ist jedoch im Browser
+    aufrufbar und skaliert auf größeren Bildschirmen innerhalb der
+    mobilen Maximalbreite zentriert.
+  </p>
+
+  <h3>1.4 Datenquellen und API-Endpunkte</h3>
+
+  <p>
+    GoTrip nutzt mehrere externe Datenquellen für die KI-Score-Berechnung.
+    Alle Anfragen an kostenpflichtige oder CORS-beschränkte APIs werden über
+    den eigenen Express-Server (<code>server/index.js</code>) als Proxy
+    weitergeleitet:
+  </p>
+
+  <div class="tbl-caption">Tabelle 3: Externe Datenquellen und API-Endpunkte</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Datenquelle</th><th>API</th><th>Verwendungszweck</th><th>Kosten</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Klimadaten (ERA5)</td><td>Open-Meteo Climate API</td><td>Temperatur, Niederschlag, Sonnenstunden</td><td>kostenlos</td></tr>
+        <tr><td>Küstenerkennung</td><td>Open-Meteo Marine API</td><td>Strandeignung: Meerestemperatur, Wellengang</td><td>kostenlos</td></tr>
+        <tr><td>Geocoding</td><td>Open-Meteo Geocoding API</td><td>Stadtname → Koordinaten</td><td>kostenlos</td></tr>
+        <tr><td>Biodiversität</td><td>GBIF Occurrence API</td><td>Artenvielfalt am Reiseziel</td><td>kostenlos</td></tr>
+        <tr><td>Wetterdaten (NASA)</td><td>NASA POWER API</td><td>Historische Sonneneinstrahlung</td><td>kostenlos</td></tr>
+        <tr><td>Satellitendaten</td><td>NASA Earthdata MODIS</td><td>Landnutzung, Vegetationsindex</td><td>Token erforderlich</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    Die Score-Berechnung kombiniert Klimakomfort (40 %) und
+    Interessenerfüllung (60 %):
+  </p>
+
+  <div class="code-block">Gesamtscore = Klimakomfort × 0,4 + Interessenerfüllung × 0,6
+
+Klimakomfort (ERA5):
+  Temperatur 20–26 °C   → +25 Punkte
+  Niederschlag &lt; 20 mm  → +12 Punkte
+  Sonne ≥ 9 h/Tag       → +8 Punkte
+
+Interessenerfüllung (je nach gewähltem Interesse):
+  Strand (beach)  → küstennahe Stadt? Ja → 85–95 Pkt., Nein → 8 Pkt.
+  Stadt  (city)   → Einwohner ≥ 500.000? Ja → 92 Pkt., Nein → 18 Pkt.
+  Natur  (nature) → GBIF-Arten &gt; 1.000.000? Ja → 85 Pkt., Nein → 55 Pkt.</div>
+
+  <div class="hinweis">
+    <strong>Hinweis:</strong> Der NASA-Earthdata-Token wird in
+    <code>server/.env</code> als Umgebungsvariable (<code>EARTHDATA_TOKEN</code>)
+    gespeichert und ist in <code>.gitignore</code> aufgeführt — er wird
+    nie in das Repository committed.
+  </div>
+
+  <h3>1.5 Code-Splitting und Ordnerstruktur</h3>
+
+  <p>
+    Die Anwendung ist in drei Hauptbereiche aufgeteilt: Frontend
+    (<code>src/</code>), Backend (<code>server/</code>) und Dokumentation
+    (<code>docs/</code>). Jede der 16 Seiten liegt in einer eigenen Datei unter
+    <code>src/pages/</code>, was eine klare Trennung nach Screens ermöglicht
+    (dateibasiertes Code-Splitting). Gemeinsam genutzte Komponenten sind nach
+    funktionalem Bereich gruppiert:
+  </p>
+
+  <div class="code-block">gotrip/
+├── src/
+│   ├── App.tsx                     Routing-Konfiguration (16 Routen)
+│   ├── main.tsx                    Einstiegspunkt
+│   ├── components/
+│   │   ├── activities/             ActivityCard
+│   │   ├── budget/                 AddExpenseForm, BalanceSummary, ExpenseCard
+│   │   ├── calendar/               AvailabilityCalendar, GroupHeatmap
+│   │   ├── members/                InviteLink, MemberCard, MemberList
+│   │   ├── preferences/            BudgetSlider, InterestChips, PreferencesForm
+│   │   ├── recommendations/        DestinationCard, ScoreRing, DataSourceBadges
+│   │   ├── shared/                 BottomNav, BottomSheet, PageHeader, Toast
+│   │   ├── sheets/                 10 Bottom-Sheet-Dialoge
+│   │   ├── trips/                  TripCard, TripForm
+│   │   ├── ui/                     Button, Card, Input, WheelDatePicker
+│   │   └── voting/                 StarRating, VotingCard
+│   ├── context/
+│   │   ├── AuthContext.tsx          Nutzersession (Name, Trip-ID)
+│   │   ├── TripContext.tsx          Reise-Zustand (Mitglieder, Ziele, Budget)
+│   │   ├── LanguageContext.tsx      Sprachwahl (DE / EN / ES)
+│   │   └── AccessibilityContext.tsx Barrierefreiheits-Einstellungen
+│   ├── i18n/
+│   │   └── translations.ts         Übersetzungen für DE, EN, ES
+│   ├── lib/
+│   │   └── utils.ts                Hilfsfunktionen (cn, Datumsformat)
+│   ├── pages/                      16 Screen-Dateien (je eine Route)
+│   └── services/
+│       ├── llmService.ts           Koordiniert alle API-Aufrufe
+│       ├── realData.ts             Anbindung: Open-Meteo, GBIF, NASA POWER
+│       ├── scoreEngine.ts          Regelbasierte Score-Berechnung
+│       ├── tripSync.ts             HTTP-Polling alle 6 s (Echtzeit-Sync)
+│       ├── activitiesService.ts    Aktivitäten-CRUD
+│       ├── account.ts              Nutzer-Verwaltung
+│       └── joinTrip.ts             Beitritt per Einladungslink
+└── server/
+    ├── index.js                    Express: DB-Endpunkte + NASA-Proxy
+    └── .env                        DATABASE_URL, EARTHDATA_TOKEN (nicht committet)</div>
+
+
+  <!-- 2 -->
+  <h2>2. Implementierung</h2>
+
+  <h3>2.1 Systemübersicht</h3>
+
+  <p>
+    GoTrip wurde als Progressive Web App (PWA) mit React 19 und TypeScript
+    implementiert. Das Frontend kommuniziert mit dem Express-Backend über
+    REST-Endpunkte. Für die Echtzeit-Synchronisation zwischen Gruppenmitgliedern
+    wird HTTP-Polling im 6-Sekunden-Intervall eingesetzt
+    (<code>src/services/tripSync.ts</code>). Die Datenbank liegt in der Cloud
+    (Neon PostgreSQL); das Backend läuft auf Render.com.
+  </p>
+
+  <div class="tbl-caption">Tabelle 4: Systemarchitektur im Überblick</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Schicht</th><th>Technologie</th><th>Beschreibung</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Frontend</td><td>React 19 + TypeScript + Vite 8</td><td>SPA, 16 Routen, Mobile-first</td></tr>
+        <tr><td>Styling</td><td>Tailwind CSS v4</td><td>Utility-first, max-width 430 px</td></tr>
+        <tr><td>State Management</td><td>React Context API</td><td>4 Contexts (Auth, Trip, Language, A11y)</td></tr>
+        <tr><td>Backend</td><td>Express.js (Node.js)</td><td>REST-API, NASA-Proxy, DB-Sync</td></tr>
+        <tr><td>Datenbank</td><td>PostgreSQL – Neon Cloud</td><td>Trips, Members, Votes, Expenses</td></tr>
+        <tr><td>Echtzeit</td><td>HTTP-Polling (6 s)</td><td>Gruppenänderungen in Echtzeit sichtbar</td></tr>
+        <tr><td>Deployment</td><td>Render.com</td><td>Frontend + Backend als ein Service</td></tr>
+        <tr><td>Live-URL</td><td colspan="2">gotrip-9id7.onrender.com</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>2.2 Code-Kommentierung und Autorenschaft</h3>
+
+  <p>
+    Jede Quelldatei enthält im Dateikopf einen Autor-Kommentar sowie
+    inline erläuternde Kommentare auf Deutsch. Das folgende Beispiel zeigt
+    das verwendete Kommentarschema:
+  </p>
+
+  <div class="code-block">// Autor: Mohamad Haj Ahmad
+// src/services/scoreEngine.ts
+// Regelbasierte Berechnung des KI-Scores für ein Reiseziel.
+// Score = Klimakomfort (40 %) + Interessenerfüllung (60 %)
+
+export function calculateScore(climate: ClimateData, interests: string[]): number {
+  // Klimakomfort: Temperatur, Niederschlag, Sonnenstunden auswerten
+  const climateScore = evaluateClimate(climate);
+
+  // Interessenerfüllung: je Interesse einen Teilscore berechnen
+  const interestScore = evaluateInterests(interests, climate);
+
+  // Gewichtete Summe zurückgeben
+  return climateScore * 0.4 + interestScore * 0.6;
+}</div>
+
+  <p>Die folgende Tabelle zeigt die Verantwortlichkeiten auf Dateiebene:</p>
+
+  <div class="tbl-caption">Tabelle 5: Autorenschaft nach Bereich</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Bereich / Dateien</th><th>Autorin / Autor</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Backend, Datenbank, API-Integration, Score-Engine<br><small>server/index.js · services/realData.ts · services/scoreEngine.ts · services/llmService.ts</small></td><td>Mohamad Haj Ahmad</td></tr>
+        <tr><td>Routing, TripDashboard, Management, Sync-System, Reise erstellen<br><small>App.tsx · pages/Home · pages/Management · services/tripSync.ts · pages/CreateTrip</small></td><td>Wajdy Eleyan</td></tr>
+        <tr><td>UI-Komponenten, DestinationCard, Aktivitäten, Budget-Tracker, Reiseplan<br><small>components/recommendations/ · pages/ActivitiesVoting · pages/BudgetTracker · pages/FinalOverview</small></td><td>Amal Najah</td></tr>
+        <tr><td>StarRating, Präferenzen, Verfügbarkeit, Login, Voting<br><small>components/voting/ · pages/Preferences · pages/Availability · pages/Login · pages/VoteDecide</small></td><td>Eya Mathlouthi</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>2.3 README und Release-Notes</h3>
+
+  <p>
+    Die README-Datei (<code>README.md</code> im Projektstamm) enthält alle
+    geforderten Abschnitte: Projektbeschreibung, Tech-Stack, Funktionsübersicht,
+    vollständige Installationsanleitung sowie einen Verweis auf die
+    Release-Notes. Die Release-Notes dokumentieren alle Versionen mit Datum
+    und Verantwortlichkeiten:
+  </p>
+
+  <div class="tbl-caption">Tabelle 6: Release-Notes – Übersicht</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Version</th><th>Datum</th><th>Änderungen</th><th>Verantwortlich</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>v1.0.0</td>
+          <td>28.06.2026</td>
+          <td>Initiales Release: Login, Home, Reise erstellen, Einladungslink, Verfügbarkeitskalender, Präferenzen, PostgreSQL-Anbindung</td>
+          <td>Alle</td>
+        </tr>
+        <tr>
+          <td>v1.1.0</td>
+          <td>05.07.2026</td>
+          <td>KI-Empfehlung: Open-Meteo, GBIF, NASA POWER integriert; Score-Engine; DestinationCard mit ScoreRing; DataSourceBadges</td>
+          <td>Mohamad, Amal</td>
+        </tr>
+        <tr>
+          <td>v1.2.0</td>
+          <td>12.07.2026</td>
+          <td>Aktivitäten-Voting, Budget-Tracker, Reiseplan, Mehrsprachigkeit (DE/EN/ES), HTTP-Polling für Echtzeit-Sync</td>
+          <td>Amal, Wajdy</td>
+        </tr>
+        <tr>
+          <td>v1.3.0</td>
+          <td>20.07.2026</td>
+          <td>WheelDatePicker (iOS-Stil), StarRating mit eindeutigen clipPath-IDs, KI-Score dynamisch aus Präferenzen, Bugfixes Navigation</td>
+          <td>Eya, Wajdy</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><strong>Installationsanleitung (Kurzfassung aus README.md):</strong></p>
+  <div class="code-block"># 1. Repository klonen
+git clone https://github.com/mo518525/Trip-Planer.git
+cd Trip-Planer
+
+# 2. Frontend starten
+npm install
+npm run dev          # → http://localhost:5173
+
+# 3. Backend starten
+cd server
+npm install
+node index.js        # → http://localhost:3001
+
+# 4. Umgebungsvariablen (server/.env)
+DATABASE_URL=postgresql://...      # Neon PostgreSQL Connection String
+EARTHDATA_TOKEN=...                # NASA Earthdata Bearer Token (optional)</div>
+
+  <div class="hinweis">
+    <strong>Abgabehinweis:</strong> Der Ordner <code>node_modules/</code> ist
+    in <code>.gitignore</code> aufgeführt und wird nicht abgegeben. Große
+    Datensätze (&gt; 200 MB) werden nicht verwendet — alle externen Daten
+    werden zur Laufzeit über die oben aufgeführten APIs abgerufen.
+  </div>
+
+</div>
+</body>
+</html>

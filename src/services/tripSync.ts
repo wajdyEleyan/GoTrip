@@ -1,12 +1,5 @@
-// src/services/tripSync.ts
-// Synchronisiert eine Reise zwischen localStorage (lokaler Cache) und dem
-// Server (geteilte DB), damit alle Gruppenmitglieder dieselbe Reise sehen.
-//
-// Ablauf:
-//   • pull(code)  → holt das Reise-Bündel vom Server in den localStorage
-//   • scheduleSync() → schiebt lokale Änderungen (debounced) zum Server
-//   • Polling     → holt regelmäßig Updates anderer Mitglieder
-// Ohne erreichbaren Server bleibt alles lokal (App funktioniert trotzdem).
+// Autor: Wajdy Eleyan
+// Synchronisiert Reisedaten zwischen localStorage und Server (Polling alle 6 s).
 import type { Trip } from '@/types/trip'
 import type { MemberAvailability } from '@/types/availability'
 import type { MemberPreferences } from '@/types/preferences'
@@ -45,7 +38,6 @@ function writeArr(key: string, arr: unknown[]) {
   localStorage.setItem(key, JSON.stringify(arr))
 }
 
-// ── aktive Reise (die gerade geöffnete) ──────────────────────────────────────
 let activeTripId: string | null = null
 let activeCode: string | null = null
 
@@ -54,7 +46,6 @@ export function setActiveTrip(tripId: string | null, inviteCode?: string | null)
   activeCode = inviteCode ?? null
 }
 
-// ── Bündel aus localStorage einsammeln ───────────────────────────────────────
 function collectBundle(tripId: string): TripBundle | null {
   const trip = readArr<Trip>(K.trips).find((t) => t.id === tripId)
   if (!trip) return null
@@ -73,7 +64,6 @@ function collectBundle(tripId: string): TripBundle | null {
   }
 }
 
-// ── Änderungen erkennen & als Notification-Events feuern ────────────────────
 function notify(message: string, tile?: string) {
   window.dispatchEvent(new CustomEvent('gotrip-notification', { detail: { message, tile } }))
 }
@@ -144,7 +134,6 @@ function fireNotifications(before: TripBundle | null, after: TripBundle): void {
   }
 }
 
-// ── Bündel in localStorage anwenden (andere Reisen bleiben erhalten) ─────────
 function applyBundle(bundle: TripBundle): boolean {
   if (!bundle?.trip) return false
   const tripId = bundle.trip.id
@@ -171,7 +160,6 @@ function applyBundle(bundle: TripBundle): boolean {
   return changed
 }
 
-// ── Server-Kommunikation ─────────────────────────────────────────────────────
 /** Holt eine Reise per inviteCode vom Server. Gibt das Bündel oder null zurück. */
 export async function pullTrip(inviteCode: string): Promise<TripBundle | null> {
   try {
@@ -202,7 +190,6 @@ async function pushBundle(tripId: string, code: string): Promise<void> {
   }
 }
 
-// ── Debounced Push (von storage.ts nach jeder Änderung aufgerufen) ───────────
 let pushTimer: ReturnType<typeof setTimeout> | undefined
 export function scheduleSync(): void {
   if (!activeTripId || !activeCode) return
@@ -217,7 +204,6 @@ export async function pushNow(tripId: string, code: string): Promise<void> {
   await pushBundle(tripId, code)
 }
 
-// ── Polling (holt Updates anderer Mitglieder) ────────────────────────────────
 let pollTimer: ReturnType<typeof setInterval> | undefined
 export function startPolling(intervalMs = 6000): void {
   stopPolling()

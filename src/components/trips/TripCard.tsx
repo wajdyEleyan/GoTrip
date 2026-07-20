@@ -1,4 +1,3 @@
-// src/components/trips/TripCard.tsx
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, Users, Pencil, Trash2, AlertTriangle } from 'lucide-react'

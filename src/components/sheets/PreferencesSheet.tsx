@@ -1,5 +1,3 @@
-// src/components/sheets/PreferencesSheet.tsx
-// Präferenzen-Popup: Interessen (Icons) + „Sonstiges" frei + Aktivitäten-Wünsche.
 import { saveMemberPreferences, getMemberPreferences } from '@/utils/storage'
 import { PreferencesForm } from '@/components/preferences/PreferencesForm'
 import { toast } from '@/components/shared/Toast'

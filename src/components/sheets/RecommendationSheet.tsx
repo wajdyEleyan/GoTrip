@@ -1,4 +1,3 @@
-// src/components/sheets/RecommendationSheet.tsx
 import { useState, useEffect, useCallback } from 'react'
 import { Sparkles } from 'lucide-react'
 import { DestinationCard } from '@/components/recommendations/DestinationCard'

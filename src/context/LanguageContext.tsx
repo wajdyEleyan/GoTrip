@@ -1,4 +1,3 @@
-// src/context/LanguageContext.tsx
 import React, { createContext, useContext, useState } from 'react'
 import { translations, type Lang, type TranslationKey } from '@/i18n/translations'
 
