@@ -1,3 +1,4 @@
+// Autor: Wajdy Eleyan, Amal Najah
 import { useParams, useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { TripForm } from '@/components/trips/TripForm'

@@ -1,3 +1,4 @@
+// Autor: Amal Najah, Eya Mathlouthi, Wajdy Eleyan
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Globe, LogOut, ArrowRight, Plane, FolderHeart } from 'lucide-react'

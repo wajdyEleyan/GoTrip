@@ -1,3 +1,4 @@
+// Autor: Amal Najah, Wajdy Eleyan
 import { useParams, useNavigate } from 'react-router-dom'
 import { UserPlus } from 'lucide-react'
 import { TripScreen } from '@/components/shared/TripScreen'

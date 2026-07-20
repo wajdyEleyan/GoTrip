@@ -1,3 +1,4 @@
+// Autor: Amal Najah, Eya Mathlouthi
 import { useParams, useNavigate } from 'react-router-dom'
 import { TripScreen } from '@/components/shared/TripScreen'
 import { Button } from '@/components/ui/button'

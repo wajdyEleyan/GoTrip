@@ -231,8 +231,12 @@ Die App unterstützt **Deutsch, Englisch und Spanisch**. Alle UI-Texte sind in `
 
 | Bereich | Autoren |
 |---------|---------|
+| Frontend-Entwicklung (alle Seiten) | Mohamad Haj Ahmad, Wajdy Eleyan, Amal Najah, Eya Mathlouthi |
 | Backend, Datenbank, API-Integration, Score-Engine | Mohamad Haj Ahmad, Eya Mathlouthi, Wajdy Eleyan |
-| Sync-System, Kalender, Verfügbarkeit, Abstimmung | Amal Najah, Wajdy Eleyan |
+| Sync-System, Echtzeit-Kommunikation | Amal Najah, Wajdy Eleyan |
+| Design & UI-Konzept | Amal Najah, Eya Mathlouthi |
+| Dokumentation (MS3 & MS4) | Amal Najah, Eya Mathlouthi |
+| Projektmanagement | Mohamad Haj Ahmad, Wajdy Eleyan |
 
 ---
 
