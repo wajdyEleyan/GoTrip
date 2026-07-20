@@ -1,5 +1,4 @@
 // Autor: Amal Najah
-// src/components/voting/VotingCard.tsx
 import { useState } from 'react'
 import { MessageSquare, Thermometer, Sun, Star } from 'lucide-react'
 import { StarRating } from './StarRating'

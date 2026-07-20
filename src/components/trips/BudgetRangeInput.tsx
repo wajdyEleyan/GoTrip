@@ -1,5 +1,4 @@
 // Autor: Eya Mathlouthi
-// src/components/trips/BudgetRangeInput.tsx
 import { cn } from '@/lib/utils'
 
 interface BudgetRangeInputProps {

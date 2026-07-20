@@ -1,5 +1,4 @@
 // Autor: Eya Mathlouthi
-// src/context/AccessibilityContext.tsx — S5: Senioren-Modus für Persona Johanna
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 
 interface AccessibilityContextType {

@@ -1,5 +1,3 @@
-// src/types/itinerary.ts
-
 export interface ItinerarySlot {
   id: string
   time: string       // "08:00"

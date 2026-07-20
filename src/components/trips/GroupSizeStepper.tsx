@@ -1,5 +1,4 @@
 // Autor: Eya Mathlouthi
-// src/components/trips/GroupSizeStepper.tsx
 import { Minus, Plus } from 'lucide-react'
 
 interface GroupSizeStepperProps {

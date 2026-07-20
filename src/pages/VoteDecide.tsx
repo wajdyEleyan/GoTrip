@@ -1,5 +1,4 @@
 // Autor: Wajdy Eleyan
-// src/pages/VoteDecide.tsx — Screen 9: Abstimmen & Entscheiden
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { TripScreen } from '@/components/shared/TripScreen'

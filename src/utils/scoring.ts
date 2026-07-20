@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/utils/scoring.ts
 // NON-NEGOTIABLE: Hybrid-Score-Formel aus constitution.md
 
 /**

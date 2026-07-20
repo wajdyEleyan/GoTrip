@@ -24,7 +24,6 @@ export function BottomNav({ onCreateClick, onTripsClick, onJoinClick }: BottomNa
       active ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
     )
 
-  // ── Trip-Kontext: 1-Tap-Sprünge (helle Variante) ──
   if (tripId) {
     const base = `/trip/${tripId}`
     const items = [
@@ -56,7 +55,6 @@ export function BottomNav({ onCreateClick, onTripsClick, onJoinClick }: BottomNa
     )
   }
 
-  // ── Global: Meine Reisen · Neue Reise · Beitreten ──
   return (
     <nav
       className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-bar border-t z-30"

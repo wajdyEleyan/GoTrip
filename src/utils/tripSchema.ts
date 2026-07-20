@@ -1,4 +1,3 @@
-// src/utils/tripSchema.ts
 import { z } from 'zod'
 
 export const createTripSchema = z

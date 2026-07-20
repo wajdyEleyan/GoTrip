@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/pages/BudgetTracker.tsx — Feature 008: Budget-Tracker + Splitwise-Logik
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Wallet } from 'lucide-react'

@@ -1,5 +1,4 @@
 // Autor: Wajdy Eleyan
-// src/components/calendar/HeatmapLegend.tsx
 const ITEMS = [
   { color: 'bg-success', label: 'Verfügbar' },
   { color: 'bg-amber-400', label: 'Vielleicht' },

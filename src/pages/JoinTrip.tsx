@@ -1,5 +1,4 @@
 // Autor: Wajdy Eleyan
-// src/pages/JoinTrip.tsx — /join/:code: Einladungslink beitreten
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'

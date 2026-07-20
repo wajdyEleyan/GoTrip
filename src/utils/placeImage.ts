@@ -1,9 +1,3 @@
-// src/utils/placeImage.ts
-// Echtes Foto eines Ortes über die Wikipedia-REST-API (CORS-fähig, kein Key).
-// Holt die Bilderliste der Wikipedia-Seite, filtert Karten/Wappen/SVG/PNG raus
-// und nimmt das erste echte JPG-Foto. Das Bild wird über Commons Special:FilePath
-// in passender Breite geladen. Ergebnisse werden gecacht (Speicher + localStorage).
-
 const memCache = new Map<string, string | null>()
 const LS_KEY = 'gotrip_place_img'
 

@@ -1,5 +1,4 @@
 // Autor: Amal Najah
-// src/types/activity.ts
 
 export interface Activity {
   id: string

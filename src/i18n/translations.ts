@@ -1,5 +1,3 @@
-// src/i18n/translations.ts — DE / EN / ES
-
 export type Lang = 'de' | 'en' | 'es'
 
 const de = {

@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/types/destination.ts
 
 export interface ClimateData {
   temp_avg: number           // °C

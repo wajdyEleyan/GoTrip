@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/services/llmService.ts
 // Reiseziel-Analyse OHNE LLM und OHNE Mock-Daten.
 // Holt echte Daten direkt im Browser (Copernicus/ERA5, GBIF, NASA POWER;
 // NASA Earthdata optional via Server) und bewertet regelbasiert (scoreEngine).

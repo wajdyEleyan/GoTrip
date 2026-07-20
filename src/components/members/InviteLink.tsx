@@ -1,5 +1,4 @@
 // Autor: Amal Najah
-// src/components/members/InviteLink.tsx
 import { useState } from 'react'
 import { Copy, Check, MessageCircle, Share2 } from 'lucide-react'
 

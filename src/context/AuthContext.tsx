@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/context/AuthContext.tsx
 // Passwortlose Konten: Identität = eindeutiger Username (auth.id == name).
 // signIn meldet ein bestehendes Konto an, register legt eines an (optional + Code).
 // Ohne Server (error 'offline') kommt der Nutzer lokal rein → App läuft weiter.

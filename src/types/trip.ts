@@ -1,5 +1,3 @@
-// src/types/trip.ts
-
 export interface Member {
   id: string
   name: string

@@ -1,5 +1,4 @@
 // Autor: Eya Mathlouthi
-// src/components/recommendations/AddDestinationForm.tsx
 // Reiseziel vorschlagen: ERST Land, DANN Stadt. Die Stadt wird gegen echte
 // Geocoding-Daten geprüft — sie muss wirklich im gewählten Land liegen.
 import { useState } from 'react'

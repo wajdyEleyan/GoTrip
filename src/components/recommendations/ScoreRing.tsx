@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/components/recommendations/ScoreRing.tsx
 interface ScoreRingProps {
   score: number   // 0–1
   size?: number

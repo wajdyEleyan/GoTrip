@@ -12,8 +12,6 @@ export type AuthResult =
 const TIMEOUT = 2000
 const ACCT_KEY = 'gotrip_accounts'
 
-// ── Lokaler Konten-Speicher (Fallback ohne Server) ───────────────────────────
-// Struktur: { [username]: sha256Hash }. Alt-Format (string[]) wird migriert.
 function readLocal(): Record<string, string> {
   try {
     const parsed = JSON.parse(localStorage.getItem(ACCT_KEY) || '{}')

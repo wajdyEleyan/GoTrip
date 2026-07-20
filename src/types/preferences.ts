@@ -1,5 +1,4 @@
 // Autor: Eya Mathlouthi
-// src/types/preferences.ts
 
 export type InterestType =
   | 'beach'

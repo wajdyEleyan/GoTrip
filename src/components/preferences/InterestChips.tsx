@@ -1,5 +1,4 @@
 // Autor: Amal Najah
-// src/components/preferences/InterestChips.tsx
 import {
   Check, Umbrella, Building2, Trees, Mountain, Landmark, Music, Flower2, Utensils, ShoppingBag,
   type LucideIcon,

@@ -1,5 +1,4 @@
 // Autor: Amal Najah
-// src/components/members/MemberCard.tsx
 import { cn } from '@/lib/utils'
 import type { Member } from '@/types/trip'
 

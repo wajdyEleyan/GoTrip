@@ -1,5 +1,4 @@
 // Autor: Amal Najah
-// src/components/activities/ActivityCard.tsx
 import { ThumbsUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Activity } from '@/types/activity'

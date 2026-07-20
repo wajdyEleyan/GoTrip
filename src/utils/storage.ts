@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/utils/storage.ts
 import type { Trip } from '@/types/trip'
 import type { MemberAvailability } from '@/types/availability'
 import type { MemberPreferences } from '@/types/preferences'
@@ -63,7 +62,7 @@ export function clearAuth(): void {
   localStorage.removeItem(AUTH_KEY)
 }
 
-// ─── Availability ───────────────────────────────────────────────────────────
+
 const AVAIL_KEY = 'gotrip_availability'
 
 function getAllAvailabilities(): MemberAvailability[] {
@@ -88,7 +87,7 @@ export function getMemberAvailability(tripId: string, memberId: string): MemberA
   return getAllAvailabilities().find((a) => a.tripId === tripId && a.memberId === memberId)
 }
 
-// ─── Preferences ────────────────────────────────────────────────────────────
+
 const PREFS_KEY = 'gotrip_preferences'
 
 function getAllPreferences(): MemberPreferences[] {
@@ -113,7 +112,7 @@ export function getMemberPreferences(tripId: string, memberId: string): MemberPr
   return getAllPreferences().find((p) => p.tripId === tripId && p.memberId === memberId)
 }
 
-// ─── Destinations ────────────────────────────────────────────────────────────
+
 const DEST_KEY = 'gotrip_destinations'
 
 export function getTripDestinations(tripId: string): Destination[] {
@@ -132,7 +131,7 @@ export function saveDestination(dest: Destination): void {
   scheduleSync()
 }
 
-// ─── Destination Votes ───────────────────────────────────────────────────────
+
 const VOTES_KEY = 'gotrip_dest_votes'
 
 export function getTripVotes(tripId: string): DestinationVote[] {
@@ -158,7 +157,7 @@ export function getMemberVote(destinationId: string, memberId: string): Destinat
   return all.find((v) => v.destinationId === destinationId && v.memberId === memberId)
 }
 
-// ─── Activities ──────────────────────────────────────────────────────────────
+
 const ACT_KEY = 'gotrip_activities'
 
 export function getTripActivities(tripId: string): Activity[] {
@@ -177,7 +176,7 @@ export function saveActivity(act: Activity): void {
   scheduleSync()
 }
 
-// ─── Expenses ────────────────────────────────────────────────────────────────
+
 const EXP_KEY = 'gotrip_expenses'
 
 export function getTripExpenses(tripId: string): Expense[] {
@@ -203,8 +202,6 @@ export function deleteExpense(expId: string): void {
   scheduleSync()
 }
 
-// ─── Itinerary ───────────────────────────────────────────────────────────────
-// ─── Last-Visit-Tracking (für Badge-Zähler) ──────────────────────────────────
 export function getLastVisit(tripId: string, tile: string): string | null {
   return localStorage.getItem(`gotrip_visit_${tripId}_${tile}`)
 }

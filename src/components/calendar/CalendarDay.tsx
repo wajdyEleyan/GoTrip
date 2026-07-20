@@ -1,5 +1,4 @@
 // Autor: Wajdy Eleyan
-// src/components/calendar/CalendarDay.tsx
 import { cn } from '@/lib/utils'
 import type { AvailabilityStatus } from '@/types/availability'
 

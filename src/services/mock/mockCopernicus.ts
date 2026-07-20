@@ -1,5 +1,4 @@
 // Autor: Wajdy Eleyan
-// src/services/mock/mockCopernicus.ts
 // Mock-Fallback für Copernicus ERA5 Klimadaten (Priorität 1)
 import type { ClimateData } from '@/types/destination'
 

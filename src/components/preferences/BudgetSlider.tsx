@@ -1,5 +1,4 @@
 // Autor: Eya Mathlouthi
-// src/components/preferences/BudgetSlider.tsx
 interface BudgetSliderProps {
   value: number
   onChange: (v: number) => void

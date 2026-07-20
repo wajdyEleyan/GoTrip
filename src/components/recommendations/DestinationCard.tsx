@@ -1,5 +1,4 @@
 // Autor: Amal Najah
-// src/components/recommendations/DestinationCard.tsx
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Thermometer, CloudRain, Sun, Star, MessageSquare } from 'lucide-react'
 import { DataSourceBadges } from './DataSourceBadges'

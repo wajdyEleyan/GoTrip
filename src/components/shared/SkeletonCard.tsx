@@ -1,5 +1,4 @@
 // Autor: Eya Mathlouthi
-// src/components/shared/SkeletonCard.tsx — Reusable loading skeleton
 import { cn } from '@/lib/utils'
 
 function Bone({ className }: { className?: string }) {

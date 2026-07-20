@@ -1,5 +1,4 @@
 // Autor: Amal Najah
-// src/pages/ActivitiesVoting.tsx — Screen 11: Aktivitäten-Voting
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'

@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/utils/budgetSplit.ts — Splitwise-style settlement algorithm
 import type { Expense, MemberBalance, Settlement } from '@/types/expense'
 import type { Member } from '@/types/trip'
 

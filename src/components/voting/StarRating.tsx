@@ -1,5 +1,4 @@
 // Autor: Eya Mathlouthi
-// src/components/voting/StarRating.tsx
 import { useState, useId } from 'react'
 import { RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'

@@ -1,5 +1,4 @@
 // Autor: Wajdy Eleyan
-// src/services/mock/mockLLM.ts
 // Mock-Fallback für Anthropic Claude API — stabile Demo ohne echte API
 import type { LLMAnalysis } from '@/types/destination'
 import type { MemberPreferences } from '@/types/preferences'

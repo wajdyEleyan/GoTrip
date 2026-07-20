@@ -1,5 +1,4 @@
 // Autor: Wajdy Eleyan
-// src/types/availability.ts
 
 export type AvailabilityStatus = 'available' | 'maybe' | 'not-available'
 

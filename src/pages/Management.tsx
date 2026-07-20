@@ -84,7 +84,6 @@ export default function Management() {
 
   const destName = (destId: string) => destinations.find(d => d.id === destId)?.name ?? '—'
 
-  // ── Schlussfolgerung: Daten, die auf ALLE zutreffen ──────────────────────
   const winner = rankedDest[0]
 
   const budgets = allPrefs.map(p => p.budgetPerPerson).filter((n): n is number => typeof n === 'number')
@@ -109,7 +108,6 @@ export default function Management() {
     .filter(([, c]) => prefsWithInterests.length > 0 && c === prefsWithInterests.length)
     .map(([i]) => i as InterestType)
 
-  // ── Fortschritt der Gruppe ───────────────────────────────────────────────
   const progress = [
     { key: 'av', label: 'Verfügbarkeit', icon: CalendarCheck, done: allAvail.filter(a => Object.keys(a.dates || {}).length > 0).length },
     { key: 'pr', label: 'Präferenzen', icon: Heart, done: allPrefs.filter(p => (p.interests?.length ?? 0) > 0 || (p.customInterests?.length ?? 0) > 0).length },

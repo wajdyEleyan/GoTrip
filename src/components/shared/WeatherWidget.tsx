@@ -1,5 +1,4 @@
 // Autor: Wajdy Eleyan
-// src/components/shared/WeatherWidget.tsx — S4: Wetter-Forecast-Widget
 import { Sun, CloudSun, Cloud, CloudRain, Thermometer } from 'lucide-react'
 import type { ClimateData } from '@/types/destination'
 

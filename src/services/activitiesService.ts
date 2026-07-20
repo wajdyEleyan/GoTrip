@@ -2,7 +2,7 @@ import type { InterestType } from '@/types/preferences'
 import type { TripItinerary, ItinerarySlot } from '@/types/itinerary'
 import { generateUUID } from '@/utils/uuid'
 
-// ─── Mahlzeiten nach Budget ──────────────────────────────────────────────────
+
 function breakfast(budget: number): { activity: string; emoji: string } {
   if (budget < 20) return { activity: 'Frühstück im Hostel-Café', emoji: '🥐' }
   if (budget < 60) return { activity: 'Frühstück im lokalen Café', emoji: '☕' }
@@ -51,7 +51,7 @@ function dinner(budget: number, day: number): { activity: string; emoji: string 
   return options[(day - 1) % options.length]
 }
 
-// ─── Destination-spezifische Highlights ──────────────────────────────────────
+
 function getDestinationHighlights(destination: string): Array<{ activity: string; emoji: string }> {
   const city = destination.toLowerCase()
 
@@ -145,7 +145,7 @@ function getDestinationHighlights(destination: string): Array<{ activity: string
   ]
 }
 
-// ─── Aktivitäten nach Interesse & Tageszeit ──────────────────────────────────
+
 type TimeOfDay = 'morning' | 'afternoon' | 'evening'
 
 const INTEREST_ACTIVITIES: Record<InterestType, Record<TimeOfDay, Array<{ activity: string; emoji: string }>>> = {
@@ -306,7 +306,7 @@ const INTEREST_ACTIVITIES: Record<InterestType, Record<TimeOfDay, Array<{ activi
   },
 }
 
-// ─── Geografische Prüfung ────────────────────────────────────────────────────
+
 function isCoastalDestination(destination: string): boolean {
   const d = destination.toLowerCase()
   const coastal = [
@@ -323,7 +323,7 @@ function isCoastalDestination(destination: string): boolean {
   return coastal.some(c => d.includes(c))
 }
 
-// ─── Plan generieren ──────────────────────────────────────────────────────────
+
 export interface GeneratePlanParams {
   interests: InterestType[]
   budgetPerPerson: number

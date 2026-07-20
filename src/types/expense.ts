@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/types/expense.ts
 
 export interface Expense {
   id: string

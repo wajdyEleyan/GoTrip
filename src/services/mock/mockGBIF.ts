@@ -1,5 +1,4 @@
 // Autor: Wajdy Eleyan
-// src/services/mock/mockGBIF.ts
 // Mock-Fallback für GBIF Biodiversitätsdaten (Priorität 2)
 import type { BiodiversityData } from '@/types/destination'
 

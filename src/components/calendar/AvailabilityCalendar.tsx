@@ -1,5 +1,4 @@
 // Autor: Wajdy Eleyan
-// src/components/calendar/AvailabilityCalendar.tsx
 // Interactive monthly calendar for marking personal availability
 import { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'

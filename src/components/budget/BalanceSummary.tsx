@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/components/budget/BalanceSummary.tsx
 import { ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { MemberBalance, Settlement } from '@/types/expense'

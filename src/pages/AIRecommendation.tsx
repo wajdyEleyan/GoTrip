@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/pages/AIRecommendation.tsx — Screen 8: KI-Reiseziel-Empfehlung
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { TripScreen } from '@/components/shared/TripScreen'

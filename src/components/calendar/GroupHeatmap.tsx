@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/components/calendar/GroupHeatmap.tsx
 // Shows group availability heatmap for the trip date range
 import { useMemo } from 'react'
 import { cn } from '@/lib/utils'

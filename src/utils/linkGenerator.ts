@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/utils/linkGenerator.ts
 // Generates a 6-character alphanumeric invite code (ambiguous chars excluded)
 import type { Trip } from '@/types/trip'
 

@@ -1,8 +1,3 @@
-// src/utils/geo.ts
-// Länder-Liste + Stadt/Land-Validierung über echte Geocoding-Daten
-// (Open-Meteo Geocoding API — kostenlos, kein Key, CORS-fähig).
-// Verhindert unsinnige Kombinationen wie Land=Spanien / Stadt=Frankfurt.
-
 export interface Country {
   code: string // ISO 3166-1 alpha-2
   name: string // deutscher Name

@@ -1,5 +1,4 @@
 // Autor: Eya Mathlouthi
-// src/components/recommendations/DataSourceBadges.tsx
 // Zeigt, welche ECHTEN Datenquellen in die Bewertung eingeflossen sind.
 import { Satellite, Leaf, Rocket, SatelliteDish, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'

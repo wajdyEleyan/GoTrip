@@ -1,5 +1,4 @@
 // Autor: Mohamad Haj Ahmad
-// src/components/budget/ExpenseCard.tsx
 import { Trash2, CreditCard } from 'lucide-react'
 import type { Expense } from '@/types/expense'
 
