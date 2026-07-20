@@ -229,12 +229,10 @@ Die App unterstützt **Deutsch, Englisch und Spanisch**. Alle UI-Texte sind in `
 
 ## Autoren
 
-| Bereich | Autor |
-|---------|-------|
-| Backend, Datenbank, API-Integration, Score-Engine | Mohamad Haj Ahmad |
-| Routing, TripDashboard, Management, Sync-System | Wajdy Eleyan |
-| UI-Komponenten, DestinationCard, Empfehlungen | Amal Najah |
-| StarRating, Preferences, Availability, Login | Eya Mathlouthi |
+| Bereich | Autoren |
+|---------|---------|
+| Backend, Datenbank, API-Integration, Score-Engine | Mohamad Haj Ahmad, Eya Mathlouthi, Wajdy Eleyan |
+| Sync-System, Kalender, Verfügbarkeit, Abstimmung | Amal Najah, Wajdy Eleyan |
 
 ---
 
